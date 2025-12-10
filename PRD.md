@@ -243,6 +243,27 @@ Cada post deve conter: título, slug, subtítulo, conteúdo (Markdown/HTML), ima
 
 ---
 
+### 6.9. Compliance e Termos de Uso (Afiliados)
+
+Para garantir a conformidade com os programas de afiliados (Amazon, Mercado Livre, Shopee) e boas práticas de SEO, o sistema deve seguir rigorosamente as seguintes regras:
+
+1.  **Aviso Legal (Disclaimer) Obrigatório:**
+    - **Amazon:** É obrigatório exibir a frase exata: **"Como Associado Amazon, ganho com compras qualificadas."** em local visível (próximo aos links ou rodapé).
+    - **Geral:** Exibir aviso claro de que o site contém links de afiliados e pode receber comissão.
+    - **Redes Sociais:** Uso obrigatório de hashtags como `#ad`, `#publi`, `#afiliado`.
+
+2.  **Atributos de Link (SEO):**
+    - Todos os links de saída para afiliados devem conter o atributo `rel="sponsored"` (ou `rel="nofollow"`), conforme diretrizes do Google.
+    - Exemplo: `<a href="..." rel="sponsored" target="_blank">Ver na Amazon</a>`
+
+3.  **Documentação de Referência:**
+    - Consultar os detalhes completos em:
+      - `docs/termos-de-uso/amazon-associados.md`
+      - `docs/termos-de-uso/mercado-livre-afiliados.md`
+      - `docs/termos-de-uso/shopee-afiliados.md`
+
+---
+
 ## 7. Requisitos Não Funcionais
 
 - **Banco de dados:** PostgreSQL (v14+).
@@ -675,6 +696,7 @@ Estrutura sugerida:
     - “Presentes em destaque”.
     - Newsletter.
     - Links para outros posts.
+    - **Aviso Legal (Disclaimer):** Texto visível sobre afiliação (ex.: "Como Associado Amazon...").
 
 - Para posts de lista:
   - Cada item numerado com:
