@@ -1,1543 +1,986 @@
-# Análise Data Analyst - PRD geek.bidu.guru
+# Análise Data Analyst - geek.bidu.guru
 
-**Agente**: Data Analyst
-**Documento Analisado**: PRD.md v1.1
-**Data da Análise**: 2025-12-10
-**Status**: Análise Completa
-
----
-
-## 📋 Sumário Executivo
-
-O PRD demonstra **consciência da importância de métricas**, mas carece de **profundidade analítica**, **definição de funis de conversão**, **estratégia de testes A/B** e **dashboards operacionais**. As métricas são mencionadas superficialmente, sem metodologia de análise, segmentação ou insights acionáveis.
-
-**Classificação Geral**: ⭐⭐⭐☆☆ (3/5)
-
-**Pontos Fortes**:
-- ✅ KPIs mencionados por categoria (SEO, Afiliados, Conteúdo, Engajamento)
-- ✅ Métricas de tráfego contempladas (visitantes, CTR orgânico, posição média)
-- ✅ Métricas de afiliados mencionadas (cliques, conversões, receita)
-- ✅ Google Analytics 4 mencionado
-- ✅ Core Web Vitals como métrica técnica
-
-**Áreas de Melhoria**:
-- ⚠️ Falta de funis de conversão detalhados
-- ⚠️ Ausência de estratégia de segmentação de dados
-- ⚠️ Testes A/B mencionados mas não estruturados
-- ⚠️ Dashboards não especificados
-- ⚠️ Falta de análise de coorte, retenção, LTV
+**Data**: 2025-12-10
+**Versão PRD**: 1.3
+**Analista**: Data Analyst
+**Documentos**: PRD.md, PRD-affiliate-strategy.md, PRD-internationalization.md, PRD-design-system.md
 
 ---
 
-## 🔍 Análise Detalhada por Seção
+## 1. Resumo Executivo
 
-### 1. KPIs e Métricas (Seção 3 do PRD)
+O projeto possui **KPIs bem definidos** nas seções 3 do PRD, mas apresenta **lacunas críticas** em especificação técnica de tracking, modelagem de dados para analytics, dashboards operacionais e automações de insights.
 
-#### ✅ Pontos Positivos
+**Score de Maturidade Analytics: 6.5/10** - KPIs definidos, mas falta implementação técnica detalhada.
 
-**Organização por Categoria**:
-- SEO / Tráfego
-- Afiliados
-- Conteúdo & Automação
-- Engajamento
+**Oportunidades principais**: Data warehouse (BigQuery), cohort analysis, predictive analytics, real-time dashboards, attribution modeling e automação de alertas podem **3-5x a eficiência** na tomada de decisão.
 
-**Métricas Fundamentais Contempladas**:
-- Visitantes orgânicos/mês
-- CTR orgânico (Search Console)
-- Cliques em links de afiliado/post
-- Receita mensal por plataforma
-- Tempo médio na página
-- Scroll-depth médio
+---
 
-#### ⚠️ Gaps Identificados
+## 2. TOP 5 GAPS CRÍTICOS
 
-**GAP #1: Métricas Sem Metas Quantificadas**
+### 2.1. Tracking Plan (GA4) Não Documentado
+**Severidade**: Alta
+**Impacto**: Dados inconsistentes, impossibilidade de medir KPIs definidos
 
-O PRD lista métricas, mas não define:
-- **Valores baseline**: onde estamos hoje?
-- **Metas por período**: 3 meses, 6 meses, 12 meses
-- **Benchmarks de mercado**: o que é "bom" neste nicho?
+**O que falta**: Especificação completa de eventos GA4, parâmetros, triggers, data layer.
 
-Exemplo:
-> "Visitantes orgânicos/mês"
+### 2.2. Modelagem de Dados para Analytics Incompleta
+**Severidade**: Alta
+**Impacto**: Queries lentas, impossibilidade de análises complexas
 
-Sem meta, impossível medir sucesso. Deveria ser:
-> "Visitantes orgânicos: 5k (3 meses), 15k (6 meses), 50k (12 meses)"
+**O que falta**: Tabelas de fatos/dimensões, índices, views materializadas, procedures.
 
-**GAP #2: Falta de Métricas de Negócio Críticas**
+### 2.3. Dashboards Operacionais Não Especificados
+**Severidade**: Média-Alta
+**Impacto**: Decisões baseadas em intuição ao invés de dados
 
-Métricas ausentes:
-- **CAC (Customer Acquisition Cost)**: quanto custa atrair 1 visitante?
-- **LTV (Lifetime Value)**: quanto um visitante recorrente gera de receita ao longo do tempo?
-- **ROI de Marketing**: retorno sobre investimento em conteúdo/ads
-- **Churn rate**: taxa de abandono (visitantes que não retornam)
-- **Retenção**: % de visitantes que retornam (D7, D30, D90)
+**O que falta**: Mockups, queries SQL, métricas por dashboard, refresh rate.
 
-**GAP #3: Ausência de Métricas de Produto**
+### 2.4. Sistema de Alertas Automáticos Não Implementado
+**Severidade**: Média
+**Impacto**: Problemas descobertos tarde demais
 
-Não há KPIs de produto:
-- **Feature adoption**: % de usuários que usam busca, filtros, wishlist
-- **Session quality**: sessões com clique em afiliado vs sessões sem clique
-- **Bounce rate por landing page**: onde usuários mais abandonam?
-- **Exit pages**: de onde saem?
+**O que falta**: Thresholds, canais de notificação (Telegram/Slack), automações n8n.
 
-**GAP #4: Falta de Segmentação de Métricas**
+### 2.5. Attribution Modeling Não Definido
+**Severidade**: Média
+**Impacto**: Impossibilidade de otimizar mix de canais
 
-Métricas não segmentadas por:
-- **Fonte de tráfego**: orgânico vs direto vs social vs referral
-- **Dispositivo**: mobile vs desktop vs tablet
-- **Geografia**: SP vs RJ vs outras regiões
-- **Persona**: Ana vs Lucas vs Marina (se possível inferir)
-- **Tipo de conteúdo**: produto único vs listicle vs guia
+**O que falta**: Modelo de atribuição (first-click, last-click, linear, data-driven).
 
-**GAP #5: Métricas de Afiliados Incompletas**
+---
 
-Faltam KPIs críticos de afiliados:
-- **EPC (Earnings Per Click)**: quanto ganha por clique
-- **RPM (Revenue Per Mille)**: receita por 1000 visualizações
-- **AOV (Average Order Value)**: ticket médio das compras
-- **Conversion funnel**: visualização → clique → chegada na loja → compra
-- **Time to conversion**: quanto tempo entre clique e compra
+## 3. TOP 5 OPORTUNIDADES
 
-#### 💡 Oportunidades
+### 3.1. Data Warehouse (BigQuery) + Looker Studio
+**Potencial**: Altíssimo
+**Esforço**: Alto
 
-**OPORTUNIDADE #1: Framework de Metas SMART**
+Export GA4 → BigQuery permite análises SQL avançadas, cohorts, LTV, custom funnels.
 
-Criar tabela de metas quantificadas:
+**Benefício**: 10x mais poder analítico, queries complexas em segundos.
 
-| Métrica | Baseline | 3 Meses | 6 Meses | 12 Meses | Como Medir |
-|---------|----------|---------|---------|----------|------------|
-| **Tráfego Orgânico** | 0 | 5.000 | 15.000 | 50.000 | GA4 |
-| **CTR Orgânico** | - | 2% | 4% | 6% | Search Console |
-| **Keywords Ranqueadas** | 0 | 50 | 150 | 500+ | Ahrefs/SEMrush |
-| **Bounce Rate** | - | <55% | <50% | <45% | GA4 |
-| **Tempo na Página** | - | 1:30min | 2:00min | 2:30min | GA4 |
-| **CTR de Afiliados** | - | 2-3% | 4-5% | 6-8% | Backend tracking |
-| **Receita Mensal** | 0 | R$ 500 | R$ 2.000 | R$ 5.000 | Dashboards de afiliados |
-| **RPM (Receita/1k views)** | - | R$ 10 | R$ 30 | R$ 50 | Calculado |
-| **Posts Publicados/Mês** | 0 | 30 | 30 | 30 | Backend |
-| **Newsletter Subscribers** | 0 | 200 | 1.000 | 5.000 | Email platform |
+### 3.2. Real-Time Dashboard (WebSockets)
+**Potencial**: Alto
+**Esforço**: Médio
 
-**OPORTUNIDADE #2: Pirâmide de Métricas (North Star + Drivers)**
+Dashboard ao vivo com métricas em tempo real (visitantes online, cliques afiliados últimas 24h).
 
-Definir hierarquia de métricas:
+**Benefício**: Decisões rápidas, detecção imediata de anomalias.
 
+### 3.3. Cohort Analysis & LTV
+**Potencial**: Alto
+**Esforço**: Médio
+
+Agrupar usuários por mês de aquisição, analisar retenção e valor no tempo.
+
+**Benefício**: Otimizar CAC vs LTV, identificar períodos mais lucrativos.
+
+### 3.4. Predictive Analytics (Churn, Conversão)
+**Potencial**: Médio-Alto
+**Esforço**: Alto
+
+ML para prever probabilidade de conversão, churn de usuários, produtos que vão trend.
+
+**Benefício**: Ações proativas, personalização avançada.
+
+### 3.5. Automated Insights (Anomaly Detection)
+**Potencial**: Alto
+**Esforço**: Médio
+
+Sistema que detecta automaticamente quedas/picos e gera insights.
+
+**Benefício**: Economia de tempo, insights que passariam despercebidos.
+
+---
+
+## 4. GAPS DETALHADOS (12 identificados)
+
+### 2.1. Tracking Plan GA4 Não Documentado
+
+**Eventos críticos faltando especificação**:
+
+```javascript
+// EVENTOS DE AFILIADOS
+gtag('event', 'affiliate_click', {
+  product_id: 'prod-123',
+  product_name: 'Caneca Baby Yoda',
+  platform: 'amazon',  // ou 'mercadolivre', 'shopee'
+  price: 89.90,
+  post_slug: 'caneca-baby-yoda',
+  link_position: 'top',  // 'middle', 'bottom'
+  device: 'mobile',  // 'desktop', 'tablet'
+  affiliate_score: 85  // scorecard do produto
+});
+
+// SCROLL DEPTH
+gtag('event', 'scroll', {
+  percent_scrolled: 25,  // 25%, 50%, 75%, 100%
+  page_path: window.location.pathname
+});
+
+// NEWSLETTER SIGNUP
+gtag('event', 'sign_up', {
+  method: 'newsletter',
+  source: 'sidebar',  // 'popup', 'inline', 'footer'
+  persona_inferred: 'ana'  // baseado em comportamento
+});
+
+// COMPARTILHAMENTO
+gtag('event', 'share', {
+  method: 'whatsapp',  // 'telegram', 'twitter', 'facebook', 'copy_link'
+  content_type: 'post',
+  item_id: 'post-slug'
+});
+
+// SEARCH INTERNO
+gtag('event', 'search', {
+  search_term: 'presentes até 100 reais',
+  search_results: 15
+});
+
+// QUIZ COMPLETION
+gtag('event', 'quiz_complete', {
+  quiz_name: 'Que Tipo de Geek É Você?',
+  quiz_result: 'gamer',
+  products_recommended: 5
+});
 ```
-                    ┌─────────────────────┐
-                    │   NORTH STAR        │
-                    │   Receita Mensal    │
-                    │   de Afiliados      │
-                    └─────────────────────┘
-                             ▲
-                ┌────────────┴────────────┐
-                │                         │
-        ┌───────────────┐         ┌───────────────┐
-        │ PRIMARY       │         │ PRIMARY       │
-        │ Cliques de    │         │ Tráfego       │
-        │ Afiliados     │         │ Orgânico      │
-        └───────────────┘         └───────────────┘
-                ▲                         ▲
-        ┌───────┴───────┐         ┌───────┴───────┐
-        │               │         │               │
-  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-  │ CTR de   │  │ Posts    │  │ Keywords │  │ Backlinks│
-  │ Afiliados│  │ com CTA  │  │ Ranqueadas│ │          │
-  └──────────┘  └──────────┘  └──────────┘  └──────────┘
+
+**Parâmetros personalizados GA4**:
+```javascript
+// Configuração global
+gtag('config', 'G-XXXXXXXXXX', {
+  custom_map: {
+    'dimension1': 'persona_inferred',
+    'dimension2': 'affiliate_platform',
+    'dimension3': 'price_range',
+    'dimension4': 'product_category',
+    'metric1': 'affiliate_score'
+  }
+});
 ```
 
-**North Star Metric**: Receita Mensal de Afiliados
-**Primary Metrics**: Cliques de Afiliados + Tráfego Orgânico
-**Secondary Metrics**: CTR, Posts publicados, Keywords, Backlinks
+### 2.2. Modelagem de Dados para Analytics Incompleta
 
-**OPORTUNIDADE #3: Dashboard de Métricas em Tempo Real**
+**Tabelas faltantes**:
 
-Criar dashboard com atualização diária:
+```sql
+-- Tabela de fatos: sessões agregadas (performance)
+CREATE TABLE fact_sessions (
+    date DATE NOT NULL,
+    hour SMALLINT NOT NULL,
+    post_id UUID REFERENCES posts(id),
+    device VARCHAR(20),
+    source VARCHAR(50),
+    persona_inferred VARCHAR(20),
+    sessions INT DEFAULT 0,
+    pageviews INT DEFAULT 0,
+    total_time_seconds INT DEFAULT 0,
+    affiliate_clicks INT DEFAULT 0,
+    newsletter_signups INT DEFAULT 0,
+    PRIMARY KEY (date, hour, post_id, device, source)
+);
 
+CREATE INDEX idx_fact_sessions_date ON fact_sessions(date DESC);
+CREATE INDEX idx_fact_sessions_post ON fact_sessions(post_id, date DESC);
+
+-- Tabela de fatos: cliques de afiliados (detalhado)
+CREATE TABLE fact_affiliate_clicks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clicked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    product_id UUID NOT NULL REFERENCES products(id),
+    post_id UUID REFERENCES posts(id),
+    session_id VARCHAR(100),
+    user_id UUID,
+    platform VARCHAR(20) NOT NULL,
+    link_position VARCHAR(20),
+    device VARCHAR(20),
+    country VARCHAR(2),
+    region VARCHAR(50),
+    city VARCHAR(100),
+    scroll_depth_pct SMALLINT,
+    time_on_page_seconds INT,
+    is_bot BOOLEAN DEFAULT FALSE,
+    is_suspicious BOOLEAN DEFAULT FALSE,
+    estimated_commission_brl DECIMAL(10,2)
+);
+
+CREATE INDEX idx_affiliate_clicks_time ON fact_affiliate_clicks(clicked_at DESC);
+CREATE INDEX idx_affiliate_clicks_product ON fact_affiliate_clicks(product_id, clicked_at DESC);
+CREATE INDEX idx_affiliate_clicks_post ON fact_affiliate_clicks(post_id, clicked_at DESC);
+CREATE INDEX idx_affiliate_clicks_platform ON fact_affiliate_clicks(platform, clicked_at DESC);
+
+-- View materializada: performance diária por post
+CREATE MATERIALIZED VIEW mv_daily_post_performance AS
+SELECT
+    date,
+    post_id,
+    p.title,
+    p.type,
+    p.category_id,
+    SUM(sessions) as total_sessions,
+    SUM(pageviews) as total_pageviews,
+    SUM(total_time_seconds) / NULLIF(SUM(sessions), 0) as avg_time_seconds,
+    SUM(affiliate_clicks) as total_affiliate_clicks,
+    ROUND(SUM(affiliate_clicks)::numeric / NULLIF(SUM(sessions), 0) * 100, 2) as ctr_pct,
+    SUM(newsletter_signups) as newsletter_signups
+FROM fact_sessions fs
+JOIN posts p ON p.id = fs.post_id
+GROUP BY date, post_id, p.title, p.type, p.category_id;
+
+CREATE UNIQUE INDEX ON mv_daily_post_performance(date, post_id);
+
+-- Refresh diário via cron
+-- REFRESH MATERIALIZED VIEW CONCURRENTLY mv_daily_post_performance;
+```
+
+**Procedures para relatórios**:
+
+```sql
+-- Top produtos por receita estimada (último mês)
+CREATE OR REPLACE FUNCTION get_top_products_by_revenue(
+    days_back INT DEFAULT 30,
+    limit_rows INT DEFAULT 10
+)
+RETURNS TABLE (
+    product_id UUID,
+    product_name VARCHAR,
+    platform VARCHAR,
+    total_clicks BIGINT,
+    estimated_revenue_brl DECIMAL,
+    avg_commission_per_click DECIMAL,
+    ctr_vs_views DECIMAL
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        p.id,
+        p.name,
+        p.platform,
+        COUNT(ac.id) as total_clicks,
+        SUM(ac.estimated_commission_brl) as estimated_revenue,
+        AVG(ac.estimated_commission_brl) as avg_commission,
+        ROUND(
+            COUNT(ac.id)::numeric /
+            NULLIF((SELECT SUM(pageviews) FROM fact_sessions fs
+                    JOIN post_products pp ON pp.post_id = fs.post_id
+                    WHERE pp.product_id = p.id
+                    AND fs.date >= CURRENT_DATE - days_back), 0) * 100,
+            2
+        ) as ctr
+    FROM products p
+    LEFT JOIN fact_affiliate_clicks ac ON ac.product_id = p.id
+    WHERE ac.clicked_at >= NOW() - (days_back || ' days')::INTERVAL
+    GROUP BY p.id, p.name, p.platform
+    ORDER BY estimated_revenue DESC
+    LIMIT limit_rows;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 2.3. Dashboards Operacionais Não Especificados
+
+**Dashboard 1: Executivo (Visão Geral Diária)**
+
+```sql
+-- Query principal
+WITH today_metrics AS (
+    SELECT
+        SUM(sessions) as sessions_today,
+        SUM(pageviews) as pageviews_today,
+        SUM(affiliate_clicks) as clicks_today,
+        ROUND(SUM(affiliate_clicks)::numeric / NULLIF(SUM(sessions), 0) * 100, 2) as ctr_today
+    FROM fact_sessions
+    WHERE date = CURRENT_DATE
+),
+yesterday_metrics AS (
+    SELECT
+        SUM(sessions) as sessions_yesterday,
+        SUM(pageviews) as pageviews_yesterday,
+        SUM(affiliate_clicks) as clicks_yesterday
+    FROM fact_sessions
+    WHERE date = CURRENT_DATE - 1
+),
+revenue_today AS (
+    SELECT
+        COUNT(*) as total_clicks,
+        SUM(estimated_commission_brl) as revenue_estimate,
+        AVG(estimated_commission_brl) as epc
+    FROM fact_affiliate_clicks
+    WHERE clicked_at >= CURRENT_DATE
+)
+SELECT
+    t.sessions_today,
+    ROUND((t.sessions_today - y.sessions_yesterday)::numeric / NULLIF(y.sessions_yesterday, 0) * 100, 1) as sessions_change_pct,
+    t.pageviews_today,
+    t.clicks_today,
+    t.ctr_today,
+    r.revenue_estimate,
+    r.epc
+FROM today_metrics t, yesterday_metrics y, revenue_today r;
+```
+
+**Mockup Dashboard Executivo**:
 ```
 ┌─────────────────────────────────────────────────────┐
-│ 📊 GEEK.BIDU.GURU - Dashboard Executivo            │
-│ Atualizado: 10 Dez 2025, 14:32                     │
+│ GEEK.BIDU.GURU - Dashboard Executivo              │
+│ Atualizado: 10/12/2025 15:42 🔄                    │
 ├─────────────────────────────────────────────────────┤
 │                                                     │
-│ 🎯 NORTH STAR METRIC                               │
-│   Receita Mensal (Dezembro): R$ 1.847,00           │
-│   vs Meta: R$ 2.000 (92%) 📊                       │
-│   vs Mês Anterior: +34% 📈                         │
+│ 📊 HOJE (10/Dez)                                   │
+│   ├─ Sessões: 847 (+12% vs ontem) ↗              │
+│   ├─ Pageviews: 2.103 (+15%)                      │
+│   ├─ Cliques Afiliados: 42 (CTR: 5.0%)           │
+│   └─ Receita Estimada: R$ 76,80                  │
 │                                                     │
-├─────────────────────────────────────────────────────┤
-│ 📈 TRÁFEGO (Últimos 30 dias)                       │
-│   ├─ Visitantes: 12.450 (+23% vs mês anterior)    │
-│   ├─ Pageviews: 28.900 (+31%)                     │
-│   ├─ Orgânico: 73% | Direto: 15% | Social: 8%     │
-│   ├─ Mobile: 68% | Desktop: 28% | Tablet: 4%      │
-│   └─ Bounce Rate: 48% (meta: <50%) ✅             │
+│ 💰 ÚLTIMOS 30 DIAS                                 │
+│   ├─ Receita Total: R$ 1.847,00                   │
+│   ├─ Amazon: R$ 980,00 (53%) 🟢                  │
+│   ├─ Mercado Livre: R$ 720,00 (39%) 🔵          │
+│   └─ Shopee: R$ 147,00 (8%) 🟡                   │
 │                                                     │
-├─────────────────────────────────────────────────────┤
-│ 💰 AFILIADOS (Dezembro 2025)                       │
-│   ├─ Cliques Totais: 523 (+18%)                   │
-│   ├─ CTR: 4.2% (meta: 4-5%) ✅                    │
-│   ├─ Conversões: 36 (est.)                        │
-│   ├─ Taxa de Conversão: 6.9%                      │
-│   ├─ RPM: R$ 33,50 (meta: R$ 30) ✅              │
-│   ├─ EPC: R$ 3,53                                 │
-│   │                                                │
-│   └─ Por Plataforma:                              │
-│       • Amazon: R$ 980 (53%) | CTR 5.1%           │
-│       • ML: R$ 720 (39%) | CTR 3.8%               │
-│       • Shopee: R$ 147 (8%) | CTR 2.3%            │
+│ 📈 TOP 5 POSTS (Últimos 7 dias)                   │
+│   1. "10 Presentes Geek de Natal" - R$ 320 | 89↗│
+│   2. "Caneca Baby Yoda Review" - R$ 180 | 67↗   │
+│   3. "Setup Gamer Completo" - R$ 156 | 54↗      │
+│   4. "Presentes até R$100" - R$ 132 | 48↗       │
+│   5. "Funko Pop: Guia" - R$ 98 | 41↗            │
 │                                                     │
-├─────────────────────────────────────────────────────┤
-│ 📝 CONTEÚDO (Esta semana)                          │
-│   ├─ Posts Publicados: 7/7 ✅                     │
-│   ├─ Fluxos n8n: 21 executados, 20 sucesso (95%)  │
-│   ├─ Top Post: "Top 10 Star Wars" (1.2k views)    │
-│   └─ Produtos Cadastrados: 145 total, 12 novos    │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│ 🔍 SEO (Esta semana)                               │
-│   ├─ Keywords Ranqueadas: 87 (+12)                │
-│   ├─ Top 10 Google: 8 keywords                    │
-│   ├─ Posição Média: 24.3 (melhorou 3 posições)    │
-│   └─ CTR Orgânico: 3.2%                           │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│ ⚡ PERFORMANCE TÉCNICA                             │
-│   ├─ LCP: 2.1s (meta: <2.5s) ✅                   │
-│   ├─ FID: 78ms (meta: <100ms) ✅                  │
-│   ├─ CLS: 0.08 (meta: <0.1) ✅                    │
-│   └─ Uptime: 99.8%                                │
+│ ⚠️ ALERTAS                                         │
+│   - Post "Teclado Mecânico" com CTR abaixo 2%    │
+│   - Produto "Mouse Gamer X" indisponível          │
 │                                                     │
 └─────────────────────────────────────────────────────┘
 ```
 
-**OPORTUNIDADE #4: Métricas de Coorte e Retenção**
+**Dashboard 2: Afiliados (Detalhado)**
 
-Implementar análise de coorte:
+Queries e métricas:
+- Performance por plataforma (Amazon vs ML vs Shopee)
+- EPC por dispositivo (mobile vs desktop)
+- CTR por posição de link (top vs middle vs bottom)
+- Heatmap de cliques por hora do dia
+- Funil: Pageview → Scroll 50% → Scroll 100% → Click
+- Produtos com alto tráfego mas baixo CTR (oportunidades)
 
-**Coorte**: Grupo de usuários que visitaram pela primeira vez no mesmo período
+**Dashboard 3: Conteúdo**
 
-**Exemplo de Tabela de Retenção**:
+- Posts publicados vs planejados (calendário editorial)
+- Distribuição por tipo (produto único 60%, listicle 25%, guia 15%)
+- Tempo médio na página por categoria
+- Taxa de rejeição por persona inferida
+- Content gaps (keywords com impressões mas sem posts)
 
-| Coorte (Mês) | Usuários | D7 | D30 | D90 | D180 |
-|--------------|----------|-----|-----|-----|------|
-| **Nov 2025** | 1.240 | 18% | 12% | 8% | - |
-| **Dez 2025** | 2.100 | 22% | 14% | - | - |
-| **Jan 2026** | 3.450 | 25% | - | - | - |
+### 2.4. Sistema de Alertas Não Implementado
 
-**Insight Exemplo**:
-> "Coorte de Janeiro tem retenção D7 de 25%, 3pp acima de Novembro. Possível impacto de conteúdo de Natal (evergreen) atraindo visitantes recorrentes."
-
-**OPORTUNIDADE #5: LTV (Lifetime Value) de Visitante**
-
-Calcular valor de um visitante ao longo do tempo:
-
-```python
-# Exemplo de cálculo de LTV simplificado
-def calculate_ltv():
-    # Dados hipotéticos
-    avg_pageviews_per_user = 3.2  # Média de páginas por visitante
-    avg_sessions_per_user = 1.8   # Média de sessões por visitante (inclui retorno)
-    rpm = 33.50                   # Receita por 1000 pageviews
-    retention_rate = 0.12          # 12% retornam em D30
-
-    # LTV = (Pageviews por usuário * RPM/1000) + (Valor de retorno)
-    immediate_value = (avg_pageviews_per_user * rpm) / 1000
-    # R$ 0,107 por usuário na primeira visita
-
-    # Valor de visitantes que retornam
-    # Assumindo que quem retorna gera mais 2 pageviews
-    return_value = retention_rate * (2 * rpm / 1000)
-    # R$ 0,008 adicional por visitante que retorna
-
-    ltv = immediate_value + return_value
-    # R$ 0,115 por visitante
-
-    return ltv
-
-ltv = calculate_ltv()
-print(f"LTV por visitante: R$ {ltv:.3f}")
-```
-
-**Insight**:
-- LTV de R$ 0,115 por visitante
-- Se CAC (via SEO orgânico) for ~R$ 0,05 (custo de produção de conteúdo / visitantes)
-- ROI = (LTV - CAC) / CAC = (0,115 - 0,05) / 0,05 = **130% de ROI**
-
----
-
-### 2. Funis de Conversão (Não Especificado no PRD)
-
-#### ⚠️ Gaps Identificados
-
-**GAP #6: Ausência de Funis Documentados**
-
-O PRD não define funis de conversão:
-- **Funil de Tráfego**: Impressões (SERP) → Cliques (entrada no site) → Pageviews
-- **Funil de Afiliados**: Visualização de post → Scroll até CTA → Clique em afiliado → Chegada na loja → Compra
-- **Funil de Newsletter**: Visualização de opt-in → Submit → Confirmação de email → Engajamento com emails
-
-**GAP #7: Falta de Análise de Drop-off**
-
-Sem funis, não há como identificar:
-- Onde usuários abandonam?
-- Qual etapa tem maior drop-off?
-- Como otimizar cada etapa?
-
-#### 💡 Oportunidades
-
-**OPORTUNIDADE #6: Funil de Afiliados Detalhado**
-
-Mapear e medir cada etapa:
-
-```
-FUNIL DE CONVERSÃO DE AFILIADOS
-
-1. Visualização de Post
-   └─ 10.000 pageviews
-       │
-       ▼ (50% scrollam até o CTA)
-       │
-2. Scroll até CTA Primário
-   └─ 5.000 usuários
-       │
-       ▼ (CTR 4%)
-       │
-3. Clique em Link de Afiliado
-   └─ 200 cliques
-       │
-       ▼ (20% bounce na loja)
-       │
-4. Chegada na Loja (Amazon/ML/Shopee)
-   └─ 160 chegadas
-       │
-       ▼ (Taxa de conversão 10%)
-       │
-5. Compra Finalizada
-   └─ 16 conversões
-       │
-       ▼
-   R$ 80 de comissão (média R$ 5/conversão)
-
-TAXA DE CONVERSÃO TOTAL: 0.16% (16/10.000)
-RPM: R$ 8 (R$ 80 / 10.000 pageviews * 1000)
-```
-
-**Análise de Drop-off**:
-- Maior drop: 50% não scrollam até CTA → **Problema: CTA muito abaixo da dobra**
-- Segundo maior: 20% bounce na loja → **Problema: expectativa vs realidade? Preço mudou?**
-
-**Ações**:
-1. Mover CTA primário para cima (após 1º parágrafo)
-2. Validar preços antes de redirecionar (se mudou muito, alertar)
-
-**OPORTUNIDADE #7: Funil de Newsletter**
-
-Medir captura de emails:
-
-```
-FUNIL DE NEWSLETTER
-
-1. Visualização de Opt-in (sidebar/footer)
-   └─ 10.000 pageviews (opt-in visível)
-       │
-       ▼ (Taxa de conversão 2%)
-       │
-2. Submit de Email
-   └─ 200 submits
-       │
-       ▼ (85% confirmam)
-       │
-3. Confirmação de Email (double opt-in)
-   └─ 170 confirmados
-       │
-       ▼ (Open rate 35%)
-       │
-4. Abertura de Primeiro Email
-   └─ 60 aberturas
-       │
-       ▼ (CTR 12%)
-       │
-5. Clique em Link do Email
-   └─ 7 cliques
-
-TAXA DE CONVERSÃO (submit → confirmação): 85%
-ENGAJAMENTO (confirmação → clique): 4.1%
-```
-
-**OPORTUNIDADE #8: Funil de Busca Orgânica**
-
-Rastrear jornada desde Google:
-
-```
-FUNIL DE BUSCA ORGÂNICA
-
-1. Impressões no Google (SERP)
-   └─ 100.000 impressões
-       │
-       ▼ (CTR 3%)
-       │
-2. Cliques Orgânicos
-   └─ 3.000 cliques
-       │
-       ▼ (Bounce rate 45%)
-       │
-3. Sessão Engajada (>10s, >1 página)
-   └─ 1.650 sessões engajadas
-       │
-       ▼ (CTR de afiliado 4%)
-       │
-4. Clique em Afiliado
-   └─ 66 cliques de afiliado
-       │
-       ▼ (Conv. 10%)
-       │
-5. Conversão
-   └─ 6.6 conversões (est.)
-
-RECEITA: R$ 33 (6.6 conversões * R$ 5 comissão média)
-RPM (por impressão): R$ 0,33
-RPM (por pageview): R$ 11
-```
-
----
-
-### 3. Testes A/B e Experimentação (Seção 6.8 - Busca, implícito)
-
-#### ⚠️ Gaps Identificados
-
-**GAP #8: Testes A/B Mencionados Mas Não Estruturados**
-
-O PRD menciona implicitamente necessidade de otimização, mas não especifica:
-- **Framework de testes A/B**: como criar, executar, medir?
-- **Priorização de testes**: qual teste fazer primeiro?
-- **Critérios de sucesso**: quando declarar um vencedor?
-- **Tamanho de amostra**: quantos visitantes necessários?
-
-**GAP #9: Falta de Cultura de Experimentação**
-
-Não há menção a:
-- Hipóteses documentadas
-- Roadmap de testes
-- Aprendizados de testes anteriores
-
-#### 💡 Oportunidades
-
-**OPORTUNIDADE #9: Framework de Testes A/B**
-
-Criar processo estruturado:
-
-**1. Hipótese (Formato ICE)**:
-```
-SE [mudança],
-ENTÃO [métrica] irá [aumentar/diminuir] em [%],
-PORQUE [razão baseada em dados/psicologia].
-```
-
-**Exemplo**:
-```
-SE mudarmos a cor do botão CTA de amarelo para verde,
-ENTÃO o CTR de afiliados irá aumentar em 15%,
-PORQUE verde é associado a "comprar" e "segurança" (psicologia de cores).
-```
-
-**2. Priorização (Framework ICE)**:
-
-| Teste | Impact (1-10) | Confidence (1-10) | Ease (1-10) | ICE Score | Prioridade |
-|-------|---------------|-------------------|-------------|-----------|------------|
-| Cor do botão CTA | 8 | 7 | 10 | 8.3 | Alta |
-| Posição do CTA | 9 | 6 | 8 | 7.7 | Alta |
-| Texto do CTA | 7 | 8 | 9 | 8.0 | Alta |
-| Redesign homepage | 10 | 5 | 2 | 5.7 | Média |
-| Adicionar vídeos | 8 | 4 | 3 | 5.0 | Média |
-
-**Fórmula ICE**: (Impact + Confidence + Ease) / 3
-
-**3. Execução**:
+**Alertas prioritários**:
 
 ```python
-# Exemplo de estrutura de teste A/B no backend
-class ABTest:
-    id: UUID
-    name: str
-    hypothesis: str
-    variant_a_name: str  # "Control" (original)
-    variant_b_name: str  # "Treatment" (nova versão)
-    metric: str          # "ctr", "conversion_rate", etc.
-    status: str          # "active", "paused", "completed"
-    start_date: datetime
-    end_date: datetime
-    min_sample_size: int # Calculado previamente
-    significance_level: float = 0.05  # p-value < 0.05
+# alerts.py - Executar via cron a cada hora
 
-# Atribuir variante ao usuário (consistente por session_id)
-def assign_variant(session_id: str, test_id: UUID) -> str:
-    hash_value = int(hashlib.md5(session_id.encode()).hexdigest(), 16)
-    return 'A' if hash_value % 2 == 0 else 'B'
+import psycopg2
+import requests
+from datetime import datetime, timedelta
 
-# Registrar evento
-def track_event(test_id: UUID, session_id: str, event_type: str):
-    variant = assign_variant(session_id, test_id)
-    event = ABTestEvent(
-        test_id=test_id,
-        session_id=session_id,
-        variant=variant,
-        event_type=event_type,  # "view", "click", "conversion"
-        created_at=datetime.utcnow()
+def send_telegram(message, level='info'):
+    emoji = {'critical': '🚨', 'warning': '⚠️', 'info': 'ℹ️', 'success': '✅'}
+    bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+    chat_id = os.getenv('TELEGRAM_CHAT_ID')
+
+    formatted = f"{emoji[level]} **geek.bidu.guru**\n{message}"
+
+    requests.post(
+        f"https://api.telegram.org/bot{bot_token}/sendMessage",
+        json={'chat_id': chat_id, 'text': formatted, 'parse_mode': 'Markdown'}
     )
-    db.add(event)
-    db.commit()
-```
 
-**4. Análise de Resultados**:
-
-```sql
--- Comparar performance de variantes
-SELECT
-    variant,
-    COUNT(CASE WHEN event_type = 'view' THEN 1 END) as views,
-    COUNT(CASE WHEN event_type = 'click' THEN 1 END) as clicks,
-    ROUND(
-        COUNT(CASE WHEN event_type = 'click' THEN 1 END)::numeric /
-        NULLIF(COUNT(CASE WHEN event_type = 'view' THEN 1 END), 0) * 100,
-        2
-    ) as ctr
-FROM ab_test_events
-WHERE test_id = 'UUID-DO-TESTE'
-GROUP BY variant;
-```
-
-**Resultado Exemplo**:
-| Variante | Views | Clicks | CTR |
-|----------|-------|--------|-----|
-| A (Amarelo) | 2.450 | 98 | 4.0% |
-| B (Verde) | 2.530 | 114 | 4.5% |
-
-**Análise Estatística** (usando scipy.stats em Python):
-```python
-from scipy.stats import chi2_contingency
-
-# Tabela de contingência
-obs = [
-    [98, 2450 - 98],   # Variante A: cliques, não-cliques
-    [114, 2530 - 114]  # Variante B: cliques, não-cliques
-]
-
-chi2, p_value, dof, expected = chi2_contingency(obs)
-
-if p_value < 0.05:
-    print(f"Resultado SIGNIFICATIVO (p={p_value:.4f})")
-    print("Variante B é superior com 95% de confiança")
-else:
-    print(f"Resultado NÃO significativo (p={p_value:.4f})")
-    print("Continuar teste ou declarar empate")
-```
-
-**5. Declarar Vencedor**:
-- Se p-value < 0.05 E amostra mínima atingida → Vencedor claro
-- Implementar variante vencedora para 100% dos usuários
-- Documentar aprendizado
-
-**OPORTUNIDADE #10: Roadmap de Testes (Primeiros 6 Meses)**
-
-| Mês | Teste | Métrica Alvo | Resultado Esperado |
-|-----|-------|--------------|---------------------|
-| **Mês 1** | Cor do botão CTA (amarelo vs verde) | CTR | +10-15% |
-| **Mês 2** | Posição do CTA (início vs meio vs fim) | CTR | +15-20% |
-| **Mês 3** | Texto do CTA ("Ver Preço" vs "Comprar" vs "Ver Oferta") | CTR + Conversão | +5-10% |
-| **Mês 4** | Tabela comparativa vs lista simples | Tempo na página | +20-30% |
-| **Mês 5** | Disclaimer destacado vs discreto | CTR (impacto?) | 0-5% (baseline) |
-| **Mês 6** | Sidebar sticky vs static (desktop) | Cliques em sidebar | +15-25% |
-
-**OPORTUNIDADE #11: Testes Multivariados (Avançado)**
-
-Testar múltiplas variáveis simultaneamente:
-
-**Exemplo**: Testar cor do botão E texto do CTA ao mesmo tempo
-
-**Variantes**:
-1. Amarelo + "Ver Preço"
-2. Amarelo + "Comprar Agora"
-3. Verde + "Ver Preço"
-4. Verde + "Comprar Agora"
-
-**Requer amostra 4x maior, mas identifica interações entre variáveis.**
-
----
-
-### 4. Segmentação de Dados (Não Especificado no PRD)
-
-#### ⚠️ Gaps Identificados
-
-**GAP #10: Falta de Estratégia de Segmentação**
-
-O PRD não menciona análise segmentada por:
-- **Fonte de tráfego**: Orgânico vs Direto vs Social vs Referral
-- **Dispositivo**: Mobile vs Desktop vs Tablet
-- **Geografia**: São Paulo vs Rio de Janeiro vs outras regiões
-- **Hora do dia**: Manhã vs Tarde vs Noite
-- **Dia da semana**: Segunda vs Sábado/Domingo
-- **Tipo de conteúdo**: Produto único vs Listicle vs Guia
-- **Categoria**: Gamer vs Otaku vs Dev
-
-**Sem segmentação, insights são superficiais.**
-
-#### 💡 Oportunidades
-
-**OPORTUNIDADE #12: Segmentação por Fonte de Tráfego**
-
-Analisar comportamento por origem:
-
-**Query Exemplo**:
-```sql
-SELECT
-    traffic_source,
-    COUNT(DISTINCT session_id) as sessions,
-    AVG(pages_per_session) as avg_pages,
-    AVG(time_on_site) as avg_time,
-    SUM(affiliate_clicks) as total_clicks,
-    ROUND(SUM(affiliate_clicks)::numeric / COUNT(DISTINCT session_id) * 100, 2) as ctr
-FROM (
+# ALERTA 1: Queda de tráfego
+def check_traffic_drop(conn):
+    query = """
+    WITH today AS (
+        SELECT SUM(sessions) as sessions_today
+        FROM fact_sessions
+        WHERE date = CURRENT_DATE AND hour <= EXTRACT(hour FROM NOW())
+    ),
+    last_week AS (
+        SELECT SUM(sessions) as sessions_last_week
+        FROM fact_sessions
+        WHERE date = CURRENT_DATE - 7 AND hour <= EXTRACT(hour FROM NOW())
+    )
     SELECT
-        s.session_id,
-        CASE
-            WHEN s.utm_source IS NULL AND s.referrer LIKE '%google%' THEN 'Organic'
-            WHEN s.utm_source IS NULL AND s.referrer IS NULL THEN 'Direct'
-            WHEN s.utm_source LIKE '%facebook%' OR s.utm_source LIKE '%instagram%' THEN 'Social'
-            ELSE 'Referral'
-        END as traffic_source,
-        COUNT(s.id) as pages_per_session,
-        SUM(s.time_on_page) as time_on_site,
-        COUNT(ac.id) as affiliate_clicks
-    FROM sessions s
-    LEFT JOIN affiliate_clicks ac ON ac.session_id = s.session_id
-    WHERE s.created_at >= NOW() - INTERVAL '30 days'
-    GROUP BY s.session_id, traffic_source
-) subquery
-GROUP BY traffic_source
-ORDER BY sessions DESC;
+        t.sessions_today,
+        l.sessions_last_week,
+        ROUND((t.sessions_today - l.sessions_last_week)::numeric /
+              NULLIF(l.sessions_last_week, 0) * 100, 1) as change_pct
+    FROM today t, last_week l;
+    """
+    cur = conn.cursor()
+    cur.execute(query)
+    row = cur.fetchone()
+
+    if row and row[2] < -30:  # Queda > 30%
+        send_telegram(
+            f"⚠️ **Queda de Tráfego**\n"
+            f"Hoje: {row[0]} sessões\n"
+            f"Semana passada (mesmo horário): {row[1]}\n"
+            f"Variação: {row[2]}%",
+            level='warning'
+        )
+
+# ALERTA 2: CTR de afiliados baixo
+def check_low_ctr(conn):
+    query = """
+    SELECT
+        ROUND(COUNT(ac.id)::numeric / NULLIF(SUM(fs.sessions), 0) * 100, 2) as ctr
+    FROM fact_sessions fs
+    LEFT JOIN fact_affiliate_clicks ac ON ac.clicked_at >= CURRENT_DATE
+    WHERE fs.date >= CURRENT_DATE - 7;
+    """
+    cur = conn.cursor()
+    cur.execute(query)
+    ctr = cur.fetchone()[0]
+
+    if ctr and ctr < 2.0:  # CTR < 2%
+        send_telegram(
+            f"⚠️ **CTR Afiliados Baixo**\n"
+            f"CTR últimos 7 dias: {ctr}%\n"
+            f"Meta: >= 3%\n"
+            f"Ação: Revisar CTAs e posicionamento",
+            level='warning'
+        )
+
+# ALERTA 3: Produto indisponível em post popular
+def check_unavailable_products(conn):
+    query = """
+    SELECT p.name, pr.title, pr.slug
+    FROM products p
+    JOIN post_products pp ON pp.product_id = p.id
+    JOIN posts pr ON pr.id = pp.post_id
+    JOIN mv_daily_post_performance dp ON dp.post_id = pr.id
+    WHERE p.availability = 'unavailable'
+    AND dp.date >= CURRENT_DATE - 7
+    AND dp.total_sessions > 100
+    LIMIT 5;
+    """
+    cur = conn.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    if rows:
+        msg = "⚠️ **Produtos Indisponíveis em Posts Populares**\n\n"
+        for row in rows:
+            msg += f"- {row[0]} em '{row[1]}' ({row[2]})\n"
+        send_telegram(msg, level='warning')
+
+# ALERTA 4: Novo post no Top 10 (sucesso!)
+def check_new_top_performer(conn):
+    query = """
+    SELECT p.title, p.slug, dp.total_sessions, dp.ctr_pct
+    FROM mv_daily_post_performance dp
+    JOIN posts p ON p.id = dp.post_id
+    WHERE dp.date = CURRENT_DATE - 1
+    AND p.publish_at >= CURRENT_DATE - 30
+    ORDER BY dp.total_sessions DESC
+    LIMIT 10;
+    """
+    cur = conn.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    if rows:
+        top = rows[0]
+        send_telegram(
+            f"✅ **Novo Post de Sucesso!**\n"
+            f"'{top[0]}' teve {top[2]} sessões ontem\n"
+            f"CTR: {top[3]}%\n"
+            f"Link: geek.bidu.guru/{top[1]}",
+            level='success'
+        )
+
+# Executar todos os checks
+if __name__ == '__main__':
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    check_traffic_drop(conn)
+    check_low_ctr(conn)
+    check_unavailable_products(conn)
+    check_new_top_performer(conn)
+    conn.close()
 ```
 
-**Resultado Exemplo**:
-| Fonte | Sessões | Páginas/Sessão | Tempo Médio | Cliques | CTR |
-|-------|---------|----------------|-------------|---------|-----|
-| **Orgânico** | 8.900 (73%) | 3.2 | 2:15min | 380 | 4.3% |
-| **Direto** | 1.800 (15%) | 2.1 | 1:20min | 32 | 1.8% |
-| **Social** | 950 (8%) | 1.8 | 1:05min | 18 | 1.9% |
-| **Referral** | 500 (4%) | 2.8 | 1:50min | 15 | 3.0% |
+### 2.5. Attribution Modeling Não Definido
 
-**Insights**:
-✅ **Orgânico tem melhor performance**: CTR 4.3%, muito acima da média
-⚠️ **Direto e Social têm baixo engajamento**: CTR < 2%, tempo < 1:30min
-💡 **Ação**: Focar em SEO (dobrar down no orgânico), melhorar qualidade de tráfego social
+**Problema**: PRD não especifica como atribuir conversões quando usuário visita múltiplas vezes por diferentes canais.
 
-**OPORTUNIDADE #13: Segmentação por Dispositivo**
+**Modelos sugeridos**:
 
-Comparar mobile vs desktop:
-
-**Resultado Exemplo**:
-| Dispositivo | Sessões | Bounce Rate | CTR | Tempo Médio |
-|-------------|---------|-------------|-----|-------------|
-| **Mobile** | 8.200 (68%) | 52% | 3.5% | 1:45min |
-| **Desktop** | 3.400 (28%) | 38% | 5.2% | 2:35min |
-| **Tablet** | 550 (4%) | 44% | 4.1% | 2:10min |
-
-**Insights**:
-⚠️ **Mobile tem bounce rate 14pp maior que desktop**
-⚠️ **CTR mobile 1.7pp menor que desktop**
-💡 **Ação**: Otimizar UX mobile (botões maiores, menos cliques até CTA)
-
-**OPORTUNIDADE #14: Segmentação por Tipo de Conteúdo**
-
-Identificar qual tipo de post performa melhor:
-
-**Resultado Exemplo**:
-| Tipo de Post | Posts | Pageviews | CTR | RPM |
-|--------------|-------|-----------|-----|-----|
-| **Listicle (Top 10)** | 12 | 8.500 | 5.8% | R$ 42 |
-| **Produto Único** | 85 | 15.200 | 3.2% | R$ 22 |
-| **Guia** | 8 | 5.200 | 4.1% | R$ 31 |
-
-**Insights**:
-✅ **Listicles têm CTR 80% maior que produto único**
-✅ **RPM de listicle é 90% maior**
-💡 **Ação**: Aumentar frequência de listicles (de 1/semana para 2/semana)
-
-**OPORTUNIDADE #15: Segmentação por Geografia**
-
-Analisar regiões com melhor performance:
-
-**Resultado Exemplo**:
-| Estado | Sessões | CTR | Receita (est.) |
-|--------|---------|-----|----------------|
-| **São Paulo** | 4.200 (35%) | 4.5% | R$ 680 |
-| **Rio de Janeiro** | 1.800 (15%) | 4.2% | R$ 290 |
-| **Minas Gerais** | 1.200 (10%) | 3.8% | R$ 175 |
-| **Outros** | 4.800 (40%) | 3.5% | R$ 702 |
-
-**Insights**:
-✅ **SP e RJ concentram 50% das sessões e 52% da receita**
-💡 **Ação**: Criar conteúdo localizado ("Lojas geek em SP", "Eventos geek no RJ")
-
----
-
-### 5. Dashboards e Relatórios (Não Especificado no PRD)
-
-#### ⚠️ Gaps Identificados
-
-**GAP #11: Dashboards Não Especificados**
-
-O PRD menciona "Dashboard simples com métricas" (seção 6.5), mas não detalha:
-- Quais dashboards?
-- Quem consome (stakeholders, editores, devs)?
-- Frequência de atualização?
-- Ferramentas (Google Data Studio, Metabase, custom)?
-
-**GAP #12: Relatórios Não Estruturados**
-
-Não há menção a:
-- **Relatório diário**: O que aconteceu ontem?
-- **Relatório semanal**: Resumo executivo
-- **Relatório mensal**: Análise profunda + insights
-- **Relatório trimestral**: Tendências e planejamento
-
-#### 💡 Oportunidades
-
-**OPORTUNIDADE #16: Dashboard Executivo (Stakeholders)**
-
-Dashboard de alto nível, atualizado diariamente:
-
-**Audiência**: CEO, Product Manager, Marketing Lead
-
-**Métricas**:
-1. **North Star**: Receita mensal de afiliados (vs meta)
-2. **Tráfego**: Visitantes únicos, pageviews (vs mês anterior)
-3. **Conversão**: CTR de afiliados, taxa de conversão
-4. **Conteúdo**: Posts publicados (vs meta), taxa de sucesso n8n
-5. **Performance**: Core Web Vitals, uptime
-
-**Ferramenta**: Google Data Studio (gratuito) ou Metabase (self-hosted)
-
-**OPORTUNIDADE #17: Dashboard de Conteúdo (Editores)**
-
-Dashboard para equipe editorial:
-
-**Audiência**: Content Manager, SEO Specialist
-
-**Métricas**:
-1. **Top Posts** (últimos 7 dias): pageviews, tempo médio, cliques de afiliado
-2. **Posts em Rascunho**: quantos, há quanto tempo
-3. **Posts Agendados**: próximos 7 dias
-4. **Performance de Categoria**: qual categoria tem melhor CTR?
-5. **Keywords Ranqueadas**: novas, perdidas, melhorias
-
-**OPORTUNIDADE #18: Dashboard de Afiliados (Marketing)**
-
-Dashboard focado em receita:
-
-**Audiência**: Affiliate Manager, Marketing Lead
-
-**Métricas**:
-1. **Receita por Plataforma**: Amazon, ML, Shopee (diário, acumulado)
-2. **Top 10 Produtos**: mais clicados, mais rentáveis
-3. **Top 10 Posts**: mais rentáveis
-4. **CTR por Tipo de Post**: produto único vs listicle
-5. **Funil de Conversão**: visualização → clique → conversão
-6. **Alertas**: produtos esgotados, links quebrados, oportunidades
-
-**OPORTUNIDADE #19: Relatórios Automatizados**
-
-Criar emails automáticos com resumo:
-
-**Relatório Diário** (enviado 8h da manhã):
 ```
-📊 GEEK.BIDU.GURU - Resumo de Ontem (09 Dez 2025)
+CENÁRIO: Usuário visita 3x antes de clicar em afiliado
+├─ Visita 1: Google Orgânico → Post "10 Presentes Geek"
+├─ Visita 2: Direto → Homepage
+└─ Visita 3: Newsletter → Post "Caneca Baby Yoda" → CLICK
 
-🎯 DESTAQUES
-✅ Receita: R$ 67,50 (+12% vs média)
-✅ Tráfego: 1.240 visitantes (+8%)
-⚠️ Bounce rate: 53% (acima da meta de 50%)
-
-📈 TOP 3 POSTS
-1. "Top 10 Star Wars" - 245 views, R$ 18,50
-2. "Caneca Baby Yoda" - 189 views, R$ 12,00
-3. "Presentes até R$ 100" - 167 views, R$ 9,50
-
-💰 AFILIADOS
-- Cliques: 28 (CTR 4.5%)
-- Amazon: R$ 42 | ML: R$ 18 | Shopee: R$ 7,50
-
-📝 CONTEÚDO
-- Posts publicados: 1/1 ✅
-- Fluxos n8n: 3/3 sucesso ✅
-
-⚡ ALERTAS
-⚠️ 2 produtos esgotados (verificar)
+MODELOS DE ATRIBUIÇÃO:
+├─ First-Click: 100% crédito para Google Orgânico
+├─ Last-Click: 100% crédito para Newsletter
+├─ Linear: 33% Google, 33% Direto, 33% Newsletter
+├─ Time-Decay: 20% Google, 30% Direto, 50% Newsletter
+└─ Data-Driven (ML): Baseado em padrões históricos
 ```
 
-**Relatório Semanal** (enviado segunda-feira):
-```
-📊 GEEK.BIDU.GURU - Resumo da Semana (03-09 Dez 2025)
+**Implementação recomendada**: Last-Click (simples) na Fase 1, Linear na Fase 2, Data-Driven na Fase 3.
 
-🎯 SUMÁRIO EXECUTIVO
-- Receita: R$ 412,00 (+23% vs semana anterior)
-- Tráfego: 8.450 visitantes (+18%)
-- CTR: 4.2% (dentro da meta de 4-5%)
-- Posts: 7/7 publicados ✅
-
-📈 ANÁLISE DE PERFORMANCE
-[Gráfico de receita diária]
-[Gráfico de tráfego por fonte]
-
-💡 INSIGHTS
-1. Listicles têm CTR 60% maior que posts de produto único
-   → Ação: Aumentar para 2 listicles/semana
-2. Tráfego mobile cresceu 25%, mas CTR ainda 1.5pp abaixo de desktop
-   → Ação: Otimizar CTAs mobile
-3. Top 3 produtos geraram 40% da receita
-   → Ação: Criar mais posts sobre esses produtos
-
-🔍 SEO
-- 12 novas keywords ranqueadas
-- "Presentes geek natal" subiu de #15 para #8
-- CTR orgânico: 3.4% (+0.2pp)
-
-📝 CONTEÚDO
-- Top post: "Top 10 Star Wars" (1.2k views, R$ 68)
-- Categoria mais popular: Gamer (35% do tráfego)
-
-⚡ AÇÕES PARA PRÓXIMA SEMANA
-1. Criar 2 listicles adicionais (Star Wars, Marvel)
-2. Otimizar mobile (botões maiores, menos scroll)
-3. Atualizar produtos esgotados
+**Tabela necessária**:
+```sql
+CREATE TABLE user_touchpoints (
+    id UUID PRIMARY KEY,
+    session_id VARCHAR(100),
+    user_id UUID,
+    touchpoint_at TIMESTAMP NOT NULL,
+    source VARCHAR(50),
+    medium VARCHAR(50),
+    campaign VARCHAR(100),
+    content VARCHAR(200),
+    post_id UUID,
+    is_conversion BOOLEAN DEFAULT FALSE
+);
 ```
 
-**Relatório Mensal** (enviado 1º dia do mês):
-```
-📊 GEEK.BIDU.GURU - Relatório Mensal (Dezembro 2025)
+### 2.6. Cohort Analysis Não Implementado
 
-[Estrutura completa em seção anterior do relatório]
-```
+**O que falta**: Queries e dashboards para análise de cohorts (usuários agrupados por mês de aquisição).
 
----
-
-### 6. Ferramentas de Analytics (Seção 7 - Requisitos Não Funcionais)
-
-#### ✅ Pontos Positivos
-
-- Google Analytics 4 (GA4) mencionado
-- Integração contemplada
-
-#### ⚠️ Gaps Identificados
-
-**GAP #13: Configuração de GA4 Não Especificada**
-
-O PRD menciona GA4, mas não detalha:
-- **Custom events**: quais eventos trackear?
-- **Custom dimensions**: quais dimensões customizar?
-- **Goals/Conversions**: como configurar?
-- **E-commerce tracking**: aplicável? (tecnicamente são afiliados, não vendas diretas)
-
-**GAP #14: Ferramentas Complementares Não Mencionadas**
-
-Faltam ferramentas importantes:
-- **Google Search Console**: tracking de SEO (mencionado implicitamente, mas não na seção de analytics)
-- **Heatmaps**: Hotjar, Microsoft Clarity (gratuito)
-- **Session Recording**: ver sessões reais de usuários
-- **Error Tracking**: Sentry (bugs em produção)
-
-#### 💡 Oportunidades
-
-**OPORTUNIDADE #20: Configuração Completa de GA4**
-
-Implementar tracking avançado:
-
-**Custom Events**:
-```javascript
-// Tracking de eventos customizados
-
-// 1. Clique em link de afiliado
-gtag('event', 'affiliate_click', {
-  product_id: 'produto-xyz',
-  product_name: 'Caneca Baby Yoda',
-  platform: 'amazon',
-  price: 89.90,
-  post_slug: 'melhores-canecas-geek',
-  post_type: 'listicle',
-  position: 'primary_cta', // "primary_cta", "secondary_cta", "table"
-  currency: 'BRL'
-});
-
-// 2. Scroll depth
-window.addEventListener('scroll', () => {
-  const scrolled = (window.scrollY / document.body.scrollHeight) * 100;
-  if (scrolled >= 25 && !window.scroll25) {
-    gtag('event', 'scroll', { percent_scrolled: 25 });
-    window.scroll25 = true;
-  }
-  // Repetir para 50%, 75%, 90%
-});
-
-// 3. Tempo na página (engajamento)
-let startTime = Date.now();
-window.addEventListener('beforeunload', () => {
-  const timeSpent = Math.round((Date.now() - startTime) / 1000);
-  gtag('event', 'engagement_time', {
-    time_seconds: timeSpent,
-    post_slug: window.location.pathname
-  });
-});
-
-// 4. Compartilhamento
-function trackShare(method) {
-  gtag('event', 'share', {
-    method: method,  // 'whatsapp', 'telegram', 'twitter', 'copy_link'
-    content_type: 'post',
-    item_id: window.location.pathname
-  });
-}
-
-// 5. Newsletter signup
-gtag('event', 'sign_up', {
-  method: 'newsletter'
-});
-
-// 6. Pesquisa interna
-gtag('event', 'search', {
-  search_term: query
-});
+**Query sugerida**:
+```sql
+-- Retenção por cohort (mês de primeira visita)
+WITH cohorts AS (
+    SELECT
+        user_id,
+        DATE_TRUNC('month', MIN(session_start)) as cohort_month
+    FROM user_sessions
+    GROUP BY user_id
+),
+cohort_activity AS (
+    SELECT
+        c.cohort_month,
+        DATE_TRUNC('month', us.session_start) as activity_month,
+        COUNT(DISTINCT us.user_id) as active_users
+    FROM cohorts c
+    JOIN user_sessions us ON us.user_id = c.user_id
+    GROUP BY c.cohort_month, DATE_TRUNC('month', us.session_start)
+),
+cohort_size AS (
+    SELECT cohort_month, COUNT(*) as cohort_size
+    FROM cohorts
+    GROUP BY cohort_month
+)
+SELECT
+    ca.cohort_month,
+    cs.cohort_size,
+    ca.activity_month,
+    EXTRACT(month FROM AGE(ca.activity_month, ca.cohort_month)) as months_since_acquisition,
+    ca.active_users,
+    ROUND(ca.active_users::numeric / cs.cohort_size * 100, 1) as retention_pct
+FROM cohort_activity ca
+JOIN cohort_size cs ON cs.cohort_month = ca.cohort_month
+ORDER BY ca.cohort_month, months_since_acquisition;
 ```
 
-**Custom Dimensions** (GA4 User Properties):
-```javascript
-// Identificar características do usuário (quando possível)
-gtag('set', 'user_properties', {
-  device_type: 'mobile',  // mobile, desktop, tablet
-  traffic_source: 'organic',  // organic, direct, social, referral
-  content_preference: 'listicle'  // inferido pelo tipo de post mais visitado
-});
+**Visualização sugerida**: Heatmap com cohort_month no eixo Y e months_since_acquisition no eixo X.
+
+### 2.7. Funis de Conversão Não Instrumentados
+
+**Funil 1: Tráfego Orgânico → Conversão Afiliados**
+```
+Google Search → Landing Page → Scroll 50% → Scroll 100% → Click Afiliado
+       ↓            ↓              ↓              ↓               ↓
+    10.000       7.500 (75%)    5.250 (70%)    3.675 (70%)     294 (8%)
 ```
 
-**Conversions** (GA4):
-- Marcar `affiliate_click` como conversão
-- Marcar `sign_up` (newsletter) como conversão
-- (Opcional) Importar conversões reais das plataformas de afiliados via API
+**Funil 2: Newsletter → Conversão**
+```
+Newsletter Sent → Open → Click Post → Click Afiliado
+       ↓            ↓         ↓             ↓
+     5.000      2.000 (40%)  800 (40%)    64 (8%)
+```
 
-**OPORTUNIDADE #21: Heatmaps e Session Recording**
+**Implementação**: Eventos GA4 + tabela `funnel_events` no PostgreSQL para análise SQL.
 
-Implementar Microsoft Clarity (gratuito):
+### 2.8. Testes A/B Não Estruturados
+
+**PRD menciona framework A/B** (seção 9.5) mas falta:
+- Calculadora de tamanho de amostra
+- Significância estatística (chi-square test)
+- Duration mínima (1-2 semanas)
+- Documentação de hipóteses
+
+**Função SQL sugerida**:
+```sql
+CREATE OR REPLACE FUNCTION analyze_ab_test(test_id_param UUID)
+RETURNS TABLE (
+    variant CHAR(1),
+    exposures BIGINT,
+    conversions BIGINT,
+    conversion_rate DECIMAL,
+    confidence_95_lower DECIMAL,
+    confidence_95_upper DECIMAL,
+    p_value DECIMAL,
+    is_significant BOOLEAN
+) AS $$
+-- Implementar chi-square test e confidence intervals
+-- ...
+$$ LANGUAGE plpgsql;
+```
+
+### 2.9. LTV (Lifetime Value) Não Calculado
+
+**O que falta**: Métrica de valor no tempo de cada usuário.
+
+**Cálculo simples**:
+```sql
+SELECT
+    user_id,
+    COUNT(DISTINCT session_id) as total_sessions,
+    SUM(estimated_commission_brl) as total_revenue,
+    ROUND(SUM(estimated_commission_brl) / NULLIF(COUNT(DISTINCT session_id), 0), 2) as revenue_per_session,
+    DATE_TRUNC('month', MIN(first_session)) as cohort_month,
+    EXTRACT(days FROM NOW() - MIN(first_session)) as days_since_acquisition
+FROM user_activity_aggregated
+GROUP BY user_id;
+```
+
+**LTV médio por cohort**: Essencial para otimizar CAC (Customer Acquisition Cost) se houver paid ads no futuro.
+
+### 2.10. CAC (Customer Acquisition Cost) Não Rastreado
+
+**Se implementar paid ads** (Google Ads, Meta Ads), é crítico rastrear:
+```
+CAC = Total Spend / New Users Acquired
+ROI = (Revenue - Spend) / Spend * 100
+```
+
+**Tabela necessária**:
+```sql
+CREATE TABLE marketing_spend (
+    date DATE PRIMARY KEY,
+    platform VARCHAR(50),
+    campaign VARCHAR(100),
+    spend_brl DECIMAL(10,2),
+    impressions INT,
+    clicks INT,
+    new_users INT
+);
+```
+
+### 2.11. Data Quality Monitoring Não Implementado
+
+**O que falta**: Sistema que valida dados continuamente.
+
+**Checks prioritários**:
+- Eventos GA4 chegando corretamente (volume diário esperado)
+- Tabelas fact_* sendo populadas
+- Preços de produtos atualizados (last_price_update < 48h)
+- Posts sem produtos associados
+- Links de afiliados quebrados
+
+**Implementação**: Job daily n8n que roda queries de validação e alerta se algo está errado.
+
+### 2.12. Export para BigQuery Não Configurado
+
+**PRD menciona BigQuery** (seção 7) como "opcional" mas é **altamente recomendado**.
+
+**Benefícios**:
+- Queries SQL avançadas em datasets gigantes
+- Integração nativa com Looker Studio (dashboards)
+- Machine Learning integrado (BigQuery ML)
+- Retenção ilimitada de dados
 
 **Setup**:
-```html
-<!-- Adicionar no <head> -->
-<script type="text/javascript">
-  (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-  })(window, document, "clarity", "script", "PROJECT_ID");
-</script>
-```
-
-**Benefícios**:
-- **Heatmaps**: onde usuários clicam, scrollam
-- **Session Recording**: assistir sessões reais (como usuário navega)
-- **Insights**: identificar frustração (rage clicks), abandono
-
-**Análise Exemplo**:
-> "80% dos usuários em mobile não scrollam até o CTA primário. Heatmap mostra que clicam na imagem do produto, esperando que seja clicável. **Ação**: Tornar imagem clicável (link de afiliado)."
+1. Habilitar export GA4 → BigQuery (gratuito até 1M events/dia)
+2. Criar scheduled queries para popular tabelas agregadas
+3. Conectar Looker Studio para visualizações
 
 ---
 
-## 📊 Gaps Identificados (Consolidado)
+## 5. OPORTUNIDADES DETALHADAS (10 identificadas)
 
-### Métricas e KPIs
+### 3.1. Data Warehouse (BigQuery) + Looker Studio
+**Benefício**: Análises SQL avançadas, dashboards bonitos, compartilhamento fácil.
+**Custo**: ~$50-200/mês dependendo do volume.
 
-**GAP #1**: Métricas sem metas quantificadas (baseline, 3m, 6m, 12m)
-**GAP #2**: Falta de métricas de negócio críticas (CAC, LTV, ROI, Churn, Retenção)
-**GAP #3**: Ausência de métricas de produto (feature adoption, session quality)
-**GAP #4**: Falta de segmentação de métricas (fonte, dispositivo, geografia, persona, tipo de conteúdo)
-**GAP #5**: Métricas de afiliados incompletas (EPC, RPM, AOV, conversion funnel, time to conversion)
+### 3.2. Real-Time Dashboard (WebSockets + Redis)
+**Benefício**: Decisões rápidas, gamificação interna (equipe vê métricas ao vivo).
+**Stack**: FastAPI + WebSockets + Redis Pub/Sub.
 
-### Funis de Conversão
+### 3.3. Cohort Analysis Completo
+**Benefício**: Entender retenção, identificar meses de alta qualidade, calcular LTV.
 
-**GAP #6**: Ausência de funis documentados (tráfego, afiliados, newsletter)
-**GAP #7**: Falta de análise de drop-off (onde usuários abandonam?)
+### 3.4. Predictive Analytics
+**Modelos prioritários**:
+- Probabilidade de conversão (score 0-100 por sessão)
+- Churn prediction (usuários que não voltam)
+- Trending products (produtos que vão viralizar)
 
-### Testes e Experimentação
+**Stack**: Python (scikit-learn), PostgreSQL, cron daily.
 
-**GAP #8**: Testes A/B mencionados mas não estruturados (framework, priorização, critérios)
-**GAP #9**: Falta de cultura de experimentação (hipóteses, roadmap, aprendizados)
+### 3.5. Automated Insights
+**Sistema que gera insights automaticamente**:
+- "Post X teve CTR 3x maior que média - analisar o que funcionou"
+- "Tráfego mobile aumentou 40% - otimizar mobile"
+- "Produto Y tem alto tráfego mas baixo CTR - revisar CTA"
 
-### Segmentação
+**Implementação**: Job diário que compara métricas e gera relatório.
 
-**GAP #10**: Falta de estratégia de segmentação (fonte, dispositivo, geografia, hora, categoria)
+### 3.6. Benchmarking Externo
+**Comparar com concorrentes e indústria**:
+- Ahrefs/SEMrush: DR, keywords, backlinks
+- SimilarWeb: Tráfego estimado de concorrentes
+- Industry benchmarks: CTR médio para nicho
 
-### Dashboards e Relatórios
+### 3.7. Geolocation Analytics
+**Análise por região/cidade**:
+- Quais cidades geram mais conversões?
+- Horários de pico por timezone
+- Produtos populares por região (Sul vs Nordeste)
 
-**GAP #11**: Dashboards não especificados (quais, para quem, frequência, ferramentas)
-**GAP #12**: Relatórios não estruturados (diário, semanal, mensal, trimestral)
+**Implementação**: Capturar IP → CloudFlare headers → tabela `geo_data`.
 
-### Analytics
+### 3.8. Heatmaps & Session Recordings Integrados
+**Microsoft Clarity** (gratuito) já mencionado no PRD.
 
-**GAP #13**: Configuração de GA4 não especificada (custom events, dimensions, conversions)
-**GAP #14**: Ferramentas complementares não mencionadas (Search Console, heatmaps, error tracking)
+**Análise adicional**: Exportar dados de Clarity para PostgreSQL via API para cruzar com outras métricas.
 
----
+### 3.9. Custom Attribution Model (Data-Driven)
+**Machine Learning para atribuição**:
+- Treinar modelo com histórico de conversões
+- Aprender quais touchpoints são mais importantes
+- Alocar crédito proporcionalmente
 
-## 💡 Oportunidades (Consolidado)
+**Requer**: 6-12 meses de dados, expertise em ML.
 
-### Métricas e KPIs
-
-**OPORTUNIDADE #1**: Framework de metas SMART (tabela com baseline, 3m, 6m, 12m)
-**OPORTUNIDADE #2**: Pirâmide de métricas (North Star + drivers)
-**OPORTUNIDADE #3**: Dashboard de métricas em tempo real
-**OPORTUNIDADE #4**: Métricas de coorte e retenção (D7, D30, D90)
-**OPORTUNIDADE #5**: LTV (Lifetime Value) de visitante
-
-### Funis de Conversão
-
-**OPORTUNIDADE #6**: Funil de afiliados detalhado (visualização → compra)
-**OPORTUNIDADE #7**: Funil de newsletter (opt-in → engajamento)
-**OPORTUNIDADE #8**: Funil de busca orgânica (SERP → conversão)
-
-### Testes A/B
-
-**OPORTUNIDADE #9**: Framework de testes A/B (hipótese, priorização ICE, execução, análise)
-**OPORTUNIDADE #10**: Roadmap de testes (6 meses)
-**OPORTUNIDADE #11**: Testes multivariados (avançado)
-
-### Segmentação
-
-**OPORTUNIDADE #12**: Segmentação por fonte de tráfego
-**OPORTUNIDADE #13**: Segmentação por dispositivo
-**OPORTUNIDADE #14**: Segmentação por tipo de conteúdo
-**OPORTUNIDADE #15**: Segmentação por geografia
-
-### Dashboards e Relatórios
-
-**OPORTUNIDADE #16**: Dashboard executivo (stakeholders)
-**OPORTUNIDADE #17**: Dashboard de conteúdo (editores)
-**OPORTUNIDADE #18**: Dashboard de afiliados (marketing)
-**OPORTUNIDADE #19**: Relatórios automatizados (diário, semanal, mensal)
-
-### Analytics
-
-**OPORTUNIDADE #20**: Configuração completa de GA4 (custom events, dimensions, conversions)
-**OPORTUNIDADE #21**: Heatmaps e session recording (Microsoft Clarity)
+### 3.10. Data Democratization (Self-Service BI)
+**Permitir que toda equipe acesse dados facilmente**:
+- Looker Studio com acesso compartilhado
+- Metabase self-hosted para queries SQL
+- Documentação de tabelas e métricas (data dictionary)
 
 ---
 
-## 🎯 Sugestões de Melhorias Prioritárias
+## 6. SUGESTÕES DE MELHORIAS (10 identificadas)
 
-### Prioridade ALTA (Implementar na Fase 1-2)
-
-#### 1. Definir Metas Quantificadas (Framework SMART) ⭐⭐⭐⭐⭐
-**O Quê**: Tabela com baseline, metas 3m/6m/12m para todas as métricas
-**Por Quê**: Sem metas, impossível medir sucesso
-**Como**:
-- Pesquisar benchmarks de mercado
-- Definir metas realistas mas ambiciosas
-- Documentar em planilha compartilhada
-**Esforço**: 1-2 dias
-**ROI**: Clareza estratégica + alinhamento de time
-
-#### 2. Configurar GA4 com Custom Events ⭐⭐⭐⭐⭐
-**O Quê**: Tracking de affiliate_click, scroll, engagement_time, share, sign_up
-**Por Quê**: Dados granulares para otimização
-**Como**:
-- Implementar eventos no frontend (JavaScript)
-- Configurar conversões no GA4
-- Validar tracking (GA4 DebugView)
-**Esforço**: 3-5 dias
-**ROI**: Dados ricos para análise e testes A/B
-
-#### 3. Criar Dashboard de Métricas em Tempo Real ⭐⭐⭐⭐⭐
-**O Quê**: Dashboard executivo com North Star + drivers (receita, tráfego, CTR, posts)
-**Por Quê**: Visibilidade instantânea de performance
-**Como**:
-- Google Data Studio (gratuito) conectado ao GA4 e banco de dados
-- Atualização automática diária
-**Esforço**: 1 semana
-**ROI**: Decisões baseadas em dados + detecção rápida de problemas
-
-#### 4. Implementar Funil de Afiliados ⭐⭐⭐⭐⭐
-**O Quê**: Medir visualização → scroll → clique → chegada na loja → compra
-**Por Quê**: Identificar gargalos de conversão
-**Como**:
-- Tracking de scroll depth (GA4)
-- Tracking de cliques (backend)
-- UTM parameters para tracking de chegada
-**Esforço**: 3-5 dias
-**ROI**: Otimização focada (atacar o gargalo certo)
-
-#### 5. Criar Framework de Testes A/B ⭐⭐⭐⭐
-**O Quê**: Processo estruturado (hipótese, ICE, execução, análise)
-**Por Quê**: Otimização contínua baseada em dados
-**Como**:
-- Implementar tabela `ab_tests` no backend
-- Criar interface no admin para configurar testes
-- Documentar framework em Wiki/Notion
-**Esforço**: 1-2 semanas
-**ROI**: +20-40% de CTR ao longo do tempo
-
----
-
-### Prioridade MÉDIA (Implementar na Fase 2-3)
-
-#### 6. Implementar Heatmaps (Microsoft Clarity) ⭐⭐⭐⭐
-**O Quê**: Heatmaps + session recording
-**Por Quê**: Ver comportamento real do usuário
-**Esforço**: 1 dia (configuração)
-**ROI**: Insights qualitativos poderosos
-
-#### 7. Criar Dashboards Especializados ⭐⭐⭐
-**O Quê**: Dashboard de conteúdo (editores) + dashboard de afiliados (marketing)
-**Esforço**: 1 semana (cada)
-**ROI**: Empoderamento de times específicos
-
-#### 8. Relatórios Automatizados ⭐⭐⭐
-**O Quê**: Email diário (resumo), semanal (insights), mensal (análise profunda)
-**Esforço**: 1 semana
-**ROI**: Comunicação eficiente + visibilidade constante
-
-#### 9. Segmentação Avançada ⭐⭐⭐
-**O Quê**: Análises por fonte, dispositivo, geografia, tipo de conteúdo
-**Esforço**: Contínuo (queries SQL customizadas)
-**ROI**: Insights acionáveis específicos
-
-#### 10. Análise de Coorte e Retenção ⭐⭐⭐
-**O Quê**: Tabela de retenção D7/D30/D90, LTV de visitante
-**Esforço**: 1 semana (implementação + análise)
-**ROI**: Entendimento de valor de longo prazo
-
----
-
-### Prioridade BAIXA (Implementar na Fase 3-4)
-
-#### 11. Testes Multivariados ⭐⭐
-**O Quê**: Testar múltiplas variáveis simultaneamente
-**Esforço**: 2 semanas
-**ROI**: Identificar interações entre variáveis
-
-#### 12. Machine Learning para Previsões ⭐⭐
-**O Quê**: Prever tráfego, receita, tendências
-**Esforço**: 3-4 semanas
-**ROI**: Planejamento antecipado
-
-#### 13. Análise de Sentimento (UGC) ⭐
-**O Quê**: Analisar comentários, reviews (se houver)
-**Esforço**: 2 semanas
-**ROI**: Entender satisfação do usuário
-
----
-
-## 📈 Ampliações de Escopo Sugeridas
-
-### 1. Data Warehouse e ETL (Fase 3-4)
-
-**Escopo**: Centralizar dados de múltiplas fontes em warehouse
-
-**Implementação**:
-- **Data Warehouse**: BigQuery (Google), Redshift (AWS), ou PostgreSQL (self-hosted)
-- **ETL**: Airbyte (open-source) ou scripts Python customizados
-- **Fontes de Dados**:
-  - Google Analytics 4
-  - Google Search Console
-  - Backend (PostgreSQL)
-  - APIs de afiliados (Amazon, ML, Shopee)
-
-**Benefícios**:
-- Análises cross-platform
-- Histórico de longo prazo
-- Queries complexas sem sobrecarregar banco de produção
-
-**Esforço**: 2-3 semanas
-**ROI**: Análises avançadas + escalabilidade
-
----
-
-### 2. Alertas Inteligentes com Machine Learning (Fase 4)
-
-**Escopo**: Sistema de alertas que detecta anomalias automaticamente
-
-**Implementação**:
-- **Algoritmo**: Prophet (Facebook) para detecção de anomalias
-- **Alertas**:
-  - Queda súbita de tráfego (>30% vs média)
-  - CTR anormalmente baixo
-  - Produto com pico de cliques (oportunidade)
-  - Keywords perdendo posições
-
-**Exemplo**:
-```python
-from fbprophet import Prophet
-import pandas as pd
-
-# Treinar modelo com histórico de tráfego
-df = pd.DataFrame({
-    'ds': dates,  # Datas
-    'y': traffic  # Tráfego diário
-})
-
-model = Prophet()
-model.fit(df)
-
-# Prever próximos 7 dias
-future = model.make_future_dataframe(periods=7)
-forecast = model.predict(future)
-
-# Detectar anomalia
-actual_today = get_traffic_today()
-predicted_today = forecast[forecast['ds'] == today]['yhat'].values[0]
-
-if actual_today < predicted_today * 0.7:  # 30% abaixo do esperado
-    send_alert(f"⚠️ Tráfego anormalmente baixo: {actual_today} vs {predicted_today} esperado")
-```
-
-**Benefícios**:
-- Detecção proativa de problemas
-- Menos monitoramento manual
-
-**Esforço**: 2-3 semanas
-**ROI**: Redução de tempo de resposta a problemas
-
----
-
-### 3. Atribuição Multi-Touch (Fase 4)
-
-**Escopo**: Entender jornada completa do usuário até conversão
-
-**Problema Atual**:
-- Modelo de "last-click": só o último clique recebe crédito
-- Ignora touchpoints anteriores (ex: usuário viu listicle, depois voltou e clicou em produto único)
-
-**Implementação**:
-- **Modelos de Atribuição**:
-  - Linear: todos os touchpoints recebem crédito igual
-  - Time-decay: touchpoints recentes recebem mais crédito
-  - U-shaped: primeiro e último touchpoints recebem mais crédito
+### 4.1. KPIs - Adicionar Confidence Intervals
+**Situação Atual**: KPIs apresentados como números absolutos.
+**Sugestão**: Adicionar intervalos de confiança (IC 95%).
 
 **Exemplo**:
 ```
-Jornada do Usuário:
-1. Chegou via Google → Listicle "Top 10 Star Wars" (não clicou em afiliado)
-2. Retornou direto → Post "Caneca Baby Yoda" (clicou em afiliado, comprou)
-
-Atribuição Linear:
-- Listicle: 50% do crédito (R$ 2,50)
-- Post único: 50% do crédito (R$ 2,50)
-
-Atribuição Last-Click (atual):
-- Listicle: 0%
-- Post único: 100% (R$ 5,00)
+CTR Afiliados: 4.5% (IC 95%: 4.1% - 4.9%)
+Receita Mensal: R$ 1.847 (IC 95%: R$ 1.680 - R$ 2.014)
 ```
 
-**Benefícios**:
-- Valorização correta de conteúdo de topo de funil
-- Decisões mais informadas sobre tipo de conteúdo
+### 4.2. Metas SMART - Adicionar Baseline Real
+**Situação Atual**: Metas começam do zero (baseline 0).
+**Sugestão**: Após 30-60 dias, revisar baseline com dados reais e ajustar metas.
 
-**Esforço**: 3-4 semanas
-**ROI**: Otimização de mix de conteúdo
+### 4.3. North Star Metric - Adicionar Leading Indicators
+**Situação Atual**: North Star = Receita mensal (lagging indicator).
+**Sugestão**: Adicionar leading indicators:
+- CTR afiliados (prediz receita)
+- Sessões orgânicas (prediz CTR)
+- Posts publicados (prediz sessões)
 
----
+### 4.4. Dashboards - Adicionar Comparativos Históricos
+**Situação Atual**: Métricas absolutas.
+**Sugestão**: Sempre mostrar vs período anterior e vs mesmo período ano anterior.
 
-### 4. Análise de Sentimento e NPS (Fase 3)
+### 4.5. Alertas - Implementar Machine Learning
+**Situação Atual**: Thresholds fixos (CTR < 2%, queda > 30%).
+**Sugestão**: ML para detectar anomalias baseado em padrões históricos (mais preciso).
 
-**Escopo**: Medir satisfação do usuário
+### 4.6. Segmentação - Adicionar RFM
+**RFM** (Recency, Frequency, Monetary):
+- **R**: Última visita (dias atrás)
+- **F**: Frequência de visitas (sessões/mês)
+- **M**: Valor monetário (comissões geradas)
 
-**Implementação**:
-- **NPS Survey** (Net Promoter Score):
-  - Pergunta: "De 0 a 10, qual a chance de você recomendar geek.bidu.guru?"
-  - Trigger: Após 3ª visita ou após clique em afiliado
-  - Tool: Typeform, Hotjar Surveys
+**Segmentos**:
+- Champions (RFM alto): 111, 112, 121, 122
+- Loyal (FM alto, R médio): 211, 212
+- At Risk (R baixo, FM alto): 311, 312
+- Lost (RFM baixo): 333
 
-**Cálculo NPS**:
-```
-Promotores (9-10): 40%
-Neutros (7-8): 35%
-Detratores (0-6): 25%
+### 4.7. Testes A/B - Adicionar Multi-Armed Bandit
+**Situação Atual**: A/B tradicional (50/50 split).
+**Sugestão**: Multi-Armed Bandit aloca mais tráfego para variante vencedora dinamicamente.
 
-NPS = % Promotores - % Detratores = 40% - 25% = 15
-```
+### 4.8. Funis - Adicionar Drop-off Reasons
+**Situação Atual**: Funil mostra onde usuários saem.
+**Sugestão**: Capturar motivo (via hotjar, pesquisa exit-intent, session replay analysis).
 
-**Benchmark**: NPS > 0 é aceitável, NPS > 50 é excelente
+### 4.9. Reports - Automatizar Geração e Envio
+**Situação Atual**: PRD menciona reports mas não automação completa.
+**Sugestão**: n8n workflow que gera PDF do relatório mensal e envia via email automaticamente dia 1 de cada mês.
 
-**Análise de Sentimento** (se houver comentários/reviews):
-- Usar NLP (spaCy, NLTK) para detectar sentimento (positivo, negativo, neutro)
-- Identificar tópicos de frustração
+### 4.10. Data Catalog - Documentar Tabelas e Métricas
+**Situação Atual**: Sem documentação centralizada de dados.
+**Sugestão**: Data dictionary em `/docs/analytics/data-catalog.md`:
+```markdown
+## Tabela: fact_sessions
 
-**Benefícios**:
-- Entender satisfação além de métricas quantitativas
-- Identificar pontos de dor
+**Descrição**: Sessões agregadas por hora para performance queries.
 
-**Esforço**: 1-2 semanas
-**ROI**: Melhorias focadas em UX
+| Coluna | Tipo | Descrição | Exemplo |
+|--------|------|-----------|---------|
+| date | DATE | Data da sessão | 2025-12-10 |
+| hour | SMALLINT | Hora (0-23) | 14 |
+| post_id | UUID | ID do post visitado | abc-123... |
+| device | VARCHAR(20) | mobile, desktop, tablet | mobile |
+| sessions | INT | Total de sessões | 42 |
+| affiliate_clicks | INT | Cliques em afiliados | 3 |
 
----
-
-### 5. Previsão de Receita com Machine Learning (Fase 4)
-
-**Escopo**: Prever receita futura com base em tendências
-
-**Implementação**:
-- **Algoritmo**: Regressão linear, ARIMA, ou Prophet
-- **Variáveis**:
-  - Histórico de tráfego
-  - Sazonalidade (Natal, Black Friday)
-  - Lançamento de novos posts
-  - Tendências de SEO
-
-**Exemplo**:
-```python
-from fbprophet import Prophet
-
-# Treinar modelo com histórico de receita
-df = pd.DataFrame({
-    'ds': dates,    # Datas
-    'y': revenue    # Receita diária
-})
-
-# Adicionar sazonalidades personalizadas
-model = Prophet(yearly_seasonality=True)
-model.add_seasonality(name='black_friday', period=365.25, fourier_order=5)
-model.fit(df)
-
-# Prever próximos 90 dias
-future = model.make_future_dataframe(periods=90)
-forecast = model.predict(future)
-
-# Receita prevista para Dezembro
-dec_forecast = forecast[forecast['ds'].dt.month == 12]['yhat'].sum()
-print(f"Receita prevista para Dezembro: R$ {dec_forecast:.2f}")
+**Refresh**: Atualizada a cada hora via cron.
+**Owner**: Data Team
 ```
 
-**Benefícios**:
-- Planejamento financeiro
-- Identificação antecipada de oportunidades/riscos
+---
 
-**Esforço**: 2-3 semanas
-**ROI**: Melhor planejamento estratégico
+## 7. AMPLIAÇÕES DE ESCOPO (5 identificadas)
+
+### 5.1. Data Warehouse (BigQuery)
+**Descrição**: Export GA4 + tabelas PostgreSQL → BigQuery para análises avançadas.
+**Prioridade**: Alta (implementar Fase 2).
+**Custo**: ~$50-200/mês.
+
+### 5.2. Machine Learning Platform
+**Descrição**: Modelos preditivos (conversão, churn, trending products, personalização).
+**Prioridade**: Média (Fase 3, após 6 meses de dados).
+**Stack**: Python (scikit-learn, TensorFlow), Jupyter Notebooks, MLflow.
+
+### 5.3. Customer Data Platform (CDP)
+**Descrição**: Unificar dados de GA4, PostgreSQL, newsletter, redes sociais em perfil único de usuário.
+**Benefícios**: Segmentação avançada, personalização 1:1.
+**Ferramentas**: Segment (paid), RudderStack (open-source).
+**Prioridade**: Baixa (Fase 4, após 12 meses).
+
+### 5.4. Real-Time Event Streaming
+**Descrição**: Kafka/Redis Streams para processar eventos em tempo real.
+**Benefícios**: Dashboards ao vivo, recomendações em tempo real.
+**Prioridade**: Baixa (over-engineering para escala atual).
+
+### 5.5. Data Science Team
+**Descrição**: Contratar analista de dados dedicado (após 12 meses).
+**Responsabilidades**:
+- Análises ad-hoc
+- Experimentos A/B
+- Machine Learning
+- Relatórios executivos
+**Prioridade**: Média (quando receita justificar).
 
 ---
 
-## 📊 ROI Esperado das Melhorias
+## 8. PLANO DE AÇÃO RECOMENDADO
 
-### Cenário 1: Implementando Prioridade ALTA
+### Curto Prazo (1-3 meses) - CRÍTICO
 
-**Baseline (sem melhorias)**:
-- Tráfego: 10.000 pageviews/mês
-- CTR de afiliados: 2% (sem otimização)
-- Taxa de conversão: 5%
-- Receita: R$ 50/mês
+**ALTA Prioridade**:
+- [ ] **Documentar tracking plan GA4** completo (todos os eventos + parâmetros)
+- [ ] **Criar tabelas fact_sessions e fact_affiliate_clicks** com índices
+- [ ] **Implementar 3 dashboards** (Executivo, Afiliados, Conteúdo)
+- [ ] **Sistema de alertas básico** (Telegram: queda tráfego, CTR baixo, produtos indisponíveis)
+- [ ] **Configurar views materializadas** (mv_daily_post_performance)
 
-**Com melhorias de Prioridade ALTA**:
-- **Metas quantificadas**: Clareza de objetivos → +10% de foco (intangível)
-- **GA4 configurado**: Dados melhores → decisões melhores → +5% de CTR
-- **Dashboard em tempo real**: Detecção rápida de problemas → -10% de downtime
-- **Funil de afiliados**: Otimização focada → +15% de conversão
-- **Testes A/B**: Otimização contínua → +20% de CTR ao longo de 6 meses
+**MÉDIA Prioridade**:
+- [ ] Documentar modelo de atribuição (começar com Last-Click)
+- [ ] Criar funções SQL para relatórios comuns (get_top_products_by_revenue)
+- [ ] Setup Microsoft Clarity (heatmaps)
 
-**Resultado em 6 meses**:
-- Tráfego: 15.000 pageviews/mês (+50% via SEO, não atribuível apenas a analytics)
-- CTR: 2.5% (+25% via testes A/B e otimizações)
-- Taxa de conversão: 5.75% (+15% via funil otimizado)
-- Receita: R$ 172/mês (+244%)
+### Médio Prazo (3-6 meses)
 
----
+**Implementações**:
+- [ ] **Export GA4 → BigQuery** + scheduled queries
+- [ ] **Looker Studio dashboards** conectados ao BigQuery
+- [ ] **Cohort analysis** completa (retenção, LTV)
+- [ ] **Funis instrumentados** (GA4 + PostgreSQL)
+- [ ] **Data quality monitoring** (jobs diários de validação)
+- [ ] **Automated insights** (job que gera insights semanais)
 
-### Cenário 2: Implementando TODAS as Melhorias
+**Testes**:
+- [ ] Framework A/B com significância estatística
+- [ ] 5-10 experimentos rodando (CTAs, posicionamento, copy)
 
-**Com todas as prioridades + ampliações de escopo**:
-- Tráfego: 50.000 pageviews/mês (meta 12 meses)
-- CTR: 4% (+100% via testes A/B contínuos, segmentação, heatmaps)
-- Taxa de conversão: 7% (+40% via funil otimizado, atribuição multi-touch)
-- Receita: R$ 700/mês
+### Longo Prazo (6-12 meses)
 
-**Adicional com ML**:
-- Alertas inteligentes → -20% de tempo perdido com problemas não detectados
-- Previsão de receita → +10% de receita (planejamento antecipado de sazonalidades)
-- Atribuição multi-touch → +5% de receita (otimização de mix de conteúdo)
+**Grandes Projetos**:
+- [ ] **Machine Learning models** (conversão, churn, trending)
+- [ ] **Predictive analytics** em produção
+- [ ] **Real-time dashboard** (WebSockets)
+- [ ] **Attribution modeling** avançado (Linear → Data-Driven)
+- [ ] **Data democratization** (Metabase self-service)
+- [ ] **Contratar Data Analyst** dedicado
 
-**Resultado final em 12 meses**:
-- Receita: R$ 805/mês
-- Meta original (PRD): R$ 5.000/mês
-
-**Gap**: Ainda há gap significativo. **Receita depende primariamente de tráfego (escala).** Analytics otimiza conversão (CTR, taxa de conversão), mas não cria tráfego.
-
-**Para atingir R$ 5.000/mês**:
-- Necessário: 150.000-200.000 pageviews/mês (com CTR 4%, conv. 7%, RPM R$ 40)
-- Ou: Aumentar ticket médio (produtos de maior valor, comissões maiores)
+**Otimizações**:
+- [ ] Geolocation analytics (análise por região)
+- [ ] RFM segmentation
+- [ ] Multi-Armed Bandit A/B
+- [ ] Data catalog completo
 
 ---
 
-## ✅ Checklist de Implementação de Data Analytics
+## 9. MÉTRICAS DE SUCESSO
 
-### Fase 1 - Fundação (Semanas 1-4)
+### KPIs de Analytics
 
-**Metas e Métricas**:
-- [ ] Definir metas SMART para todas as métricas (baseline, 3m, 6m, 12m)
-- [ ] Criar pirâmide de métricas (North Star + drivers)
-- [ ] Documentar em planilha compartilhada
+| Métrica | Baseline | 3 Meses | 6 Meses | 12 Meses |
+|---------|----------|---------|---------|----------|
+| **Data Quality Score** | - | 85% | 92% | 98% |
+| **Dashboard Usage** (views/semana) | 0 | 50 | 150 | 300 |
+| **Alertas Enviados** (por mês) | 0 | 20 | 30 | 40 |
+| **Insights Acionáveis** (por mês) | 0 | 5 | 10 | 15 |
+| **A/B Tests Rodando** (simultâneos) | 0 | 2 | 5 | 10 |
+| **Query Response Time** (dashboard principal) | - | <3s | <2s | <1s |
 
-**Google Analytics 4**:
-- [ ] Configurar propriedade GA4
-- [ ] Implementar custom events (affiliate_click, scroll, engagement_time, share, sign_up)
-- [ ] Configurar custom dimensions (device_type, traffic_source)
-- [ ] Marcar conversões (affiliate_click, sign_up)
-- [ ] Validar tracking (GA4 DebugView)
+### Impacto em KPIs de Negócio
 
-**Tracking Backend**:
-- [ ] Implementar tabela `affiliate_clicks` com campos completos
-- [ ] Registrar cliques com session_id, post_id, product_id, device, source
-- [ ] Criar queries para funil de afiliados
+**Expectativa**: Analytics robusto → decisões melhores → métricas melhores.
 
-**Dashboard Básico**:
-- [ ] Criar dashboard executivo (Google Data Studio ou Metabase)
-- [ ] Conectar GA4 + banco de dados
-- [ ] Atualização automática diária
+| KPI Negócio | Baseline | Com Analytics (+6 meses) | Melhoria |
+|-------------|----------|--------------------------|----------|
+| **CTR Afiliados** | 3% | 5-6% | +67-100% |
+| **Receita/Mês** | R$ 1.000 | R$ 3.000-4.000 | +200-300% |
+| **Tempo na Página** | 2min | 3min | +50% |
+| **Taxa Rejeição** | 55% | 45% | -18% |
 
----
-
-### Fase 2 - Otimização (Semanas 5-12)
-
-**Funis de Conversão**:
-- [ ] Implementar funil de afiliados (visualização → clique → conversão)
-- [ ] Implementar funil de newsletter (opt-in → confirmação → engajamento)
-- [ ] Implementar funil de busca orgânica (SERP → clique → conversão)
-- [ ] Criar visualizações de funis no dashboard
-
-**Testes A/B**:
-- [ ] Implementar framework de testes A/B (hipótese, ICE, execução, análise)
-- [ ] Criar tabela `ab_tests` no backend
-- [ ] Criar interface no admin para configurar testes
-- [ ] Executar primeiro teste (cor do botão CTA)
-- [ ] Executar segundo teste (posição do CTA)
-- [ ] Executar terceiro teste (texto do CTA)
-
-**Segmentação**:
-- [ ] Criar queries de segmentação (fonte, dispositivo, geografia, tipo de conteúdo)
-- [ ] Adicionar segmentação ao dashboard
-- [ ] Análise semanal de segmentos
-
-**Heatmaps**:
-- [ ] Configurar Microsoft Clarity (gratuito)
-- [ ] Analisar heatmaps semanalmente
-- [ ] Documentar insights e ações
+**Correlação**: Melhores dados → melhores decisões → melhores resultados.
 
 ---
 
-### Fase 3 - Escala (Semanas 13-24)
+## 10. CONCLUSÃO
 
-**Dashboards Especializados**:
-- [ ] Criar dashboard de conteúdo (editores)
-- [ ] Criar dashboard de afiliados (marketing)
-- [ ] Criar dashboard de SEO (SEO specialist)
+O geek.bidu.guru possui **KPIs bem definidos** mas **lacunas críticas** na implementação técnica de analytics.
 
-**Relatórios Automatizados**:
-- [ ] Configurar relatório diário (email 8h da manhã)
-- [ ] Configurar relatório semanal (email segunda-feira)
-- [ ] Configurar relatório mensal (email 1º dia do mês)
+### Ações Imediatas (30 dias):
+1. ✅ **Tracking plan GA4** completo documentado
+2. ✅ **Tabelas fact_sessions e fact_affiliate_clicks** criadas
+3. ✅ **3 dashboards** operacionais (Executivo, Afiliados, Conteúdo)
+4. ✅ **Sistema de alertas** Telegram (4 alertas prioritários)
 
-**Análise de Coorte**:
-- [ ] Implementar análise de coorte (retenção D7, D30, D90)
-- [ ] Calcular LTV de visitante
-- [ ] Integrar ao dashboard executivo
+### Quick Wins (90 dias):
+1. 🎯 **BigQuery export** (análises SQL avançadas)
+2. 🎯 **Cohort analysis** (entender retenção e LTV)
+3. 🎯 **Automated insights** (economia de tempo)
+4. 🎯 **Data quality monitoring** (confiança nos dados)
 
-**Google Search Console**:
-- [ ] Conectar Search Console ao dashboard
-- [ ] Monitorar keywords ranqueadas, CTR orgânico, impressões
-- [ ] Análise semanal de oportunidades (impressões altas, CTR baixo)
+### Diferenciais (6-12 meses):
+1. 🚀 **Machine Learning** (predictive analytics)
+2. 🚀 **Real-time dashboard** (decisões rápidas)
+3. 🚀 **Attribution avançado** (Data-Driven)
+4. 🚀 **Data Analyst** dedicado (análises profundas)
 
----
-
-### Fase 4 - Avançado (Meses 7-12)
-
-**Data Warehouse** (opcional):
-- [ ] Configurar BigQuery ou PostgreSQL dedicado
-- [ ] Implementar ETL (Airbyte ou scripts Python)
-- [ ] Centralizar dados de GA4, Search Console, backend, APIs de afiliados
-
-**Machine Learning**:
-- [ ] Implementar alertas inteligentes (detecção de anomalias com Prophet)
-- [ ] Implementar previsão de receita
-- [ ] Testar atribuição multi-touch
-
-**NPS e Sentimento**:
-- [ ] Configurar pesquisa NPS (Typeform/Hotjar)
-- [ ] Analisar sentimento de comentários/reviews (se houver)
-
-**Testes Avançados**:
-- [ ] Executar testes multivariados
-- [ ] Documentar aprendizados de todos os testes
+Implementação dessas sugestões pode **3-5x a eficiência** na tomada de decisão e **aumentar receita 200-300%** via otimizações data-driven.
 
 ---
 
-## 🎓 Conclusão e Recomendações Finais
-
-O PRD tem **consciência de que métricas são importantes**, mas carece de **profundidade analítica e metodologia estruturada**. Data analytics não é apenas "coletar dados", mas **transformar dados em insights acionáveis**.
-
-### Recomendações Críticas
-
-#### 1. **Definir Metas Quantificadas ANTES de Implementar** ⭐⭐⭐⭐⭐
-Sem metas claras (5k visitantes em 3 meses, CTR de 4% em 6 meses), impossível medir sucesso. **Metas SMART devem ser a primeira tarefa da Fase 1.**
-
-#### 2. **Configurar GA4 com Custom Events desde o Dia 1** ⭐⭐⭐⭐⭐
-Dados históricos são valiosos. Implementar tracking de `affiliate_click`, `scroll`, `engagement_time` desde o lançamento garante que, em 6 meses, haverá dados ricos para análise.
-
-#### 3. **Criar Dashboard de Métricas em Tempo Real** ⭐⭐⭐⭐⭐
-Visibilidade instantânea de performance é crítica. Dashboard deve ser acessível a todos stakeholders, atualizado automaticamente, e mostrar North Star Metric de forma proeminente.
-
-#### 4. **Implementar Funis de Conversão para Identificar Gargalos** ⭐⭐⭐⭐⭐
-Sem funil, otimização é "no escuro". Funil de afiliados (visualização → scroll → clique → conversão) revela exatamente onde otimizar.
-
-#### 5. **Estruturar Testes A/B com Framework Científico** ⭐⭐⭐⭐
-Testes ad-hoc não geram aprendizado. Framework de hipótese + priorização ICE + análise estatística garante que testes sejam válidos e acionáveis.
-
----
-
-### Oportunidade de Diferenciação
-
-A maior oportunidade de **analytics** para geek.bidu.guru é se tornar **data-driven desde o dia 1**, diferenciando-se de blogs que "acham" que sabem o que funciona.
-
-✅ **Decisões baseadas em dados**: Cada mudança (CTA, layout, conteúdo) validada por dados
-✅ **Otimização contínua**: Testes A/B semanais, sempre melhorando CTR e conversão
-✅ **Visibilidade total**: Dashboards em tempo real, relatórios automatizados
-✅ **Previsibilidade**: Machine learning para prever receita, identificar anomalias
-✅ **Cultura de experimentação**: Hipóteses documentadas, aprendizados compartilhados
-
-**Com as melhorias sugeridas**, o projeto pode:
-- **CTR de afiliados 4%+** (vs média de 2%)
-- **Taxa de conversão 7%+** (vs média de 5%)
-- **RPM R$ 40+** (vs média de R$ 10-20)
-- **Retenção D30 de 15%+** (vs média de 5-10%)
-
-Isso posicionaria o geek.bidu.guru como **case de sucesso em analytics para blogs de afiliados**.
-
----
-
-### Próximos Passos Imediatos
-
-#### Semana 1:
-1. ✅ Definir metas SMART (planilha com baseline, 3m, 6m, 12m)
-2. ✅ Configurar GA4 (propriedade + custom events)
-3. ✅ Criar dashboard executivo básico (Google Data Studio)
-
-#### Semana 2:
-4. ✅ Implementar funil de afiliados (tracking de scroll + clique)
-5. ✅ Configurar Microsoft Clarity (heatmaps)
-6. ✅ Validar tracking (testar eventos em GA4 DebugView)
-
-#### Semana 3-4:
-7. ✅ Criar framework de testes A/B
-8. ✅ Executar primeiro teste (cor do botão)
-9. ✅ Configurar relatório diário automatizado (email)
-10. ✅ Análise inicial de segmentação (fonte, dispositivo)
-
-**Com esta base sólida de analytics, todas as decisões futuras serão informadas por dados, não por "achismos". Isso é o diferencial entre projetos que crescem e projetos que estagnam.**
-
----
-
-**Revisado por**: Data Analyst Agent
-**Baseado em**: agents/data-analyst.md
-**Versão do Relatório**: 1.0
-**Linhas**: 1300+
+**Analista**: Data Analyst
+**Data**: 10/12/2025
+**Status**: Análise Completa
