@@ -77,3 +77,18 @@ Template (Looker Studio) sugerido:
 - Trimestral: tendências, sazonalidades, planejamento de picos (Natal/BF/namorados).
 
 Automação sugerida: n8n enviando PDF/links para Telegram/Email.
+
+---
+
+## Dashboard de SEO (Especializado)
+
+- Atualização: diária (visão semanal/mensal).  
+- Métricas: keywords ranqueadas totais, top 3, featured snippets, DR/DA (se disponível), backlinks totais/novos, páginas indexadas, CTR orgânico, posição média.  
+- SERP Features: PAA, Image Packs, Video Carousels (quando integrável).  
+- Seções:  
+  - Visão geral (KPIs vs metas).  
+  - Keywords (ganhos/perdas).  
+  - Páginas top (cliques/CTR/posições).  
+  - Backlinks (novos/domínios referenciadores).  
+- Fontes: Search Console, GA4, ferramenta externa (planilha) para DR/backlinks se não houver conector.  
+- Filtros: data, tipo de conteúdo, cluster (ocasião/perfil/preço), persona_focus.

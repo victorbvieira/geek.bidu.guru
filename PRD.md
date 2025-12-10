@@ -112,6 +112,20 @@ Observação: revisar baseline após primeiros 30–60 dias de operação para c
 - Secondary drivers: posts publicados, keywords ranqueadas, tempo na página, RPM.  
 - Governance: reuniões quinzenais para revisão dos drivers e ações corretivas.
 
+### 3.4. SEO KPIs (expandido)
+
+| Métrica | 3 meses | 6 meses | 12 meses |
+|---|---:|---:|---:|
+| Keywords ranqueadas (totais) | 100+ | 300+ | 1000+ |
+| Keywords em Top 3 | 10 | 30 | 100 |
+| Featured snippets | 2 | 10 | 30 |
+| Domain Rating (DR) | 10+ | 20+ | 30+ |
+| Backlinks (domínios ref.) | 30+ | 120+ | 300+ |
+| Páginas indexadas | 50+ | 150+ | 500+ |
+
+Dashboards e acompanhamento: `docs/analytics/dashboards.md` (Dashboard de SEO).  
+Plano de link building: `docs/seo/link-building.md`.
+
 ---
 
 ## 4. Público-Alvo & Personas (Resumo)
@@ -162,7 +176,8 @@ Documentos detalhados: ver `docs/content/personas-expanded.md` (jornada, objeç�
 
 Cada post deve conter: título, slug, subtítulo, conteúdo (Markdown/HTML), imagem destacada, categoria, tags, produtos associados, metadados de SEO, dados estruturados, botões de compartilhamento e CTAs para afiliados.
 
-Templates detalhados (estrutura, tamanhos, CTAs e checklist SEO): `docs/content/templates.md`.
+Templates detalhados (estrutura, tamanhos, CTAs e checklist SEO): `docs/content/templates.md`.  
+Otimização para featured snippets (definições, listas, tabelas, FAQ/HowTo): `docs/seo/featured-snippets.md`.
 
 ---
 
@@ -216,15 +231,20 @@ Templates detalhados (estrutura, tamanhos, CTAs e checklist SEO): `docs/content/
   - ALT-text em imagens.
 
 - **Dados Estruturados (Schema.org)**
-  - `BlogPosting` / `Article` para posts.
-  - `ItemList` para posts de lista.
-  - `Product` para páginas individuais de produto.
+  - Base global: `Organization` + `WebSite` (com `SearchAction`).
+  - Páginas: `BlogPosting` / `Article` (posts) e `BreadcrumbList` (breadcrumbs).
+  - Listas: `ItemList` (Top 10 etc.).
+  - Produtos: `Product` com `AggregateRating` quando aplicável.
+  - FAQ/Guias: `FAQPage` e `HowTo` quando pertinente.
+  - Vídeos (Fase 3): `VideoObject`.
+  - Exemplos completos: `docs/seo/schema-examples.md`.
 
 - **Infra SEO Técnica**
   - `sitemap.xml` automático (posts, categorias, produtos).
   - `robots.txt` configurável.
   - Tags `canonical`.
   - Open Graph e Twitter Cards.
+  - Diretrizes avançadas: `docs/seo/crawl-indexing.md`.
 
 ---
 
@@ -331,6 +351,17 @@ Hubs sazonais perenes (ex.: `/natal/`, `/black-friday/`, `/dia-dos-namorados/`) 
 
 Sistema para transformar pilares (listicles/guias) em múltiplos formatos (posts individuais, infográfico, social, vídeo, newsletter, thread). Processo, métricas e UTMs: `docs/content/content-recycling.md`.
 
+### 6.15. Content Hubs & Internal Linking
+
+Estratégia de hubs e clusters para dominar tópicos-chave com pillars e links internos estruturados.  
+Regras e mapeamento: `docs/content/content-hubs.md` e `docs/seo/internal-linking.md`.  
+Conectar com estratégia de keywords: `docs/seo/keyword-strategy.md`.
+
+### 6.16. Estrutura de URLs & Canonicals
+
+Padrões de URL por tipo de página (posts, categorias, ocasiões, tags, produtos) e regras de canonical/redirects.  
+Diretrizes: `docs/seo/url-structure.md`.
+
 ### 6.13. Funis de Conversão
 
 Definições e instrumentação dos funis de Tráfego Orgânico, Afiliados e Newsletter. Ver `docs/analytics/funnels.md` e o Plano de Tracking (GA4) em `docs/analytics/tracking-plan.md`.
@@ -345,8 +376,11 @@ Processo padronizado (hipótese → ICE → execução → análise → rollout)
 
 - **Banco de dados:** PostgreSQL (v14+).
 - **Performance:**
-  - Páginas críticas com LCP < 2,5s em 4G.
+  - Core Web Vitals: LCP < 2,5s; INP < 200ms; CLS < 0,1.
   - Uso de cache (HTTP cache, cache de consultas).
+  - CDN para assets estáticos e imagens.
+  - Monitoramento de Web Vitals: `docs/seo/web-vitals-monitoring.md`.
+  - Otimização de imagens (WebP/srcset/lazy): `docs/seo/image-optimization.md`.
 - **Segurança:**
   - HTTPS obrigatório.
   - Proteção contra SQL Injection, XSS, CSRF.
@@ -770,6 +804,25 @@ Gatilho: Cron a cada X minutos + checagens (uptime, tráfego, n8n).
 Exemplos de alertas: queda de tráfego > 30% (vs semana anterior), CTR < 2%, falha em fluxo A/B, erro 500.  
 Implementação sugerida: integração Telegram conforme exemplo em `agents/data-analyst.md` (seção de alertas), com thresholds configuráveis.
 
+### 11.9. Fluxo I – Content Refresh
+
+Objetivo: atualizar e reotimizar conteúdos com base em performance e sazonalidade.  
+Gatilhos: Cron mensal (top performers) e trimestral (sazonais).  
+Passos:  
+1) Identificar páginas alvo (GA4/SC: pageviews, CTR, queda de posições).  
+2) Recomendar atualizações (novas keywords, +100–200 palavras, novos produtos/preços).  
+3) Criar tarefas para editores; reindexar via Search Console.  
+Regras: ver plano em `docs/content/editorial-calendar.md` (buffers) e orientações de SEO.
+
+### 11.10. Fluxo J – Content Gap (Search Console)
+
+Objetivo: detectar gaps de conteúdo e gerar briefs.  
+Gatilho: Cron semanal.  
+Passos:  
+1) Ler queries com impressões > X e CTR < 2%.  
+2) Sugerir novos posts/sections com base em `docs/seo/keyword-strategy.md`.  
+3) Enfileirar ideias no board editorial.
+
 ---
 
 ## 12. Guia de Comunicação Visual & Layout
@@ -901,12 +954,17 @@ Estrutura sugerida:
   - Implementar **framework de Testes A/B** (docs/analytics/ab-testing-framework.md).
   - Configurar **GA4** conforme plano de tracking e **Clarity** (heatmaps).
   - Publicar **dashboards** (Executivo, Conteúdo, Afiliados) e **relatórios automatizados**.
+  - Documentar **estratégia de keywords** e iniciar **featured snippets** (FAQ/HowTo/listas/tabelas).
+  - Implementar **schemas avançados** e **internal linking** (hubs & clusters).
 
 - **Fase 3 – IA e Pesquisa Qualificada**
   - Implementar Fluxo E (pesquisa qualificada com IA).
   - Refinar copy gerada via IA (guidelines, prompts).
   - Operacionalizar Content Recycling (1 → 24) conforme documento, com automações para sociais/newsletter.
   - Iniciar **exportação BigQuery** (GA4) e análises de **coortes/LTV**.
+  - **Video SEO** (VideoObject + video sitemap) e rollout de conteúdos em vídeo.
+  - **International SEO**: preparar hreflang e estratégia (ver `PRD-internationalization.md`).
+  - **Voice Search**: conteúdo conversacional + `Speakable` (quando aplicável).
 
 - **Fase 4 – Crescimento & Otimização**
   - Quiz, newsletter mais robusta, testes A/B.
