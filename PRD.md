@@ -1,10 +1,14 @@
 
 # PRD – geek.bidu.guru – Blog de Presentes Geek com Automação e IA
 
-**Versão:** 1.1  
-**Responsável:** Squad Conteúdo & Automação  
-**Stack:** Python (frontend + backend), PostgreSQL, n8n, integrações com APIs de afiliados (Amazon, Mercado Livre, Shopee)  
+**Versão:** 1.2
+**Responsável:** Squad Conteúdo & Automação
+**Stack:** Python (frontend + backend), PostgreSQL, n8n, integrações com APIs de afiliados (Amazon, Mercado Livre, Shopee)
 **Domínio:** `https://geek.bidu.guru`
+
+**Documentos Complementares:**
+- **[PRD-affiliate-strategy.md](PRD-affiliate-strategy.md)** - Estratégia detalhada de marketing de afiliados
+- **[PRD-internationalization.md](PRD-internationalization.md)** - Especificação de internacionalização (i18n)
 
 ---
 
@@ -57,9 +61,22 @@ Este PRD considera o projeto como um **produto completo**, e não apenas um MVP.
   - CTR orgânico (Search Console).
 
 - **Afiliados**
-  - Cliques em links de afiliado/post.
-  - Conversões (quando dados forem disponibilizados pelas plataformas).
-  - Receita mensal por plataforma (Amazon, Mercado Livre, Shopee).
+  - **CTR (Click-Through Rate)**: % de visualizações que resultam em cliques nos links de afiliados
+  - **EPC (Earnings Per Click)**: Ganho médio por cada clique em link de afiliado
+  - **RPM (Revenue Per Mille)**: Receita por 1.000 visualizações de página
+  - **Taxa de Conversão**: % de cliques que resultam em compras (quando disponível via APIs)
+  - **AOV (Average Order Value)**: Valor médio de cada pedido convertido
+  - Cliques em links de afiliado/post
+  - Conversões (quando dados forem disponibilizados pelas plataformas)
+  - Receita mensal por plataforma (Amazon, Mercado Livre, Shopee)
+
+**Benchmarks por Plataforma** (detalhes em [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md)):
+
+| Plataforma | CTR Alvo | Conv. Rate | Comissão Média | RPM Alvo | Cookie Duration | Prioridade |
+|------------|----------|------------|----------------|----------|-----------------|------------|
+| **Mercado Livre** | 3-5% | 6-10% | 4-8% | R$ 20-30 | 10 dias | ⭐⭐⭐⭐⭐ Muito Alta |
+| **Amazon** | 4-6% | 5-8% | 3-5% | R$ 15-25 | 24h | ⭐⭐⭐⭐ Alta |
+| **Shopee** | 2-4% | 4-6% | 2-4% | R$ 8-15 | 7 dias | ⭐⭐⭐ Média |
 
 - **Conteúdo & Automação**
   - Número de posts publicados/dia e/semana.
@@ -215,10 +232,24 @@ Otimização para featured snippets (definições, listas, tabelas, FAQ/HowTo): 
   - Contabiliza clique e redireciona para `affiliate_url_raw`.
   - Permite mudar links de afiliado sem alterar posts antigos.
 
-**Critérios de Curadoria de Produtos**  
-- Adotar scorecard objetivo para seleção e diversidade do portfólio (categorias e faixas de preço).  
-- Processo contínuo de descoberta, triagem semanal e fila de publicação integrada ao n8n.  
-- Detalhes completos: `docs/content/curation-scorecard.md`.
+**Critérios de Curadoria de Produtos**
+- Adotar scorecard objetivo para seleção e diversidade do portfólio (categorias e faixas de preço)
+- Processo contínuo de descoberta, triagem semanal e fila de publicação integrada ao n8n
+- Detalhes completos: `docs/content/curation-scorecard.md`
+
+**Scorecard de Produtos para Afiliados** (detalhes em [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md#scorecard-de-produtos)):
+
+Sistema de pontuação de 0-100 para priorizar produtos com maior potencial de conversão e receita:
+
+- **Comissão (30%)**: Produtos com comissão 5-10% recebem pontuação máxima
+- **Preço Sweet Spot (25%)**: Faixa ideal R$ 50-150 (melhor taxa de conversão)
+- **Disponibilidade (20%)**: Produtos disponíveis têm prioridade; escassez pode ajudar conversão
+- **Rating (15%)**: Avaliação mínima 4.0, ideal 4.5+
+- **Popularidade (10%)**: Número de reviews como indicador de demanda
+
+**Uso**: Produtos com score >= 70 são priorizados nos fluxos automáticos de geração de conteúdo.
+
+**Atualização**: Scores recalculados diariamente via job automático considerando mudanças de preço, disponibilidade e avaliações.
 
 ---
 
@@ -248,7 +279,60 @@ Otimização para featured snippets (definições, listas, tabelas, FAQ/HowTo): 
 
 ---
 
-### 6.4. Compartilhamento
+### 6.4. Otimização de CTAs e Conversão de Afiliados
+
+**Estratégia de Posicionamento de CTAs** (detalhes em [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md#otimização-de-ctas)):
+
+- **3 CTAs por Produto**: Posicionamento estratégico em:
+  1. **Início**: Após introdução (primeiros 2-3 parágrafos) - para leitores decididos
+  2. **Meio**: Após características ou benefícios - para leitores em consideração
+  3. **Fim**: Antes da conclusão - última oportunidade de conversão
+
+- **Variações de Botões para Testes A/B**:
+  - Amarelo com urgência: "🛒 Comprar Agora com Frete Grátis"
+  - Roxo marca: "Ver na [Plataforma]" (transparência de destino)
+  - Verde conversão: "✓ Garantir Desconto" (benefício explícito)
+
+- **Otimização Mobile**:
+  - Botões full-width em dispositivos móveis
+  - Altura mínima 44px (Apple Human Interface Guidelines)
+  - Sticky CTA no footer após 50% de scroll
+
+**Técnicas de Conversão**:
+- **Urgência e Escassez**: Countdown timers, "Últimas X unidades", "Oferta expira em..."
+- **Prova Social**: Avaliações, número de compradores, "Produto mais vendido"
+- **Comparadores de Preço**: Tabelas mostrando mesmo produto em múltiplas plataformas
+- **Ancoragem de Preços**: Mostrar preço original riscado vs. oferta atual
+- **Cross-Sell**: "Quem comprou também levou..."
+
+**Framework de Testes A/B** (implementação em [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md#testes-ab)):
+
+Testes prioritários:
+1. Cor do botão de CTA (amarelo vs. roxo vs. verde)
+2. Texto do CTA ("Ver Preço" vs. "Comprar Agora" vs. "Ver Oferta")
+3. Posição do CTA principal (após intro vs. após características)
+4. Sticky CTA mobile (com vs. sem)
+5. Disclaimer (destacado vs. discreto)
+
+**Sistema de Tracking Expandido**:
+
+Campos adicionais na tabela `affiliate_clicks`:
+- `device` (mobile, desktop, tablet)
+- `country`, `region`, `city` (geolocalização via CloudFlare)
+- `link_position` (top, middle, bottom)
+- `scroll_depth_percentage` (quanto o usuário scrollou)
+- `is_suspicious`, `is_bot` (proteção contra fraude)
+
+**Dashboard de Afiliados** (especificação completa em [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md#dashboard-e-analytics)):
+- Overview diário: receita estimada, cliques totais, CTR médio, EPC
+- Breakdown por plataforma e dispositivo
+- Top 10 produtos mais clicados
+- Top 10 posts mais rentáveis
+- Alertas automáticos de performance (alta/baixa/oportunidades)
+
+---
+
+### 6.5. Compartilhamento
 
 - Botões de compartilhamento em cada post:
   - WhatsApp, Telegram, X, Facebook, e-mail.
@@ -260,7 +344,50 @@ Otimização para featured snippets (definições, listas, tabelas, FAQ/HowTo): 
 
 ---
 
-### 6.5. Backend & Painel Administrativo (Python)
+### 6.6. Internacionalização (i18n)
+
+**Visão Geral** (especificação completa em [PRD-internationalization.md](PRD-internationalization.md)):
+
+O geek.bidu.guru será construído desde o início com **suporte completo a internacionalização**, permitindo expansão gradual para múltiplos mercados.
+
+**Estrutura de URLs**:
+```
+https://geek.bidu.guru/pt-br/       → Brasil (padrão)
+https://geek.bidu.guru/pt-pt/       → Portugal
+https://geek.bidu.guru/es-mx/       → México
+https://geek.bidu.guru/es-ar/       → Argentina
+https://geek.bidu.guru/es-es/       → Espanha
+https://geek.bidu.guru/en-us/       → Estados Unidos
+```
+
+**Arquitetura Multi-idioma**:
+- Tabelas de tradução separadas (`post_translations`, `product_translations`)
+- Preços localizados por país e plataforma (`product_prices` com locale)
+- Programas de afiliados por país (Amazon.com.br, Amazon.com.mx, Amazon.com, etc.)
+- Hreflang tags para SEO internacional
+- Detecção automática de locale (URL > Cookie > Accept-Language > IP > fallback)
+
+**Roadmap de Expansão**:
+1. **Fase 1 (Meses 1-6)**: Brasil (pt-BR) - Fundação com infraestrutura i18n pronta
+2. **Fase 2 (Meses 7-9)**: Portugal (pt-PT) - Primeira expansão internacional
+3. **Fase 3 (Meses 10-15)**: América Latina Hispânica (es-MX, es-AR, es-CO)
+4. **Fase 4 (Meses 16-24)**: Espanha (es-ES) e Estados Unidos (en-US)
+
+**Tradução Automática**:
+- Workflow n8n integrado com LLM para tradução de conteúdo
+- Adaptação cultural (não apenas tradução literal)
+- Keywords research por país/idioma
+- Status de tradução (pending, auto, reviewed, published)
+
+**Benefícios**:
+- Escala de tráfego 5-10x (múltiplos mercados)
+- Diversificação de receita (menos dependência de um país)
+- Vantagem competitiva (poucos blogs geek multilíngues)
+- Potencial de audiência: 300+ milhões (português + espanhol)
+
+---
+
+### 6.7. Backend & Painel Administrativo (Python)
 
 - Backend em Python com:
   - **FastAPI** (sugestão) para API REST e backend de aplicação.
@@ -957,13 +1084,23 @@ Estrutura sugerida:
   - Documentar **estratégia de keywords** e iniciar **featured snippets** (FAQ/HowTo/listas/tabelas).
   - Implementar **schemas avançados** e **internal linking** (hubs & clusters).
 
-- **Fase 3 – IA e Pesquisa Qualificada**
+- **Fase 3 – IA, Pesquisa Qualificada e Internacionalização**
   - Implementar Fluxo E (pesquisa qualificada com IA).
   - Refinar copy gerada via IA (guidelines, prompts).
   - Operacionalizar Content Recycling (1 → 24) conforme documento, com automações para sociais/newsletter.
   - Iniciar **exportação BigQuery** (GA4) e análises de **coortes/LTV**.
   - **Video SEO** (VideoObject + video sitemap) e rollout de conteúdos em vídeo.
-  - **International SEO**: preparar hreflang e estratégia (ver `PRD-internationalization.md`).
+  - **Internacionalização**: Implementar infraestrutura completa de i18n conforme [PRD-internationalization.md](PRD-internationalization.md)
+    - Tabelas de tradução e localização
+    - Workflow de tradução automática (n8n + LLM)
+    - Hreflang tags e sitemap multilingue
+    - Lançamento Portugal (pt-PT) como primeiro mercado internacional
+  - **Estratégia de Afiliados Avançada**: Implementar melhorias conforme [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md)
+    - Dashboard completo de afiliados com métricas detalhadas
+    - Sistema de scorecard de produtos
+    - Framework de testes A/B estruturado
+    - Otimização de CTAs e técnicas de conversão
+    - Sistema de alertas automáticos
   - **Voice Search**: conteúdo conversacional + `Speakable` (quando aplicável).
 
 - **Fase 4 – Crescimento & Otimização**
