@@ -1,7 +1,7 @@
 
 # PRD – geek.bidu.guru – Blog de Presentes Geek com Automação e IA
 
-**Versão:** 1.2
+**Versão:** 1.3
 **Responsável:** Squad Conteúdo & Automação
 **Stack:** Python (frontend + backend), PostgreSQL, n8n, integrações com APIs de afiliados (Amazon, Mercado Livre, Shopee)
 **Domínio:** `https://geek.bidu.guru`
@@ -9,6 +9,7 @@
 **Documentos Complementares:**
 - **[PRD-affiliate-strategy.md](PRD-affiliate-strategy.md)** - Estratégia detalhada de marketing de afiliados
 - **[PRD-internationalization.md](PRD-internationalization.md)** - Especificação de internacionalização (i18n)
+- **[PRD-design-system.md](PRD-design-system.md)** - Sistema de design, componentes e especificações de UX/UI
 
 ---
 
@@ -954,6 +955,8 @@ Passos:
 
 ## 12. Guia de Comunicação Visual & Layout
 
+> **Especificação Completa**: Ver [PRD-design-system.md](PRD-design-system.md) para design tokens, componentes, acessibilidade, performance e implementação detalhada do sistema de design.
+
 ### 12.1. Posicionamento de Marca
 
 - **Nome/Site:** geek.bidu.guru  
@@ -984,6 +987,35 @@ Guia de estilo completo (brand voice chart, exemplos e diretrizes para IA): `doc
   - Texto secundário: `#9CA3AF`
 
 > O blog pode adotar **dark theme** como identidade principal (reforça o universo geek), com a possibilidade futura de um toggle light/dark.
+
+**Design Tokens** (especificação completa em [PRD-design-system.md](PRD-design-system.md#design-tokens)):
+
+O sistema de design utiliza **CSS Custom Properties** para garantir consistência e facilitar manutenção:
+
+```css
+:root {
+  /* Primary Colors (Purple Geek) */
+  --color-primary-500: #7C3AED;
+  --color-primary-600: #6D28D9;
+
+  /* Accent Colors (Yellow CTA) */
+  --color-accent-500: #FACC15;
+  --color-accent-600: #F59E0B;
+
+  /* Dark Theme Backgrounds */
+  --bg-primary: #020617;
+  --bg-secondary: #0F172A;
+  --bg-tertiary: #1E293B;
+
+  /* Spacing (4px scale) */
+  --space-4: 1rem;      /* 16px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+
+  /* Touch Targets */
+  --touch-target-min: 44px;
+}
+```
 
 ### 12.3. Tipografia
 
@@ -1055,19 +1087,80 @@ Estrutura sugerida:
 
 ### 12.7. Layout – Responsivo
 
-- Mobile-first:  
-  - Menus colapsados (hambúrguer).  
-  - Cards em coluna única.  
+- Mobile-first:
+  - Menus colapsados (hambúrguer).
+  - Cards em coluna única.
   - Botões grandes, fáceis de clicar (tamanho mínimo 44px de altura).
+
+### 12.8. Acessibilidade (WCAG 2.1 AA)
+
+**Requisitos Obrigatórios** (detalhes em [PRD-design-system.md](PRD-design-system.md#acessibilidade)):
+
+- **Contraste de Cores**: Mínimo 4.5:1 para texto normal, 3:1 para texto grande (18px+ ou 14px+ bold)
+- **Navegação por Teclado**: Todos os elementos interativos acessíveis via Tab, Enter e Espaço
+- **Skip Links**: Link "Pular para conteúdo" no topo da página
+- **Focus Visible**: Estados de foco claramente visíveis em todos os elementos interativos
+- **ARIA Labels**: Uso correto de `aria-label`, `aria-labelledby` e `role` onde necessário
+- **Alt Text**: Todas as imagens com texto alternativo descritivo
+- **Estrutura Semântica**: Uso correto de HTML5 semântico (`<header>`, `<nav>`, `<main>`, `<article>`, `<aside>`, `<footer>`)
+
+**Checklist de Validação**:
+- [ ] Contraste validado com Lighthouse/WAVE
+- [ ] Navegação por teclado testada em todas as páginas
+- [ ] Leitores de tela compatíveis (NVDA/JAWS)
+- [ ] Formulários com labels e mensagens de erro claras
+
+### 12.9. Performance e Otimização de Imagens
+
+**Metas de Performance** (alinhadas com Core Web Vitals em seção 7):
+
+- **LCP (Largest Contentful Paint)**: < 2s (ideal), < 2.5s (aceitável)
+- **FID (First Input Delay)**: < 50ms (ideal), < 100ms (aceitável)
+- **CLS (Cumulative Layout Shift)**: < 0.05 (ideal), < 0.1 (aceitável)
+
+**Estratégias de Otimização de Imagens** (especificação completa em [PRD-design-system.md](PRD-design-system.md#performance-e-imagens)):
+
+- **Formato WebP**: Prioridade para WebP com fallback JPG/PNG
+- **Responsive Images**: Uso de `srcset` e `sizes` para diferentes breakpoints
+- **Lazy Loading**: `loading="lazy"` em todas as imagens abaixo da dobra
+- **Dimensionamento**: Especificar `width` e `height` para evitar CLS
+- **CDN**: Servir imagens via CDN com cache agressivo
+
+**Exemplo de Implementação**:
+```html
+<picture>
+  <source type="image/webp" srcset="
+    /images/produto-320.webp 320w,
+    /images/produto-640.webp 640w,
+    /images/produto-1024.webp 1024w
+  " sizes="(max-width: 640px) 100vw, 50vw">
+  <img src="/images/produto-640.jpg"
+       alt="Descrição do produto"
+       width="640" height="480"
+       loading="lazy">
+</picture>
+```
+
+**Critical CSS**: Inline de CSS crítico (above-the-fold) para acelerar FCP (First Contentful Paint)
+
+**Font Loading**: Estratégia de `font-display: swap` para evitar FOIT (Flash of Invisible Text)
 
 ---
 
 ## 13. Roadmap Macro (Resumo)
 
-- **Fase 1 – Base técnica (Python + PostgreSQL + Layout inicial)**
+- **Fase 1 – Base técnica (Python + PostgreSQL + Design System)**
   - Implementar backend FastAPI + PostgreSQL.
   - Modelagem de dados (posts, produtos, relacionamentos).
-  - Templates Jinja2 com layout básico e guia visual inicial.
+  - **Implementar Design System** conforme [PRD-design-system.md](PRD-design-system.md):
+    - Setup de design tokens (CSS custom properties)
+    - Sistema de cores com dark theme como padrão
+    - Tipografia responsiva com clamp()
+    - Grid system (12 colunas)
+    - Componentes base (botões, cards, formulários)
+    - Acessibilidade WCAG 2.1 AA (contraste, navegação por teclado, ARIA)
+    - Performance (responsive images, lazy loading, critical CSS)
+  - Templates Jinja2 com layout baseado no design system.
   - Painel administrativo simples.
   - API REST para posts/produtos.
 
