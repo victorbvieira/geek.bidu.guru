@@ -20,6 +20,17 @@ Relacionado: PRD.md §3, §7 (Analytics), §11 (Relatórios)
 - Métricas: North Star (Receita mensal), tráfego (visitantes/pageviews), conversão (CTR afiliados, taxa de conversão quando disponível), conteúdo (posts publicados, sucesso n8n), performance (Core Web Vitals, uptime).  
 - Segmentos: fonte de tráfego, dispositivo, tipo de conteúdo.
 
+Template (Looker Studio) sugerido:
+- Fontes: Conector GA4 (propriedade do site), Conector Search Console (Site Impression), opcional CSV/Sheets para metas.  
+- Páginas:  
+  - Visão Geral: North Star, tráfego 30 dias, mix de canais, dispositivos.  
+  - Afiliados: CTR, EPC/RPM (campos calculados), por plataforma (se integrar dados externos).  
+  - SEO: queries top, CTR por query, páginas top por cliques.  
+- Filtros: intervalo de datas, dispositivo, fonte/mídia, `post_type`, `persona_focus`.  
+- Campos calculados:  
+  - `affiliate_ctr = affiliate_clicks / sessions`  
+  - `rpm = (revenue / pageviews) * 1000` (se receita disponível)
+
 ---
 
 ## Dashboard de Conteúdo (Editores/SEO)
@@ -28,6 +39,16 @@ Relacionado: PRD.md §3, §7 (Analytics), §11 (Relatórios)
 - Métricas: Top posts (pageviews/tempo/CTR afiliado), performance por categoria, keywords (novas/perdidas), calendário de publicações (draf/agenda).  
 - Insights: oportunidades (categorias com pouco conteúdo mas alto RPM/CTR).
 
+Template (Looker Studio) sugerido:
+- Fontes: GA4 (eventos `view_post`, `affiliate_click`, `scroll`), Search Console (páginas).  
+- Seções/Gráficos:  
+  - Tabela Top Posts (pageviews, avg engagement time, affiliate_clicks, CTR).  
+  - Heatmap por dia/hora.  
+  - Performance por categoria e `post_type`.  
+  - Keywords (SC): novas/perdidas/melhores ganhos.  
+- Filtros: data, categoria, `post_type`, `persona_focus`.  
+- Campos: `affiliate_ctr`, `scroll_50_rate` (se event count/users), `avg_time`.
+
 ---
 
 ## Dashboard de Afiliados (Marketing)
@@ -35,6 +56,16 @@ Relacionado: PRD.md §3, §7 (Analytics), §11 (Relatórios)
 - Atualização: diária.  
 - Métricas: receita por plataforma, top produtos, top posts por receita, CTR por tipo de post, funil de afiliados (view → click → redirect → conversão), alertas (links quebrados/produtos esgotados).  
 - Segmentos: plataforma, persona_focus, dispositivo.
+
+Template (Looker Studio) sugerido:
+- Fontes: GA4 (eventos), planilha/API com receita por plataforma (se disponível), PostgreSQL (cliques `affiliate_clicks`/`goto_redirect` via conector).  
+- Seções/Gráficos:  
+  - Receita por plataforma (mês/dia).  
+  - Top 10 produtos e posts por cliques/receita.  
+  - Funil: view → click → redirect → conversão (se dados).  
+  - Tabela por `post_type` e `platform` com CTR/RPM.  
+- Filtros: data, plataforma, `post_type`, `persona_focus`.  
+- Campos: `rpm`, `epc = revenue / clicks` (se receita disponível).
 
 ---
 
@@ -46,4 +77,3 @@ Relacionado: PRD.md §3, §7 (Analytics), §11 (Relatórios)
 - Trimestral: tendências, sazonalidades, planejamento de picos (Natal/BF/namorados).
 
 Automação sugerida: n8n enviando PDF/links para Telegram/Email.
-

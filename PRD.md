@@ -453,6 +453,74 @@ Processo padronizado (hipótese → ICE → execução → análise → rollout)
 - `created_at`
 - `updated_at`
 
+### 9.5. Testes A/B
+
+Tabelas para instrumentação e auditoria de experimentos A/B. Ver também `docs/analytics/ab-testing-framework.md`.
+
+#### 9.5.1. Tabela `ab_tests`
+
+Campos:
+- `id` UUID (PK)
+- `name` (varchar)
+- `hypothesis` (text)
+- `primary_metric` (varchar) — ex.: `affiliate_ctr`
+- `area` (varchar) — ex.: `cta_button`, `listicle_table`
+- `target_type` (varchar) — ex.: `post`, `sitewide`
+- `target_id` (UUID, nullable) — FK opcional para `posts.id` quando aplicável
+- `status` (enum: `running`, `paused`, `completed`)
+- `variant_a_pct` (numeric)
+- `variant_b_pct` (numeric)
+- `start_at` (timestamp)
+- `end_at` (timestamp, nullable)
+- `created_at`, `updated_at`
+
+DDL sugerido:
+```sql
+CREATE TABLE ab_tests (
+  id UUID PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  hypothesis TEXT NOT NULL,
+  primary_metric VARCHAR(64) NOT NULL,
+  area VARCHAR(64) NOT NULL,
+  target_type VARCHAR(32) NOT NULL,
+  target_id UUID NULL REFERENCES posts(id),
+  status VARCHAR(16) NOT NULL CHECK (status IN ('running','paused','completed')),
+  variant_a_pct NUMERIC(5,2) NOT NULL DEFAULT 50.00,
+  variant_b_pct NUMERIC(5,2) NOT NULL DEFAULT 50.00,
+  start_at TIMESTAMP NOT NULL,
+  end_at TIMESTAMP NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
+
+#### 9.5.2. Tabela `ab_test_events`
+
+Campos:
+- `id` (PK)
+- `test_id` (FK → `ab_tests.id`)
+- `variant` (enum: `A`, `B`)
+- `session_id` (varchar, para correlacionar com GA4/export)
+- `event_type` (enum: `exposure`, `view`, `click`)
+- `post_id` (FK opcional para `posts.id`)
+- `occurred_at` (timestamp)
+
+DDL sugerido:
+```sql
+CREATE TABLE ab_test_events (
+  id UUID PRIMARY KEY,
+  test_id UUID NOT NULL REFERENCES ab_tests(id),
+  variant CHAR(1) NOT NULL CHECK (variant IN ('A','B')),
+  session_id VARCHAR(64) NOT NULL,
+  event_type VARCHAR(16) NOT NULL CHECK (event_type IN ('exposure','view','click')),
+  post_id UUID NULL REFERENCES posts(id),
+  occurred_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_ab_events_test_time ON ab_test_events (test_id, occurred_at);
+CREATE INDEX idx_ab_events_session ON ab_test_events (session_id);
+```
+
 ---
 
 ## 10. Especificação de API (REST – Resumo)
