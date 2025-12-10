@@ -88,6 +88,30 @@ Para acompanhamento mensal segmentado por persona (via GA4, dimensões/segmentos
 
 Relatório mensal: consolidar tendências, conteúdos top por persona e ajustes de calendário/priorização.
 
+### 3.2. Metas SMART (12 meses)
+
+| Métrica | Baseline | 3 meses | 6 meses | 12 meses | Como medir |
+|---|---:|---:|---:|---:|---|
+| Tráfego orgânico (sessões/mês) | 0 | 5.000 | 15.000 | 50.000 | GA4 |
+| CTR orgânico (SERP) | — | 2% | 4% | 6% | Search Console |
+| Keywords ranqueadas | 0 | 50 | 150 | 500+ | Ahrefs/SEMrush |
+| Bounce rate | — | < 55% | < 50% | < 45% | GA4 |
+| Tempo na página | — | 1:30 | 2:00 | 2:30 | GA4 |
+| CTR de afiliados | — | 2–3% | 4–5% | 6–8% | Backend + GA4 |
+| Receita mensal (R$) | 0 | 500 | 2.000 | 5.000+ | Programas de afiliados |
+| RPM (R$/1k views) | — | 10 | 30 | 50+ | Calculado |
+| Posts publicados/mês | 0 | 30 | 30 | 30 | Backend |
+| Assinantes newsletter | 0 | 200 | 1.000 | 5.000 | Plataforma de email |
+
+Observação: revisar baseline após primeiros 30–60 dias de operação para calibrar metas.
+
+### 3.3. North Star & Drivers
+
+- North Star Metric: Receita mensal de afiliados.  
+- Primary drivers: CTR de afiliados, sessões orgânicas, taxa de conversão nas plataformas.  
+- Secondary drivers: posts publicados, keywords ranqueadas, tempo na página, RPM.  
+- Governance: reuniões quinzenais para revisão dos drivers e ações corretivas.
+
 ---
 
 ## 4. Público-Alvo & Personas (Resumo)
@@ -307,6 +331,14 @@ Hubs sazonais perenes (ex.: `/natal/`, `/black-friday/`, `/dia-dos-namorados/`) 
 
 Sistema para transformar pilares (listicles/guias) em múltiplos formatos (posts individuais, infográfico, social, vídeo, newsletter, thread). Processo, métricas e UTMs: `docs/content/content-recycling.md`.
 
+### 6.13. Funis de Conversão
+
+Definições e instrumentação dos funis de Tráfego Orgânico, Afiliados e Newsletter. Ver `docs/analytics/funnels.md` e o Plano de Tracking (GA4) em `docs/analytics/tracking-plan.md`.
+
+### 6.14. Framework de Testes A/B
+
+Processo padronizado (hipótese → ICE → execução → análise → rollout) com instrumentação em GA4 e opcional no backend. Detalhes: `docs/analytics/ab-testing-framework.md`.
+
 ---
 
 ## 7. Requisitos Não Funcionais
@@ -325,7 +357,10 @@ Sistema para transformar pilares (listicles/guias) em múltiplos formatos (posts
   - **Orquestração:** Docker Compose para gerenciar os serviços.
   - Possibilidade de replicação do banco no futuro.
 - **Analytics:**
-  - Integração com **Google Analytics 4 (GA4)** ou solução gratuita equivalente para tracking de acessos.
+  - **GA4** com plano de tracking de eventos e parâmetros conforme `docs/analytics/tracking-plan.md`.
+  - **Dashboards** (Looker Studio/Metabase) conforme `docs/analytics/dashboards.md` e cadência `docs/analytics/reporting-cadence.md`.
+  - **Heatmaps/Recordings:** Microsoft Clarity (ou similar) para insights qualitativos.
+  - **Exportação BigQuery (opcional):** habilitar para coortes e LTV.
 - **LGPD:**
   - Política de cookies.
   - Coleta explícita de consentimento para newsletter.
@@ -650,6 +685,23 @@ Sistema para transformar pilares (listicles/guias) em múltiplos formatos (posts
    - Publicar imediatamente.
    - Acionar **Fluxo D** para divulgar nas redes sociais do blog.
 
+### 11.7. Fluxo G – Relatórios Automatizados
+
+Objetivo: enviar relatórios diário/semanal/mensal para stakeholders.  
+Gatilho: Cron diário/semanal/mensal.  
+Passos (alto nível):
+1) Coletar métricas de GA4/Search Console/PostgreSQL (cliques afiliados)  
+2) Compilar resumo e links de dashboards (Looker Studio)  
+3) Enviar via Telegram/Email aos destinatários  
+Especificação de conteúdo/cadência: `docs/analytics/reporting-cadence.md`.
+
+### 11.8. Fluxo H – Alertas e Monitoramento
+
+Objetivo: alertar automaticamente sobre anomalias ou falhas.  
+Gatilho: Cron a cada X minutos + checagens (uptime, tráfego, n8n).  
+Exemplos de alertas: queda de tráfego > 30% (vs semana anterior), CTR < 2%, falha em fluxo A/B, erro 500.  
+Implementação sugerida: integração Telegram conforme exemplo em `agents/data-analyst.md` (seção de alertas), com thresholds configuráveis.
+
 ---
 
 ## 12. Guia de Comunicação Visual & Layout
@@ -778,11 +830,15 @@ Estrutura sugerida:
   - Implementar Fluxo C (atualização de preços).
   - Formalizar calendário editorial anual e scorecard de curadoria (documentos vinculados no PRD).
   - Criar hubs sazonais prioritários (`/natal/`, `/black-friday/`, `/dia-dos-namorados/`).
+  - Implementar **framework de Testes A/B** (docs/analytics/ab-testing-framework.md).
+  - Configurar **GA4** conforme plano de tracking e **Clarity** (heatmaps).
+  - Publicar **dashboards** (Executivo, Conteúdo, Afiliados) e **relatórios automatizados**.
 
 - **Fase 3 – IA e Pesquisa Qualificada**
   - Implementar Fluxo E (pesquisa qualificada com IA).
   - Refinar copy gerada via IA (guidelines, prompts).
   - Operacionalizar Content Recycling (1 → 24) conforme documento, com automações para sociais/newsletter.
+  - Iniciar **exportação BigQuery** (GA4) e análises de **coortes/LTV**.
 
 - **Fase 4 – Crescimento & Otimização**
   - Quiz, newsletter mais robusta, testes A/B.
