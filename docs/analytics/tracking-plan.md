@@ -1,8 +1,8 @@
 # Plano de Tracking (GA4) — geek.bidu.guru
 
-Versão: 1.0  
-Última atualização: 2025-12-10  
-Relacionado: PRD.md §3, §6.13–6.14, §7 (Analytics)
+Versão: 1.1
+Última atualização: 2025-12-10
+Relacionado: PRD.md §3, §6.13–6.14, §7 (Analytics), reports/data-analyst-analysis.md
 
 ---
 
@@ -117,7 +117,229 @@ Eventos automáticos do GA4 (page_view etc.) permanecem. A seguir, eventos custo
 
 ## Exportação e Integrações
 
-- BigQuery Export (GA4) para análises de coorte, LTV e segmentações avançadas.  
-- Integração com Search Console no Looker Studio.  
+- BigQuery Export (GA4) para análises de coorte, LTV e segmentações avançadas.
+- Integração com Search Console no Looker Studio.
 - Integração com backend (PostgreSQL) para cliques de afiliados.
+
+---
+
+## Dimensões Customizadas (GA4)
+
+### Configuração de Dimensões
+
+| Dimensão | Escopo | Tipo | Uso |
+|----------|--------|------|-----|
+| `persona_focus` | Event | String | Persona alvo do conteúdo (Ana/Lucas/Marina) |
+| `post_type` | Event | String | Tipo de post (product_single, listicle, guide) |
+| `price_range` | Event | String | Faixa de preço (budget, mid, premium) |
+| `affiliate_platform` | Event | String | Plataforma de afiliado (amazon, mercadolivre, shopee) |
+| `cta_position` | Event | String | Posição do CTA (intro, middle, end, sidebar) |
+| `ab_test_variant` | Event | String | Variante do teste A/B (A, B) |
+| `content_age_days` | Event | Number | Idade do conteúdo em dias |
+| `franchise` | Event | String | Franquia geek (star_wars, marvel, anime) |
+
+### Métricas Customizadas
+
+| Métrica | Tipo | Uso |
+|---------|------|-----|
+| `affiliate_revenue_estimate` | Currency | Receita estimada do clique |
+| `product_score` | Number | Score interno do produto (0-100) |
+| `scroll_depth_at_click` | Number | % scrollado no momento do clique |
+
+---
+
+## Eventos Avançados (Fase 2+)
+
+### 11) `wishlist_add`
+- Quando: usuário adiciona produto à wishlist
+- Params:
+  - `product_id`, `product_name`, `price`
+  - `platform`, `franchise`
+
+### 12) `wishlist_remove`
+- Quando: usuário remove produto da wishlist
+- Params:
+  - `product_id`
+
+### 13) `price_alert_set`
+- Quando: usuário configura alerta de preço
+- Params:
+  - `product_id`, `target_price`, `current_price`
+
+### 14) `price_alert_triggered`
+- Quando: alerta de preço é acionado
+- Params:
+  - `product_id`, `old_price`, `new_price`, `discount_percent`
+
+### 15) `quiz_start`
+- Quando: usuário inicia quiz de recomendação
+- Params:
+  - `quiz_type` (presente_ideal, qual_geek, etc.)
+
+### 16) `quiz_complete`
+- Quando: usuário completa quiz
+- Params:
+  - `quiz_type`, `result_persona`, `products_shown`
+
+### 17) `compare_view`
+- Quando: usuário visualiza comparativo de produtos
+- Params:
+  - `product_ids` (array), `category`
+
+### 18) `email_optin`
+- Quando: usuário se inscreve via formulário específico
+- Params:
+  - `source` (post, modal, footer, sidebar)
+  - `incentive` (cupom, ebook, none)
+
+---
+
+## Funis de Conversão
+
+### Funil 1: Afiliado Completo
+```
+page_view → view_post → scroll (50%) → affiliate_click → [conversão externa]
+```
+
+### Funil 2: Newsletter
+```
+page_view → newsletter_optin_view → sign_up
+```
+
+### Funil 3: Wishlist → Compra
+```
+page_view → wishlist_add → price_alert_set → price_alert_triggered → affiliate_click
+```
+
+### Funil 4: Quiz → Conversão
+```
+quiz_start → quiz_complete → affiliate_click
+```
+
+---
+
+## Alertas Automatizados
+
+### Configurar alertas no GA4 para:
+
+1. **Queda de Tráfego**: >30% queda vs semana anterior
+2. **CTR Baixo**: CTR de afiliados <2% em 24h
+3. **Bounce Rate Alto**: >60% em posts novos
+4. **Erro de Tracking**: Eventos sem parâmetros obrigatórios
+
+### Implementação de Alertas (n8n)
+
+```javascript
+// Verificar anomalias diariamente
+const metricsToCheck = {
+  'affiliate_click_rate': { threshold: 0.02, direction: 'below' },
+  'bounce_rate': { threshold: 0.60, direction: 'above' },
+  'pageviews': { threshold: -0.30, direction: 'change' }
+};
+```
+
+---
+
+## Integração com Microsoft Clarity
+
+### Eventos de Heatmap
+
+Configurar para rastrear:
+- Cliques em botões de afiliado
+- Scroll depth em posts longos
+- Rage clicks (frustração)
+- Dead clicks (cliques sem resposta)
+
+### Sessões para Análise
+
+Filtrar sessões por:
+- Usuários que clicaram em afiliados
+- Usuários que abandonaram antes do CTA
+- Mobile vs Desktop
+
+---
+
+## Código de Implementação
+
+### gtag.js - Eventos Principais
+
+```javascript
+// affiliate_click
+function trackAffiliateClick(productData, postData, ctaData) {
+  gtag('event', 'affiliate_click', {
+    product_id: productData.id,
+    product_name: productData.name,
+    platform: productData.platform,
+    price: productData.price,
+    post_id: postData.id,
+    post_slug: postData.slug,
+    position: ctaData.position,
+    cta_variant: ctaData.variant,
+    scroll_depth: getScrollDepth(),
+    ab_test_id: ctaData.abTestId || null,
+    ab_variant: ctaData.abVariant || null
+  });
+}
+
+// scroll tracking
+let scrollMilestones = [25, 50, 75, 90];
+let trackedMilestones = [];
+
+window.addEventListener('scroll', () => {
+  const scrollPercent = Math.round(
+    (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+  );
+
+  scrollMilestones.forEach(milestone => {
+    if (scrollPercent >= milestone && !trackedMilestones.includes(milestone)) {
+      trackedMilestones.push(milestone);
+      gtag('event', 'scroll', {
+        percent_scrolled: milestone,
+        page_path: window.location.pathname
+      });
+    }
+  });
+});
+
+// Helper: Get current scroll depth
+function getScrollDepth() {
+  return Math.round(
+    (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+  );
+}
+```
+
+### Data Layer para GTM
+
+```javascript
+// Push para data layer
+dataLayer.push({
+  event: 'affiliate_click',
+  ecommerce: {
+    items: [{
+      item_id: productData.id,
+      item_name: productData.name,
+      affiliation: productData.platform,
+      price: productData.price
+    }]
+  }
+});
+```
+
+---
+
+## Validação e QA
+
+### Checklist de Validação
+
+- [ ] Todos os eventos disparam no GA4 Debug View
+- [ ] Parâmetros obrigatórios estão presentes
+- [ ] Valores de enum estão corretos
+- [ ] Eventos não duplicam
+- [ ] Mobile e desktop comportamento idêntico
+- [ ] Consent mode funciona corretamente
+
+### Ferramenta de Teste
+
+Usar Google Tag Assistant ou GA4 Debugger para validar implementação antes de produção.
 

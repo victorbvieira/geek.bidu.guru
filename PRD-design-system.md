@@ -1772,6 +1772,449 @@ document.querySelector('.theme-toggle').addEventListener('click', toggleTheme);
 
 ---
 
+## 🔄 Estados de Loading e Skeleton
+
+### Skeleton Screens
+
+Skeleton loading proporciona melhor UX que spinners tradicionais, mostrando a estrutura da página enquanto carrega.
+
+```css
+/* Base do Skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton de texto */
+.skeleton-text {
+  height: 1em;
+  margin-bottom: var(--space-2);
+}
+
+.skeleton-text--title {
+  height: 2em;
+  width: 70%;
+}
+
+.skeleton-text--short {
+  width: 40%;
+}
+
+/* Skeleton de imagem */
+.skeleton-image {
+  aspect-ratio: 16/9;
+  width: 100%;
+}
+
+.skeleton-image--square {
+  aspect-ratio: 1/1;
+}
+
+/* Skeleton de botão */
+.skeleton-button {
+  height: var(--touch-target-min);
+  width: 200px;
+}
+
+/* Skeleton de card de produto */
+.skeleton-card-product {
+  padding: var(--space-6);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-card-product .skeleton-image {
+  margin-bottom: var(--space-4);
+}
+```
+
+#### HTML Exemplo - Card de Produto Loading
+
+```html
+<div class="card card-product skeleton-card-product">
+  <div class="skeleton skeleton-image skeleton-image--square"></div>
+  <div class="skeleton skeleton-text skeleton-text--title"></div>
+  <div class="skeleton skeleton-text"></div>
+  <div class="skeleton skeleton-text skeleton-text--short"></div>
+  <div class="skeleton skeleton-button"></div>
+</div>
+```
+
+### Estados de Loading para Botões
+
+```css
+/* Botão com loading spinner */
+.btn.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: btn-spin 0.8s linear infinite;
+}
+
+/* Restaurar cor do texto para calcular currentColor */
+.btn-primary.is-loading::after {
+  border-color: #000;
+  border-top-color: transparent;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estados de sucesso e erro pós-ação */
+.btn.is-success {
+  background: var(--color-success-500) !important;
+  pointer-events: none;
+}
+
+.btn.is-error {
+  background: var(--color-error-500) !important;
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+```
+
+---
+
+## ✨ Animações e Transições
+
+### Sistema de Animações
+
+```css
+/* Durations padronizadas */
+:root {
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
+}
+
+/* Easing functions */
+:root {
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+```
+
+### Animações de Entrada
+
+```css
+/* Fade In */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in var(--duration-base) var(--ease-out);
+}
+
+/* Slide Up */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up var(--duration-slow) var(--ease-out);
+}
+
+/* Scale In (para modais) */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-base) var(--ease-out);
+}
+
+/* Stagger para listas (cards aparecendo em sequência) */
+.stagger-children > * {
+  animation: slide-up var(--duration-slow) var(--ease-out) backwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+```
+
+### Micro-interações
+
+```css
+/* Hover lift (cards, produtos) */
+.hover-lift {
+  transition: transform var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Pulse (notificações, badges) */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s var(--ease-in-out) infinite;
+}
+
+/* Bounce (CTAs, chamada de atenção) */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1s var(--ease-bounce) infinite;
+}
+
+/* Ripple effect (botões mobile) */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10%);
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.3s;
+}
+
+.ripple:active::after {
+  transform: scale(10);
+  opacity: 1;
+  transition: 0s;
+}
+```
+
+### Respeitar Preferências do Usuário
+
+```css
+/* Reduzir animações para usuários que preferem */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+---
+
+## 🚨 Estados de Erro e Feedback
+
+### Mensagens de Erro
+
+```css
+/* Container de erro */
+.error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-error-50);
+  border: 1px solid var(--color-error-500);
+  border-radius: var(--radius-md);
+  color: var(--color-error-700);
+}
+
+.error-message__icon {
+  flex-shrink: 0;
+  color: var(--color-error-500);
+}
+
+/* Mensagem de sucesso */
+.success-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-success-50);
+  border: 1px solid var(--color-success-500);
+  border-radius: var(--radius-md);
+  color: var(--color-success-700);
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-notification);
+  animation: slide-up var(--duration-slow) var(--ease-out);
+}
+
+.toast--success {
+  border-left: 4px solid var(--color-success-500);
+}
+
+.toast--error {
+  border-left: 4px solid var(--color-error-500);
+}
+
+.toast--warning {
+  border-left: 4px solid var(--color-warning-500);
+}
+
+/* Auto-dismiss */
+.toast.is-dismissing {
+  animation: fade-out var(--duration-base) var(--ease-in) forwards;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+```
+
+### Estados de Formulário
+
+```css
+/* Input normal */
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  transition: border-color var(--duration-fast),
+              box-shadow var(--duration-fast);
+}
+
+.input:hover {
+  border-color: var(--border-color-hover);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+/* Input com erro */
+.input.is-error {
+  border-color: var(--color-error-500);
+}
+
+.input.is-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* Input com sucesso */
+.input.is-success {
+  border-color: var(--color-success-500);
+}
+
+/* Label de erro */
+.input-error {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-error-500);
+}
+
+/* Helper text */
+.input-helper {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+```
+
+---
+
 ## ✅ Checklist de Implementação
 
 ### Fase 1 - Fundação (Semanas 1-4)
@@ -1920,8 +2363,8 @@ Com a implementação completa deste design system:
 
 ---
 
-**Versão**: 1.0
+**Versão**: 1.1
 **Última atualização**: 2025-12-10
-**Baseado em**: reports/ux-ui-designer-analysis.md
+**Baseado em**: reports/ux-ui-designer-analysis.md, reports/consolidated-analysis.md
 **Aprovação**: Pendente
 **Responsável**: Equipe de Produto + UX/UI Designer

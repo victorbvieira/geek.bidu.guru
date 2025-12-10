@@ -146,20 +146,35 @@ Se a pergunta envolver múltiplas áreas (ex: SEO + Backend), consulte TODOS os 
 geek.bidu.guru/
 ├── agents.md                           # Este arquivo (índice principal)
 ├── CLAUDE.MD                           # Instruções para Claude Code
-├── PRD.md                              # Product Requirements Document
-└── agents/
-    ├── README.md                       # Índice detalhado de agentes
-    ├── seo-specialist.md
-    ├── content-strategist.md
-    ├── affiliate-marketing-specialist.md
-    ├── ux-ui-designer.md
-    ├── data-analyst.md
-    ├── backend-developer.md
-    ├── database-architect.md
-    ├── devops-engineer.md
-    ├── automation-engineer.md
-    ├── frontend-developer.md
-    └── security-engineer.md
+├── PRD.md                              # Product Requirements Document (v1.4)
+├── PRD-design-system.md                # Sistema de design completo (v1.1)
+├── PRD-affiliate-strategy.md           # Estratégia de afiliados (v1.1)
+├── PRD-internationalization.md         # Internacionalização
+├── agents/
+│   ├── README.md                       # Índice detalhado de agentes
+│   ├── seo-specialist.md
+│   ├── content-strategist.md
+│   ├── affiliate-marketing-specialist.md
+│   ├── ux-ui-designer.md
+│   ├── data-analyst.md
+│   ├── backend-developer.md
+│   ├── database-architect.md
+│   ├── devops-engineer.md
+│   ├── automation-engineer.md
+│   ├── frontend-developer.md
+│   └── security-engineer.md
+├── docs/
+│   ├── analytics/
+│   │   ├── tracking-plan.md            # Plano de tracking GA4 (v1.1)
+│   │   ├── dashboards.md               # Especificação de dashboards
+│   │   ├── ab-testing-framework.md     # Framework de testes A/B
+│   │   └── reporting-cadence.md        # Cadência de relatórios
+│   ├── content/
+│   │   └── ...
+│   └── seo/
+│       └── ...
+└── reports/
+    └── consolidated-analysis.md        # Análise consolidada dos 6 especialistas
 ```
 
 ---
@@ -229,9 +244,21 @@ Quando adicionar ou modificar um agente:
 
 ### Versionamento
 
-- **Versão atual**: 1.0
+- **Versão atual**: 1.1
 - **Última atualização**: 2025-12-10
 - **Projeto**: geek.bidu.guru
+
+### Documentos Auxiliares Importantes
+
+Para uma visão completa do projeto, consulte também:
+
+| Documento | Descrição | Quando Consultar |
+|-----------|-----------|------------------|
+| `PRD.md` | Documento principal de requisitos | Visão geral do projeto |
+| `PRD-design-system.md` | Sistema de design completo | Cores, tipografia, componentes |
+| `PRD-affiliate-strategy.md` | Estratégia de afiliados | CTAs, conversão, tracking |
+| `docs/analytics/tracking-plan.md` | Plano GA4 | Eventos, métricas, funis |
+| `reports/consolidated-analysis.md` | Análise dos especialistas | Gaps e oportunidades |
 
 ---
 

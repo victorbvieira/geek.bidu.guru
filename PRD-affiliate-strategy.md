@@ -1721,6 +1721,344 @@ ORDER BY date DESC;
 
 ---
 
+## 📧 Email Marketing para Afiliados
+
+### Estratégia de Email
+
+O email marketing é um canal próprio com alto potencial de conversão para afiliados. Usuários de newsletter têm 3-5x maior probabilidade de clicar em links de afiliados.
+
+### Tipos de Email
+
+#### 1. Newsletter Semanal ("Radar Geek")
+
+```markdown
+Assunto: 🎮 5 achados geek da semana + cupom exclusivo
+
+Olá, [Nome]!
+
+Aqui estão os melhores produtos geek que encontramos esta semana:
+
+1. ⭐ DESTAQUE: Caneca Baby Yoda 350ml
+   De R$ 129,90 por R$ 79,90 (38% OFF)
+   [Ver na Amazon →]
+
+2. 🔥 Em Alta: Mousepad Gamer RGB 80x30cm
+   R$ 89,90 com frete grátis
+   [Ver no Mercado Livre →]
+
+3. 💰 Melhor Preço: Funko Pop Darth Vader
+   Menor preço em 60 dias!
+   [Ver na Shopee →]
+
+4. 🆕 Novidade: LEGO Star Wars 2025
+   Pré-venda com 20% OFF
+   [Ver na Amazon →]
+
+5. 🎁 Ideia de Presente: Kit Caneca + Camiseta Mandalorian
+   R$ 139,80 o combo
+   [Ver Combo →]
+
+---
+
+🎁 CUPOM EXCLUSIVO para assinantes:
+Use GEEK10 para 10% extra na Shopee
+
+Até a próxima semana!
+Equipe geek.bidu.guru
+```
+
+#### 2. Alertas de Preço
+
+```markdown
+Assunto: 🚨 Preço baixou! Baby Yoda por R$ 69,90 (-30%)
+
+[Nome], aquele produto que você estava de olho baixou de preço!
+
+📦 Caneca Térmica Baby Yoda 350ml
+
+Preço anterior: R$ 99,90
+Preço atual: R$ 69,90 (-30%)
+💰 Você economiza: R$ 30,00
+
+⏰ Oferta válida enquanto durar o estoque
+
+[🛒 Garantir Este Preço →]
+
+---
+
+Você recebe este alerta porque adicionou este produto à sua wishlist.
+[Gerenciar alertas]
+```
+
+#### 3. Email de Abandono de Wishlist
+
+```markdown
+Assunto: Aquele Funko ainda está esperando você... 👀
+
+[Nome], você deixou alguns produtos geek na sua wishlist!
+
+Produtos que você salvou:
+
+1. Funko Pop Grogu - R$ 89,90 [Ver Produto]
+2. Camiseta Mandalorian - R$ 59,90 [Ver Produto]
+3. Mousepad Star Wars - R$ 79,90 [Ver Produto]
+
+💡 Dica: Os preços podem mudar a qualquer momento.
+Ative alertas de preço para não perder promoções!
+
+[Ver Minha Wishlist →]
+```
+
+#### 4. Email de Boas-Vindas (Sequência)
+
+**Email 1 (Imediato):**
+```markdown
+Assunto: Bem-vindo ao Radar Geek! 🎮 Aqui está seu presente
+
+Olá, [Nome]!
+
+Seja bem-vindo(a) à newsletter do geek.bidu.guru!
+
+Aqui você vai receber:
+✅ Os melhores achados geek toda semana
+✅ Alertas de promoções imperdíveis
+✅ Cupons exclusivos para assinantes
+✅ Pré-vendas e lançamentos antes de todo mundo
+
+Para começar, aqui está um presente:
+🎁 Cupom BEMVINDO15 = 15% OFF em qualquer produto via Shopee
+
+[🎮 Ver Produtos em Destaque →]
+
+Até breve!
+```
+
+**Email 2 (3 dias depois):**
+```markdown
+Assunto: 3 produtos geek mais vendidos este mês
+
+[Nome], você sabia que esses são os produtos geek mais vendidos?
+
+[Lista de top 3 produtos com links]
+
+Não perca as melhores ofertas!
+```
+
+**Email 3 (7 dias depois):**
+```markdown
+Assunto: Crie sua wishlist e receba alertas de preço 🔔
+
+[Nome], você sabia que pode criar uma wishlist no geek.bidu.guru?
+
+Benefícios:
+✅ Receba alertas quando o preço baixar
+✅ Organize seus produtos favoritos
+✅ Cupons exclusivos para produtos da wishlist
+
+[Criar Minha Wishlist →]
+```
+
+### Segmentação de Lista
+
+```sql
+-- Segmentos de email marketing
+CREATE TABLE email_segments (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+
+    -- Interesses (baseado em cliques)
+    interests TEXT[],  -- ['star_wars', 'gaming', 'anime']
+
+    -- Faixa de preço preferida
+    price_preference VARCHAR(20),  -- 'budget', 'mid', 'premium'
+
+    -- Plataformas preferidas
+    preferred_platforms TEXT[],  -- ['amazon', 'mercado_livre']
+
+    -- Engajamento
+    last_email_opened_at TIMESTAMP,
+    last_click_at TIMESTAMP,
+    total_clicks INTEGER DEFAULT 0,
+    total_conversions INTEGER DEFAULT 0,
+
+    -- Status
+    is_active BOOLEAN DEFAULT true,
+    unsubscribed_at TIMESTAMP
+);
+```
+
+### Métricas de Email
+
+| Métrica | Meta | Benchmark |
+|---------|------|-----------|
+| Taxa de Abertura | 35-45% | 25-30% |
+| Taxa de Clique (CTR) | 8-12% | 5-7% |
+| Taxa de Conversão | 3-5% | 1-2% |
+| Unsubscribe Rate | <0.5% | 0.5-1% |
+
+---
+
+## 🛒 Cross-Sell e Bundles Avançados
+
+### Sistema de Recomendação
+
+```python
+def get_cross_sell_products(product_id: str, limit: int = 4) -> list:
+    """
+    Retorna produtos relacionados para cross-sell.
+
+    Critérios:
+    1. Mesma franquia/universo (Star Wars, Marvel, etc.)
+    2. Mesma categoria (canecas, camisetas, funkos)
+    3. Produtos frequentemente comprados juntos
+    4. Faixa de preço complementar
+    """
+    product = db.query(Product).get(product_id)
+
+    # 1. Produtos da mesma franquia
+    same_franchise = db.query(Product).filter(
+        Product.franchise == product.franchise,
+        Product.id != product_id,
+        ProductPrice.availability == 'available'
+    ).limit(limit // 2).all()
+
+    # 2. Produtos complementares (baseado em histórico)
+    complementary = db.query(Product).filter(
+        Product.id.in_(
+            db.query(PurchaseHistory.product_b_id).filter(
+                PurchaseHistory.product_a_id == product_id
+            )
+        )
+    ).limit(limit // 2).all()
+
+    return same_franchise + complementary
+```
+
+### Templates de Cross-Sell
+
+#### Template: Seção "Complete o Kit"
+
+```html
+<section class="cross-sell-section">
+  <h3>🎁 Complete Seu Kit Geek</h3>
+
+  <div class="bundle-suggestion">
+    <div class="bundle-header">
+      <span class="badge">COMBO EXCLUSIVO</span>
+      <p>Quem comprou <strong>Caneca Baby Yoda</strong> também levou:</p>
+    </div>
+
+    <div class="bundle-products">
+      <div class="product-mini">
+        <img src="mousepad.jpg" alt="Mousepad">
+        <span class="name">Mousepad Star Wars</span>
+        <span class="price">R$ 49,90</span>
+      </div>
+      <span class="plus">+</span>
+      <div class="product-mini">
+        <img src="camiseta.jpg" alt="Camiseta">
+        <span class="name">Camiseta Mandalorian</span>
+        <span class="price">R$ 59,90</span>
+      </div>
+    </div>
+
+    <div class="bundle-pricing">
+      <span class="original">R$ 189,70</span>
+      <span class="bundle-price">R$ 169,70</span>
+      <span class="savings">Economize R$ 20,00!</span>
+    </div>
+
+    <div class="bundle-ctas">
+      <a href="/goto/bundle-star-wars" class="btn btn-primary">
+        Ver Combo Completo
+      </a>
+    </div>
+  </div>
+</section>
+```
+
+#### Template: Tabela Comparativa Multi-Produto
+
+```html
+<section class="comparison-section">
+  <h3>📊 Compare e Escolha</h3>
+
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Produto</th>
+        <th>Preço</th>
+        <th>Avaliação</th>
+        <th>Destaque</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="best-choice">
+        <td>
+          <span class="badge">MELHOR ESCOLHA</span>
+          <strong>Caneca Baby Yoda Premium</strong>
+        </td>
+        <td>R$ 89,90</td>
+        <td>⭐ 4.9 (2.340)</td>
+        <td>Térmica 6h, 450ml</td>
+        <td><a href="/goto/caneca-premium" class="btn">Ver</a></td>
+      </tr>
+      <tr>
+        <td><strong>Caneca Baby Yoda Básica</strong></td>
+        <td>R$ 49,90</td>
+        <td>⭐ 4.5 (890)</td>
+        <td>Cerâmica 350ml</td>
+        <td><a href="/goto/caneca-basica" class="btn">Ver</a></td>
+      </tr>
+      <tr>
+        <td><strong>Kit 2 Canecas Baby Yoda</strong></td>
+        <td>R$ 79,90</td>
+        <td>⭐ 4.7 (456)</td>
+        <td>Ideal para casal</td>
+        <td><a href="/goto/kit-canecas" class="btn">Ver</a></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+```
+
+### Upsell por Faixa de Preço
+
+```python
+def get_upsell_products(product_id: str, price_range: str = 'similar') -> list:
+    """
+    Sugere produtos de upsell baseado na faixa de preço.
+
+    - 'similar': Produtos na mesma faixa (+/- 20%)
+    - 'premium': Produtos 30-50% mais caros
+    - 'value': Kits/combos com melhor custo-benefício
+    """
+    product = db.query(Product).get(product_id)
+    current_price = product.prices[0].price
+
+    if price_range == 'premium':
+        min_price = current_price * 1.3
+        max_price = current_price * 1.5
+    elif price_range == 'value':
+        # Buscar combos/kits
+        return db.query(Product).filter(
+            Product.type == 'bundle',
+            Product.franchise == product.franchise
+        ).all()
+    else:  # similar
+        min_price = current_price * 0.8
+        max_price = current_price * 1.2
+
+    return db.query(Product).join(ProductPrice).filter(
+        ProductPrice.price.between(min_price, max_price),
+        Product.id != product_id,
+        Product.category == product.category
+    ).limit(4).all()
+```
+
+---
+
 ## 🎓 Conclusão
 
 Com a implementação desta estratégia detalhada de afiliados, o geek.bidu.guru pode atingir:
@@ -1734,8 +2072,8 @@ Posicionando o projeto no **top 10% de sites de afiliados brasileiros**.
 
 ---
 
-**Versão**: 1.0
+**Versão**: 1.1
 **Última atualização**: 2025-12-10
-**Baseado em**: reports/affiliate-marketing-analysis.md
+**Baseado em**: reports/affiliate-marketing-analysis.md, reports/affiliate-marketing-specialist-analysis.md, reports/consolidated-analysis.md
 **Aprovação**: Pendente
 **Responsável**: Equipe de Produto + Affiliate Marketing Specialist

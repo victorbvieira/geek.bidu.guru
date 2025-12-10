@@ -14,8 +14,14 @@
 - Stack 100% Python (FastAPI + PostgreSQL + Docker)
 
 **Documentação Principal**:
-- **PRD completo**: `PRD.md` - Leia PRIMEIRO para entender o projeto
+- **PRD completo**: `PRD.md` (v1.4) - Leia PRIMEIRO para entender o projeto
 - **Agentes especializados**: `agents.md` e `agents/README.md`
+
+**Documentação Auxiliar** (consulte quando relevante):
+- **Sistema de Design**: `PRD-design-system.md` (v1.1) - Cores, tipografia, componentes
+- **Estratégia de Afiliados**: `PRD-affiliate-strategy.md` (v1.1) - CTAs, conversão, tracking
+- **Plano de Tracking**: `docs/analytics/tracking-plan.md` - Eventos GA4, métricas
+- **Análise Consolidada**: `reports/consolidated-analysis.md` - Gaps e oportunidades identificados
 
 ---
 
@@ -113,7 +119,10 @@ Pergunta: "Como implementar autenticação JWT?"
 
 ```
 geek.bidu.guru/
-├── PRD.md                      # LEIA PRIMEIRO
+├── PRD.md                      # LEIA PRIMEIRO (v1.4)
+├── PRD-design-system.md        # Sistema de design completo (v1.1)
+├── PRD-affiliate-strategy.md   # Estratégia de afiliados (v1.1)
+├── PRD-internationalization.md # Internacionalização
 ├── agents.md                   # Índice de agentes (padrão agents.md)
 ├── CLAUDE.MD                   # Este arquivo
 ├── agents/                     # Agentes especializados
@@ -129,6 +138,15 @@ geek.bidu.guru/
 │   ├── automation-engineer.md
 │   ├── frontend-developer.md
 │   └── security-engineer.md
+├── docs/
+│   ├── analytics/              # Documentação de analytics
+│   │   ├── tracking-plan.md    # Plano GA4 (v1.1)
+│   │   ├── dashboards.md       # Especificação de dashboards
+│   │   └── ab-testing-framework.md
+│   ├── content/                # Documentação de conteúdo
+│   └── seo/                    # Documentação de SEO
+├── reports/
+│   └── consolidated-analysis.md # Análise consolidada dos especialistas
 ├── app/
 │   ├── main.py                 # Entry point FastAPI
 │   ├── api/v1/                 # Endpoints da API
@@ -435,7 +453,7 @@ Se a pergunta for sobre uma área sem agente específico:
 
 ---
 
-**Versão**: 1.0
+**Versão**: 1.1
 **Última atualização**: 2025-12-10
 **Projeto**: geek.bidu.guru
 **Repositório**: `A:\Repositorios\geek.bidu.guru`

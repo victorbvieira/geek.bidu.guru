@@ -1,7 +1,7 @@
 
 # PRD – geek.bidu.guru – Blog de Presentes Geek com Automação e IA
 
-**Versão:** 1.3
+**Versão:** 1.4
 **Responsável:** Squad Conteúdo & Automação
 **Stack:** Python (frontend + backend), PostgreSQL, n8n, integrações com APIs de afiliados (Amazon, Mercado Livre, Shopee)
 **Domínio:** `https://geek.bidu.guru`
@@ -1200,6 +1200,149 @@ Estrutura sugerida:
   - Quiz, newsletter mais robusta, testes A/B.
   - Recomendações personalizadas.
   - Otimização contínua de SEO e conversão.
+
+---
+
+## 14. Gaps Identificados e Plano de Ação
+
+> **Documento de Referência**: Ver [reports/consolidated-analysis.md](reports/consolidated-analysis.md) para análise completa dos 6 especialistas.
+
+### 14.1. Resumo de Scores por Área
+
+| Área | Score | Status |
+|------|-------|--------|
+| Affiliate Marketing | 8.5/10 | Fundação sólida, otimização avançada pendente |
+| Content Strategy | 7/10 | Estrutura boa, operacionalização necessária |
+| Data/Analytics | 6.5/10 | Gaps em tracking e dashboards |
+| SEO | 6.5/10 | Técnico bom, estratégia a documentar |
+| UX/UI | 7/10 | Design tokens e acessibilidade a completar |
+
+### 14.2. TOP 5 Quick Wins (Alta Prioridade)
+
+1. **Urgência e Escassez nos CTAs**
+   - Countdown timers, badges "Últimas X unidades", alertas "Preço baixou!"
+   - Impacto: +15-25% conversão
+   - Detalhes: [PRD-affiliate-strategy.md](PRD-affiliate-strategy.md#urgência-e-escassez)
+
+2. **Plano de Tracking GA4 Formal**
+   - Eventos, parâmetros customizados, dimensões por persona
+   - Impacto: Visibilidade completa do funil
+   - Documento: `docs/analytics/tracking-plan.md`
+
+3. **Design Tokens Completos**
+   - CSS custom properties (espaçamento, shadows, z-index, animações)
+   - Impacto: Consistência visual, manutenção facilitada
+   - Detalhes: [PRD-design-system.md](PRD-design-system.md#design-tokens)
+
+4. **Keywords Strategy Documentada**
+   - Volumes de busca, dificuldade, clusters semânticos por persona
+   - Impacto: +40-60% potencial de tráfego orgânico
+   - Documento: `docs/seo/keyword-strategy.md`
+
+5. **Templates de Conteúdo Operacionais**
+   - Seções obrigatórias, tamanhos, CTAs, schema por tipo de post
+   - Impacto: Qualidade consistente, automação facilitada
+   - Documento: `docs/content/templates.md`
+
+### 14.3. Gaps por Área
+
+#### SEO (Prioridade Alta)
+- [ ] Estratégia de keywords não documentada
+- [ ] Content hubs e pillar pages ausentes
+- [ ] Featured snippets strategy não implementada
+- [ ] Internal linking structure não definida
+- [ ] Link building strategy não documentada
+- [ ] Voice search não contemplada
+- [ ] Image SEO não especificado
+
+**Documentos a criar:**
+- `docs/seo/keyword-strategy.md`
+- `docs/seo/internal-linking.md`
+- `docs/seo/featured-snippets.md`
+- `docs/seo/link-building.md`
+- `docs/seo/image-seo.md`
+
+#### Affiliate Marketing (Prioridade Alta)
+- [ ] Urgência/escassez não implementada
+- [ ] Email marketing estruturado ausente
+- [ ] Cross-sell/upsell limitado
+- [ ] Programa de indicação inexistente
+- [ ] Histórico de preços não integrado
+- [ ] Alertas de wishlist não implementados
+
+**Documentos a criar:**
+- `docs/affiliate/email-marketing.md`
+- `docs/affiliate/urgency-scarcity.md`
+- `docs/affiliate/referral-program.md`
+
+#### Analytics (Prioridade Alta)
+- [ ] Plano de tracking GA4 não formalizado
+- [ ] Dashboards não especificados
+- [ ] Sistema de alertas manual
+- [ ] Análise de coortes/LTV não planejada
+- [ ] Funnels não instrumentados
+
+**Documentos a criar:**
+- `docs/analytics/tracking-plan.md`
+- `docs/analytics/dashboards.md`
+- `docs/analytics/alerts-system.md`
+
+#### Content (Prioridade Média)
+- [ ] Templates não detalhados operacionalmente
+- [ ] Processo de curadoria informal
+- [ ] Estratégia UGC ausente
+- [ ] Content recycling não automatizado
+- [ ] Quizzes interativos não implementados
+
+**Documentos a criar:**
+- `docs/content/templates.md` (detalhar)
+- `docs/content/curation-scorecard.md`
+- `docs/content/ugc-strategy.md`
+
+#### UX/UI (Prioridade Média)
+- [ ] Design tokens incompletos
+- [ ] Acessibilidade WCAG 2.1 AA parcial
+- [ ] Estados de componentes não documentados
+- [ ] Dark/light mode toggle não implementado
+- [ ] Skeleton loading não padronizado
+
+**Documentos a atualizar:**
+- [PRD-design-system.md](PRD-design-system.md)
+
+### 14.4. Roadmap de Implementação
+
+#### Quick Wins (Semanas 1-2)
+- Design tokens completos
+- Plano de tracking GA4
+- Elementos de urgência/escassez
+
+#### Fase A (Mês 1)
+- Keywords strategy com clusters
+- Dashboard Executivo
+- Content hubs principais
+- Sistema de alertas
+
+#### Fase B (Meses 2-3)
+- Featured snippets optimization
+- Email marketing sequences
+- Internal linking structure
+- Cross-sell/upsell
+
+#### Fase C (Meses 4-6)
+- UGC/Reviews system
+- Video SEO
+- Programmatic SEO
+- International expansion
+
+### 14.5. KPIs de Evolução
+
+| Métrica | Baseline | 3 meses | 6 meses | 12 meses |
+|---------|----------|---------|---------|----------|
+| SEO Score | 6.5/10 | 7.5/10 | 8.5/10 | 9/10 |
+| Affiliate Score | 8.5/10 | 9/10 | 9.5/10 | 9.5/10 |
+| Data Score | 6.5/10 | 8/10 | 9/10 | 9.5/10 |
+| Design Score | 7/10 | 8/10 | 9/10 | 9/10 |
+| Content Score | 7/10 | 8/10 | 8.5/10 | 9/10 |
 
 ---
 
