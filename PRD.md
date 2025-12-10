@@ -87,6 +87,8 @@ Este PRD considera o projeto como um **produto completo**, e não apenas um MVP.
   - Usa gadgets e itens geeks no trabalho.
   - Procura presentes geek “úteis”, para home office, setup, etc.
 
+Documentos detalhados: ver `docs/content/personas-expanded.md` (jornada, objeções, canais e priorização por persona).
+
 ---
 
 ## 5. Proposta de Valor & Diferenciais
@@ -118,6 +120,8 @@ Este PRD considera o projeto como um **produto completo**, e não apenas um MVP.
    - Conteúdo evergreen para SEO.
 
 Cada post deve conter: título, slug, subtítulo, conteúdo (Markdown/HTML), imagem destacada, categoria, tags, produtos associados, metadados de SEO, dados estruturados, botões de compartilhamento e CTAs para afiliados.
+
+Templates detalhados (estrutura, tamanhos, CTAs e checklist SEO): `docs/content/templates.md`.
 
 ---
 
@@ -154,6 +158,11 @@ Cada post deve conter: título, slug, subtítulo, conteúdo (Markdown/HTML), ima
   - Endpoint: `/goto/{affiliate_redirect_slug}`
   - Contabiliza clique e redireciona para `affiliate_url_raw`.
   - Permite mudar links de afiliado sem alterar posts antigos.
+
+**Critérios de Curadoria de Produtos**  
+- Adotar scorecard objetivo para seleção e diversidade do portfólio (categorias e faixas de preço).  
+- Processo contínuo de descoberta, triagem semanal e fila de publicação integrada ao n8n.  
+- Detalhes completos: `docs/content/curation-scorecard.md`.
 
 ---
 
@@ -261,6 +270,17 @@ Para garantir a conformidade com os programas de afiliados (Amazon, Mercado Livr
       - `docs/termos-de-uso/amazon-associados.md`
       - `docs/termos-de-uso/mercado-livre-afiliados.md`
       - `docs/termos-de-uso/shopee-afiliados.md`
+
+---
+
+### 6.10. Calendário Editorial & Sazonalidades
+
+- Estrutura semanal base:  
+  Segunda (Top 10), Ter/Qua/Qui (produto único), Sexta (produto + mini‑guia), Sábado (guia/evergreen).  
+- Rotação mensal orientada a personas: Semana 1 (Ana), Semana 2 (Lucas), Semana 3 (Marina), Semana 4 (mix).  
+- Planejamento anual com sazonalidades (Natal, Black Friday, Dia dos Namorados etc.), buffers evergreen/seasonal e timeline de preparação.
+
+Detalhamento completo: `docs/content/editorial-calendar.md`.
 
 ---
 
@@ -620,6 +640,8 @@ Para garantir a conformidade com os programas de afiliados (Amazon, Mercado Livr
   - Próximo, informal controlado, sem gírias excessivas.  
   - Frases claras, objetivas, com pitadas de referências geek (sem exagero).
 
+Guia de estilo completo (brand voice chart, exemplos e diretrizes para IA): `docs/content/style-guide.md`.
+
 ### 12.2. Paleta de Cores (sugestão)
 
 - **Cor primária:**  
@@ -729,6 +751,7 @@ Estrutura sugerida:
   - Configurar fluxos n8n A (post diário) e B (top 10 semanal).
   - Implementar redirecionamento `/goto`.
   - Implementar Fluxo C (atualização de preços).
+  - Formalizar calendário editorial anual e scorecard de curadoria (documentos vinculados no PRD).
 
 - **Fase 3 – IA e Pesquisa Qualificada**
   - Implementar Fluxo E (pesquisa qualificada com IA).
