@@ -668,6 +668,23 @@ Cada hub contém:
 
 ---
 
+### 6. Estratégia de Conteúdo Zodiacal (Novo)
+
+**Escopo**: Criar páginas e posts dedicados a cada signo do zodíaco, explorando a interseção entre astrologia e cultura geek.
+
+**Implementação**:
+- **12 Hubs Evergreen**: Criar páginas pilares como "Presentes Geek para Arianos", "Presentes Geek para Escorpianos", etc.
+- **Sazonalidade Mensal**: Na virada de cada signo (ex: 21 de Março para Áries), promover intensamente o hub correspondente na Home e redes sociais.
+- **Micro-segmentação**: "O presente ideal para o Gamer de Virgem" (organizado) vs "O presente ideal para o Otaku de Peixes" (sonhador).
+- **Curadoria Temática**: Relacionar características do signo com produtos (ex: Leão -> Itens dourados, exclusivos, chamativos; Câncer -> Itens nostálgicos, retrô, conforto).
+
+**Benefício**:
+- **Tráfego Recorrente**: Garante um pico de tráfego garantido todo mês na troca de signo.
+- **Alta Compartilhabilidade**: Pessoas adoram compartilhar conteúdo sobre seu próprio signo.
+- **Conexão Pessoal**: Gera identificação imediata ("Nossa, isso é muito eu!").
+
+---
+
 ## 📈 ROI Esperado das Melhorias
 
 ### Cenário Conservador
