@@ -71,6 +71,23 @@ Este PRD considera o projeto como um **produto completo**, e não apenas um MVP.
   - Scroll-depth médio.
   - Cliques em botões de compartilhamento.
 
+### 3.1. KPIs por Persona (Mensal)
+
+Para acompanhamento mensal segmentado por persona (via GA4, dimensões/segmentos por categoria/tag de post, parâmetro `persona_focus` ou taxonomia):
+
+| Persona | Sessões orgânicas | Tempo médio | Rejeição | Cliques afiliados | CTR afiliados | Receita estimada |
+|---|---:|---:|---:|---:|---:|---:|
+| Ana | — | — | — | — | — | — |
+| Lucas | — | — | — | — | — | — |
+| Marina | — | — | — | — | — | — |
+
+- Meta inicial (90 dias):  
+  - Tempo médio: Ana > 2:00, Lucas > 3:00, Marina > 3:30  
+  - CTR afiliados: Ana > 4%, Lucas > 5%, Marina > 4%  
+  - Receita/sessão: calibrar após 60 dias de dados
+
+Relatório mensal: consolidar tendências, conteúdos top por persona e ajustes de calendário/priorização.
+
 ---
 
 ## 4. Público-Alvo & Personas (Resumo)
@@ -281,6 +298,14 @@ Para garantir a conformidade com os programas de afiliados (Amazon, Mercado Livr
 - Planejamento anual com sazonalidades (Natal, Black Friday, Dia dos Namorados etc.), buffers evergreen/seasonal e timeline de preparação.
 
 Detalhamento completo: `docs/content/editorial-calendar.md`.
+
+### 6.11. Seasonal Content Hubs
+
+Hubs sazonais perenes (ex.: `/natal/`, `/black-friday/`, `/dia-dos-namorados/`) atuam como páginas pilar que concentram e distribuem tráfego para conteúdos e produtos da data. Estrutura, SEO e operação: `docs/content/seasonal-hubs.md`.
+
+### 6.12. Content Recycling (1 → 24)
+
+Sistema para transformar pilares (listicles/guias) em múltiplos formatos (posts individuais, infográfico, social, vídeo, newsletter, thread). Processo, métricas e UTMs: `docs/content/content-recycling.md`.
 
 ---
 
@@ -752,10 +777,12 @@ Estrutura sugerida:
   - Implementar redirecionamento `/goto`.
   - Implementar Fluxo C (atualização de preços).
   - Formalizar calendário editorial anual e scorecard de curadoria (documentos vinculados no PRD).
+  - Criar hubs sazonais prioritários (`/natal/`, `/black-friday/`, `/dia-dos-namorados/`).
 
 - **Fase 3 – IA e Pesquisa Qualificada**
   - Implementar Fluxo E (pesquisa qualificada com IA).
   - Refinar copy gerada via IA (guidelines, prompts).
+  - Operacionalizar Content Recycling (1 → 24) conforme documento, com automações para sociais/newsletter.
 
 - **Fase 4 – Crescimento & Otimização**
   - Quiz, newsletter mais robusta, testes A/B.
