@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>Encontre o presente geek perfeito</h1>
+        <p class="hero-subtitle">
+            Listas, reviews e ideias criadas por geeks, para geeks - com os melhores achados da Amazon, Mercado Livre e Shopee.
+        </p>
+        <div class="hero-cta">
+            <a href="/categorias/ocasiao" class="btn btn-primary">Ver por ocasiao</a>
+            <a href="/categorias/preco/ate-100" class="btn btn-secondary">Presentes ate R$ 100</a>
+        </div>
+    </div>
+</section>
+
+<section class="featured">
+    <div class="container">
+        <h2>Destaques</h2>
+        <p class="section-description">Em breve: os melhores presentes geek selecionados para voce!</p>
+
+        <!-- Posts em destaque serao carregados aqui -->
+        <div class="posts-grid">
+            <div class="placeholder-card">
+                <p>Conteudo em construcao...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="categories">
+    <div class="container">
+        <h2>Navegue por Categoria</h2>
+        <div class="category-grid">
+            <a href="/categorias/gamer" class="category-card">
+                <span class="category-icon">🎮</span>
+                <span class="category-name">Gamer</span>
+            </a>
+            <a href="/categorias/dev" class="category-card">
+                <span class="category-icon">💻</span>
+                <span class="category-name">Dev</span>
+            </a>
+            <a href="/categorias/otaku" class="category-card">
+                <span class="category-icon">🎌</span>
+                <span class="category-name">Otaku</span>
+            </a>
+            <a href="/categorias/star-wars" class="category-card">
+                <span class="category-icon">⭐</span>
+                <span class="category-name">Star Wars</span>
+            </a>
+            <a href="/categorias/marvel" class="category-card">
+                <span class="category-icon">🦸</span>
+                <span class="category-name">Marvel</span>
+            </a>
+            <a href="/categorias/boardgames" class="category-card">
+                <span class="category-icon">🎲</span>
+                <span class="category-name">Board Games</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="newsletter">
+    <div class="container">
+        <h2>Fique por dentro!</h2>
+        <p>Receba as melhores ideias de presentes geek toda semana.</p>
+        <form class="newsletter-form" action="/api/v1/newsletter" method="POST">
+            <input type="email" name="email" placeholder="Seu melhor e-mail" required>
+            <button type="submit" class="btn btn-primary">Inscrever</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

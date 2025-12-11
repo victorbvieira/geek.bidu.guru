@@ -79,13 +79,13 @@ Se a pergunta envolver múltiplas áreas (ex: SEO + Backend), consulte TODOS os 
   - "Quais índices criar para performance?"
   - "Como fazer query de top produtos?"
 
-#### 8. DevOps Engineer (Docker)
+#### 8. DevOps Engineer (Docker/Easypanel)
 - **Arquivo**: `agents/devops-engineer.md`
-- **Quando usar**: Docker, docker-compose, deploy, infraestrutura, CI/CD, Nginx, monitoramento
+- **Quando usar**: Docker, docker-compose, deploy, infraestrutura, CI/CD, Easypanel, Traefik, monitoramento
 - **Exemplos de perguntas**:
   - "Como configurar o docker-compose?"
-  - "Como fazer deploy na VPS?"
-  - "Como configurar Nginx com SSL?"
+  - "Como fazer deploy no Easypanel?"
+  - "Como funciona a infraestrutura da VPS?"
 
 #### 9. Automation Engineer (n8n)
 - **Arquivo**: `agents/automation-engineer.md`
@@ -145,36 +145,89 @@ Se a pergunta envolver múltiplas áreas (ex: SEO + Backend), consulte TODOS os 
 ```
 geek.bidu.guru/
 ├── agents.md                           # Este arquivo (índice principal)
-├── CLAUDE.MD                           # Instruções para Claude Code
+├── CLAUDE.md                           # Instruções para Claude Code (v1.2)
+├── Makefile                            # Comandos de desenvolvimento
 ├── PRD.md                              # Product Requirements Document (v1.4)
 ├── PRD-design-system.md                # Sistema de design completo (v1.1)
 ├── PRD-affiliate-strategy.md           # Estratégia de afiliados (v1.1)
 ├── PRD-internationalization.md         # Internacionalização
-├── agents/
+├── requirements.txt                    # Dependências Python
+├── .env.example                        # Template de variáveis de ambiente
+│
+├── agents/                             # Agentes especializados
 │   ├── README.md                       # Índice detalhado de agentes
-│   ├── seo-specialist.md
-│   ├── content-strategist.md
-│   ├── affiliate-marketing-specialist.md
-│   ├── ux-ui-designer.md
-│   ├── data-analyst.md
-│   ├── backend-developer.md
-│   ├── database-architect.md
-│   ├── devops-engineer.md
-│   ├── automation-engineer.md
-│   ├── frontend-developer.md
-│   └── security-engineer.md
+│   └── [11 arquivos de agentes]
+│
+├── src/app/                            # Código fonte FastAPI
+│   ├── main.py                         # Entry point
+│   ├── config.py                       # Configurações (Pydantic Settings)
+│   ├── database.py                     # SQLAlchemy async
+│   ├── api/v1/                         # Endpoints da API
+│   ├── models/                         # Modelos SQLAlchemy
+│   ├── schemas/                        # Pydantic schemas
+│   ├── services/                       # Lógica de negócio
+│   ├── routers/                        # Rotas SSR
+│   ├── templates/                      # Jinja2 templates
+│   │   ├── base.html
+│   │   ├── home.html
+│   │   └── components/                 # Header, footer, etc.
+│   └── static/                         # CSS, JS, imagens
+│       ├── css/main.css
+│       └── js/main.js
+│
+├── docker/                             # Configuração Docker
+│   ├── Dockerfile                      # Python 3.12, multi-stage
+│   └── docker-compose.yml              # Dev local (Redis + App)
+│
 ├── docs/
-│   ├── analytics/
-│   │   ├── tracking-plan.md            # Plano de tracking GA4 (v1.1)
-│   │   ├── dashboards.md               # Especificação de dashboards
-│   │   ├── ab-testing-framework.md     # Framework de testes A/B
-│   │   └── reporting-cadence.md        # Cadência de relatórios
-│   ├── content/
-│   │   └── ...
-│   └── seo/
-│       └── ...
+│   └── analytics/                      # Documentação de analytics
+│
 └── reports/
-    └── consolidated-analysis.md        # Análise consolidada dos 6 especialistas
+    └── consolidated-analysis.md        # Análise consolidada
+```
+
+---
+
+## 🏗️ Infraestrutura do Projeto
+
+### Stack Tecnológica
+- **Python 3.12** (versão estável)
+- **FastAPI** + **SQLAlchemy 2.x** (async)
+- **PostgreSQL 18** (remoto na VPS)
+- **Redis 7** (cache)
+- **Jinja2** (SSR)
+
+### Ambientes
+
+| Ambiente | Database | User | Porta App |
+|----------|----------|------|-----------|
+| Dev Local | `geek_bidu_dev` | `geek_app_dev` | 8001 |
+| Produção | `geek_bidu_prod` | `geek_app_prod` | 8000 |
+
+### Arquitetura de Produção (VPS Hostinger KVM8)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                VPS Hostinger KVM8 (Easypanel)               │
+├─────────────────────────────────────────────────────────────┤
+│  SERVIÇOS COMPARTILHADOS:                                   │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
+│  │PostgreSQL18│  │    n8n     │  │  Traefik   │            │
+│  └────────────┘  └────────────┘  └────────────┘            │
+│                                                             │
+│  PROJETO geek-bidu-guru:                                   │
+│  ┌─────────────────────────────────────────────┐           │
+│  │  app (FastAPI + Jinja2 SSR)                 │           │
+│  └─────────────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Comandos Úteis (Makefile)
+```bash
+make up          # Subir ambiente local
+make logs        # Ver logs
+make migrate     # Executar migrations
+make test        # Rodar testes
+make lint        # Verificar código
 ```
 
 ---
@@ -244,8 +297,8 @@ Quando adicionar ou modificar um agente:
 
 ### Versionamento
 
-- **Versão atual**: 1.1
-- **Última atualização**: 2025-12-10
+- **Versão atual**: 1.2
+- **Última atualização**: 2025-12-11
 - **Projeto**: geek.bidu.guru
 
 ### Documentos Auxiliares Importantes

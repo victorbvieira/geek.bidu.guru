@@ -1,0 +1,74 @@
+# =============================================================================
+# Docker Compose - geek.bidu.guru
+# DESENVOLVIMENTO LOCAL - Conecta ao PostgreSQL remoto (VPS)
+# =============================================================================
+#
+# NOTA: PostgreSQL NAO esta incluso pois usamos o banco remoto da VPS
+# tanto para desenvolvimento quanto producao (databases separados)
+#
+# Portas utilizadas (evitando conflitos):
+# - App: 8001 (8000 em uso por outro projeto)
+# - Redis: 6380 (6379 em uso por outro projeto)
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Redis - Cache de sessoes e queries (opcional para dev)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: geek_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geek_network
+
+  # ---------------------------------------------------------------------------
+  # App FastAPI - Aplicacao principal
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: geek_app
+    environment:
+      # DATABASE_URL aponta para o PostgreSQL REMOTO (VPS)
+      # Configurar no .env com as credenciais corretas
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production-INSECURE}
+      - DEBUG=${DEBUG:-true}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    volumes:
+      - ../src:/app/src
+    ports:
+      - "8001:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - geek_network
+
+# -----------------------------------------------------------------------------
+# Volumes persistentes
+# -----------------------------------------------------------------------------
+volumes:
+  redis_data:
+    name: geek_redis_data
+
+# -----------------------------------------------------------------------------
+# Rede interna
+# -----------------------------------------------------------------------------
+networks:
+  geek_network:
+    name: geek_network
+    driver: bridge

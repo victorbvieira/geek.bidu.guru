@@ -82,15 +82,16 @@ Pergunta: "Como implementar autenticação JWT?"
 ## 🛠️ Stack Tecnológica do Projeto
 
 ### Backend
-- **Python** 3.11+
-- **FastAPI** - Framework web
-- **SQLAlchemy** - ORM
-- **Pydantic** - Validação
+- **Python 3.12** (versão estável - 3.14 ainda em alpha)
+- **FastAPI** - Framework web assíncrono
+- **SQLAlchemy 2.x** (async) - ORM com asyncpg
+- **Pydantic v2** - Validação e settings
 - **Jinja2** - Templates (SSR)
 
-### Banco de Dados
-- **PostgreSQL** 15+ - Container **compartilhado** na VPS (database: `geek_bidu_guru`)
-- **Redis** - Cache (opcional)
+### Banco de Dados (PostgreSQL 18 - REMOTO na VPS)
+- **Dev**: database `geek_bidu_dev` / user `geek_app_dev`
+- **Prod**: database `geek_bidu_prod` / user `geek_app_prod`
+- **Redis 7** - Cache local (dev) na porta 6380
 
 ### Frontend
 - **Server-Side Rendering (SSR)** com Jinja2
@@ -121,8 +122,11 @@ Pergunta: "Como implementar autenticação JWT?"
 - **n8n** - Container compartilhado (criar workflows do projeto)
 
 ### Ambiente de Desenvolvimento Local
-- **Docker Compose** - Simula ambiente de produção
-- PostgreSQL e Redis locais em containers
+- **Docker Compose** (`docker/docker-compose.yml`) - Apenas Redis + App
+- **PostgreSQL é REMOTO** (conecta na VPS) - NÃO há container local
+- **Portas locais** (evitando conflitos):
+  - App: `8001` (interno 8000)
+  - Redis: `6380` (interno 6379)
 
 ### Automação
 - **n8n** - Workflows (container compartilhado na VPS)
@@ -220,22 +224,45 @@ geek.bidu.guru/
 
 ## 🚀 Comandos Úteis (Lembre o usuário quando relevante)
 
-### Desenvolvimento Local (Docker Compose)
+### Makefile (Recomendado - Desenvolvimento Local)
+```bash
+make help           # Ver todos os comandos disponíveis
+make up             # Subir containers (app + redis)
+make up-build       # Rebuild e subir containers
+make down           # Parar containers
+make logs           # Ver logs de todos os containers
+make logs-app       # Ver logs apenas da aplicação
+make shell          # Acessar shell do container app
+make migrate        # Executar migrations pendentes
+make migrate-new MSG="descricao"  # Criar nova migration
+make test           # Executar todos os testes
+make lint           # Verificar código com ruff
+make format         # Formatar código com black
+```
+
+### Docker Compose Direto (alternativa)
 ```bash
 # Subir ambiente de desenvolvimento
-cd docker && docker-compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Ver logs
-docker-compose logs -f app
-
-# Migrations
-docker-compose exec app alembic upgrade head
-
-# Shell do container
-docker-compose exec app /bin/bash
+docker compose -f docker/docker-compose.yml logs -f app
 
 # Parar ambiente
-docker-compose down
+docker compose -f docker/docker-compose.yml down
+```
+
+### Banco de Dados (PostgreSQL REMOTO na VPS)
+```bash
+# Conectar no PostgreSQL remoto (requer psql instalado e .env configurado)
+make db-shell
+
+# Ou diretamente:
+psql "$DATABASE_URL"
+
+# Databases já criados:
+# - geek_bidu_dev (desenvolvimento)
+# - geek_bidu_prod (produção)
 ```
 
 ### Produção (Easypanel)
@@ -244,17 +271,8 @@ docker-compose down
 # 1. Push para GitHub
 # 2. Easypanel detecta e faz rebuild automático
 
-# Acessar logs via Easypanel UI ou:
-# ssh para VPS e usar docker logs do container
-```
-
-### Banco de Dados (PostgreSQL Compartilhado)
-```bash
-# Conectar no PostgreSQL da VPS (via Easypanel ou SSH)
-psql -h localhost -U postgres -d geek_bidu_guru
-
-# Criar database inicial (apenas uma vez)
-CREATE DATABASE geek_bidu_guru;
+# Build manual da imagem:
+make build-prod
 ```
 
 ### n8n (Workflows)
@@ -264,15 +282,6 @@ CREATE DATABASE geek_bidu_guru;
 
 # Importar workflows do diretório n8n/workflows/
 # Via interface do n8n: Settings > Import from File
-```
-
-### Makefile (desenvolvimento local)
-```bash
-make help        # Ver todos os comandos
-make up          # Subir containers locais
-make logs        # Ver logs
-make migrate     # Rodar migrations
-make test        # Executar testes
 ```
 
 ---
@@ -503,7 +512,7 @@ Se a pergunta for sobre uma área sem agente específico:
 
 ---
 
-**Versão**: 1.1
-**Última atualização**: 2025-12-10
+**Versão**: 1.2
+**Última atualização**: 2025-12-11
 **Projeto**: geek.bidu.guru
-**Repositório**: `A:\Repositorios\geek.bidu.guru`
+**Repositório**: GitHub

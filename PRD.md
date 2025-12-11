@@ -518,7 +518,9 @@ Processo padronizado (hipótese → ICE → execução → análise → rollout)
   - **Easypanel:** Plataforma de gerenciamento de containers na VPS (substitui Docker Compose manual).
   - **VPS Hostinger KVM8:** Servidor de produção com recursos compartilhados.
   - **Serviços Compartilhados na VPS:**
-    - **PostgreSQL:** Container já existente, criar database específico `geek_bidu_guru`.
+    - **PostgreSQL:** Container já existente, criar databases:
+      - `geek_bidu_dev` - Ambiente de desenvolvimento/staging
+      - `geek_bidu_prod` - Ambiente de produção
     - **n8n:** Container já existente, criar workflows específicos do projeto.
     - **Traefik:** Gerenciador de domínios e certificados SSL (já configurado).
   - **Projeto Easypanel `geek-bidu-guru`:** Conterá apenas os serviços específicos da aplicação:
@@ -581,7 +583,9 @@ Processo padronizado (hipótese → ICE → execução → análise → rollout)
 
 - **Easypanel:** Interface de gerenciamento de containers (substitui Docker Compose manual em produção)
 - **Traefik:** Reverse proxy e gerenciador de certificados SSL (já existente na VPS)
-- **PostgreSQL:** Banco de dados compartilhado (criar database `geek_bidu_guru`)
+- **PostgreSQL:** Banco de dados compartilhado:
+  - `geek_bidu_dev` - desenvolvimento/staging
+  - `geek_bidu_prod` - produção
 - **n8n:** Automação de workflows (já existente, criar workflows específicos)
 - **app (FastAPI):** Container único da aplicação com SSR via Jinja2
 - **Redis:** Cache de sessões e queries (dentro do projeto Easypanel)
