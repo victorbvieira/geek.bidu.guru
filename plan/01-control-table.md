@@ -39,6 +39,9 @@
 | 1.2.4 | Implementar database.py (conexao) | Backend Developer | 1.2.3 | :white_large_square: | SQLAlchemy async |
 | 1.2.5 | Configurar requirements.txt | Backend Developer | - | :white_large_square: | Todas dependencias |
 | 1.2.6 | Configurar Alembic | Database Architect | 1.2.4 | :white_large_square: | alembic.ini, env.py |
+| 1.2.7 | Implementar exception handlers globais | Backend Developer | 1.2.2 | :white_large_square: | **[NOVO]** HTTPException, ValidationError |
+| 1.2.8 | Configurar logging estruturado (JSON) | Backend Developer | 1.2.2 | :white_large_square: | **[NOVO]** pythonjsonlogger |
+| 1.2.9 | Implementar health check completo | Backend Developer | 1.2.4 | :white_large_square: | **[NOVO]** Verificar DB + Redis |
 
 ## 1.3 Banco de Dados - Schema
 
@@ -54,6 +57,8 @@
 | 1.3.8 | Criar modelo NewsletterSignup | Database Architect | 1.2.6 | :white_large_square: | Email marketing |
 | 1.3.9 | Criar indices otimizados | Database Architect | 1.3.1-1.3.8 | :white_large_square: | Conforme PRD |
 | 1.3.10 | Criar migration inicial | Database Architect | 1.3.9 | :white_large_square: | alembic revision |
+| 1.3.11 | Criar trigger para updated_at automatico | Database Architect | 1.3.10 | :white_large_square: | **[NOVO]** Funcao PL/pgSQL |
+| 1.3.12 | Implementar indice GIN para busca full-text | Database Architect | 1.3.10 | :white_large_square: | **[NOVO]** Posts search |
 
 ## 1.4 Backend - Autenticacao
 
@@ -128,6 +133,7 @@
 | 1.10.3 | Sanitizar inputs | Security Engineer | 1.5.3, 1.6.3 | :white_large_square: | XSS prevention |
 | 1.10.4 | Validar uploads (se houver) | Security Engineer | 1.5.3 | :white_large_square: | Tipo, tamanho |
 | 1.10.5 | Revisar checklist OWASP Top 10 | Security Engineer | 1.10.1-1.10.4 | :white_large_square: | Auditoria |
+| 1.10.6 | Definir Content Security Policy (CSP) | Security Engineer | 1.10.2 | :white_large_square: | **[NOVO]** Politica detalhada |
 
 ---
 

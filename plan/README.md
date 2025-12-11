@@ -9,11 +9,12 @@ Este diretorio contem o planejamento completo para execucao do projeto **geek.bi
 | Arquivo | Descricao |
 |---------|-----------|
 | [00-overview.md](00-overview.md) | Visao geral do projeto, stack, estrutura de pastas |
-| [01-control-table.md](01-control-table.md) | **TABELA DE CONTROLE** - 187 tarefas detalhadas |
+| [01-control-table.md](01-control-table.md) | **TABELA DE CONTROLE** - 193+ tarefas detalhadas |
 | [02-phase-1-technical-base.md](02-phase-1-technical-base.md) | Fase 1: Base Tecnica (Docker, FastAPI, DB) |
 | [03-phase-2-seo-automation.md](03-phase-2-seo-automation.md) | Fase 2: SEO & Automacao (Schema.org, n8n) |
 | [04-phase-3-ai-i18n.md](04-phase-3-ai-i18n.md) | Fase 3: IA & Internacionalizacao |
 | [05-phase-4-growth-optimization.md](05-phase-4-growth-optimization.md) | Fase 4: Growth & Otimizacao |
+| [06-agent-reviews.md](06-agent-reviews.md) | **REVISAO DOS AGENTES** - Gaps e melhorias identificados |
 
 ---
 
@@ -23,7 +24,7 @@ Este diretorio contem o planejamento completo para execucao do projeto **geek.bi
 Leia [00-overview.md](00-overview.md) para entender o projeto completo.
 
 ### 2. Use a Tabela de Controle
-[01-control-table.md](01-control-table.md) contem **187 tarefas** organizadas por fase e agente.
+[01-control-table.md](01-control-table.md) contem **193+ tarefas** organizadas por fase e agente.
 
 **Atualize o status conforme o progresso:**
 - :white_large_square: Pendente
@@ -56,12 +57,19 @@ Antes de cada tarefa, consulte o agente especializado em `agents/`:
 | Design | [ux-ui-designer.md](../agents/ux-ui-designer.md) |
 | Afiliados | [affiliate-marketing-specialist.md](../agents/affiliate-marketing-specialist.md) |
 
+### 5. Consulte a Revisao dos Agentes
+O documento [06-agent-reviews.md](06-agent-reviews.md) contem:
+- Validacoes de cada agente sobre o planejamento
+- Gaps identificados por prioridade (Alta, Media, Baixa)
+- Novas tarefas adicionadas apos revisao
+- Melhorias sugeridas
+
 ---
 
 ## Resumo das Fases
 
 ### Fase 1: Base Tecnica
-**68 tarefas** | Agentes: DevOps, Backend, Database, Frontend, Security
+**74 tarefas** | Agentes: DevOps, Backend, Database, Frontend, Security
 
 - Docker & Docker Compose
 - FastAPI com estrutura completa
@@ -70,28 +78,31 @@ Antes de cada tarefa, consulte o agente especializado em `agents/`:
 - CRUD de posts e produtos
 - Templates Jinja2 basicos
 - Sistema de redirecionamento de afiliados
+- **[NOVO]** Exception handlers, logging estruturado, CSP
 
 ### Fase 2: SEO & Automacao
-**48 tarefas** | Agentes: SEO, Automation, Data Analyst, DevOps
+**50 tarefas** | Agentes: SEO, Automation, Data Analyst, DevOps
 
 - Sitemap.xml e robots.txt
-- Schema.org (BlogPosting, Product, ItemList)
+- Schema.org (BlogPosting, Product, ItemList, FAQ)
 - Open Graph e Twitter Cards
 - n8n configurado
 - Workflows A, B, C (posts, listicles, precos)
 - Google Analytics 4
+- **[NOVO]** FAQ Schema, rate limits documentados
 
 ### Fase 3: IA & Internacionalizacao
-**26 tarefas** | Agentes: Automation, Content, Backend, SEO
+**30 tarefas** | Agentes: Automation, Content, Backend, SEO
 
 - Prompts otimizados por tipo de post
 - Workflow E (pesquisa de produtos)
 - Workflow F (monitor de deals)
 - Cache Redis
 - Sistema i18n (pt-BR base)
+- **[NOVO]** QA automatizado de conteudo, retry logic
 
 ### Fase 4: Growth & Otimizacao
-**45 tarefas** | Agentes: Data Analyst, DevOps, Automation, Security
+**50 tarefas** | Agentes: Data Analyst, DevOps, Automation, Security
 
 - Sistema de A/B testing
 - Dashboards de analytics
@@ -101,22 +112,23 @@ Antes de cada tarefa, consulte o agente especializado em `agents/`:
 - Otimizacao de performance
 - LGPD compliance
 - Documentacao final
+- **[NOVO]** Search Console API, Critical CSS, pip-audit
 
 ---
 
-## Distribuicao por Agente
+## Distribuicao por Agente (Atualizada)
 
 | Agente | Tarefas | Principal em |
 |--------|---------|--------------|
-| Backend Developer | 32 | Fases 1, 2, 3, 4 |
-| Automation Engineer | 28 | Fases 2, 3, 4 |
-| DevOps Engineer | 24 | Fases 1, 2, 4 |
-| Frontend Developer | 20 | Fases 1, 2, 4 |
-| SEO Specialist | 18 | Fases 2, 3, 4 |
-| Data Analyst | 18 | Fases 1, 2, 4 |
-| Database Architect | 14 | Fases 1, 4 |
-| Security Engineer | 14 | Fases 1, 4 |
-| Content Strategist | 6 | Fases 3, 4 |
+| Backend Developer | 35 | Fases 1, 2, 3, 4 |
+| Automation Engineer | 30 | Fases 2, 3, 4 |
+| DevOps Engineer | 25 | Fases 1, 2, 4 |
+| Frontend Developer | 22 | Fases 1, 2, 4 |
+| SEO Specialist | 20 | Fases 2, 3, 4 |
+| Data Analyst | 20 | Fases 1, 2, 4 |
+| Database Architect | 16 | Fases 1, 4 |
+| Security Engineer | 17 | Fases 1, 4 |
+| Content Strategist | 8 | Fases 3, 4 |
 | UX/UI Designer | 4 | Fase 1 |
 | Affiliate Marketing | 2 | Fase 1 |
 
@@ -136,14 +148,15 @@ Antes de cada tarefa, consulte o agente especializado em `agents/`:
 
 ## Proximos Passos
 
-1. Revisar este planejamento com cada agente especializado
+1. ~~Revisar este planejamento com cada agente especializado~~ :white_check_mark: **Concluido**
 2. Criar a pasta `src/` com a estrutura inicial
 3. Iniciar a **Fase 1** pelo item 1.1.1 (Dockerfile)
 4. Atualizar a tabela de controle conforme progresso
+5. Priorizar os 3 gaps de alta prioridade identificados na revisao
 
 ---
 
-**Versao do Planejamento**: 1.0
+**Versao do Planejamento**: 1.1 (revisado pelos agentes)
 **Data**: 2025-12-10
 **Projeto**: geek.bidu.guru
-**Total de Tarefas**: 187
+**Total de Tarefas**: 193+
