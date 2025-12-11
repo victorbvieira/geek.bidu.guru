@@ -25,12 +25,17 @@ Notas:
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, JSON, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import TypeDecorator
+
+
+def utc_now() -> datetime:
+    """Retorna datetime atual em UTC (timezone-aware)."""
+    return datetime.now(UTC)
 
 
 class JSONBType(TypeDecorator):
@@ -101,7 +106,7 @@ class TimestampMixin:
 
         updated_at (datetime): Data/hora da última atualização.
             Atualizado automaticamente em cada UPDATE via
-            `onupdate=datetime.utcnow`.
+            `onupdate=utc_now`.
 
     Notas:
         - Utiliza timezone-aware datetime para compatibilidade
@@ -113,13 +118,13 @@ class TimestampMixin:
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),  # Timestamp do servidor PostgreSQL
-        default=datetime.utcnow,  # Timestamp do Python (para testes)
+        default=utc_now,  # Timestamp do Python (para testes)
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),  # Valor inicial igual a created_at
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,  # Atualiza automaticamente em cada UPDATE
+        default=utc_now,
+        onupdate=utc_now,  # Atualiza automaticamente em cada UPDATE
     )

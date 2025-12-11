@@ -5,8 +5,10 @@ Blog de Presentes Geek com Automacao e IA
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -83,11 +85,14 @@ app.add_middleware(
 # Static Files e Templates
 # -----------------------------------------------------------------------------
 
-# Montar arquivos estaticos
-app.mount("/static", StaticFiles(directory="src/app/static"), name="static")
+# Diretório base da aplicação (onde está este arquivo main.py)
+BASE_DIR = Path(__file__).resolve().parent
 
-# Templates Jinja2
-templates = Jinja2Templates(directory="src/app/templates")
+# Montar arquivos estaticos (caminho absoluto para funcionar em qualquer contexto)
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
+# Templates Jinja2 (caminho absoluto)
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 # -----------------------------------------------------------------------------

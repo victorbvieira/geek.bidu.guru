@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import UUIDMixin
+from app.models.base import UUIDMixin, utc_now
 
 if TYPE_CHECKING:
     from app.models.post import Post
@@ -86,7 +86,7 @@ class Session(Base, UUIDMixin):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        default=datetime.utcnow,
+        default=utc_now,
     )
 
     # Relacionamentos

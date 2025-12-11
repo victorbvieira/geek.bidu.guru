@@ -2,7 +2,7 @@
 Repositorio para Session.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -41,7 +41,7 @@ class SessionRepository(BaseRepository[Session]):
 
     async def count_unique_visitors(self, days: int = 30) -> int:
         """Conta visitantes unicos no periodo."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         result = await self.db.execute(
             select(func.count(func.distinct(Session.session_id))).where(
                 Session.created_at >= since
@@ -51,7 +51,7 @@ class SessionRepository(BaseRepository[Session]):
 
     async def count_new_users(self, days: int = 30) -> int:
         """Conta novos usuarios no periodo."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         result = await self.db.execute(
             select(func.count())
             .select_from(Session)
@@ -64,7 +64,7 @@ class SessionRepository(BaseRepository[Session]):
 
     async def get_by_device_type(self, days: int = 30) -> list[dict]:
         """Agrupa sessoes por tipo de dispositivo."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
 
         result = await self.db.execute(
             select(

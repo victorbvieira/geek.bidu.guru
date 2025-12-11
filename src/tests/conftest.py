@@ -142,3 +142,63 @@ def newsletter_data() -> dict[str, Any]:
         "name": "Newsletter Subscriber",
         "source": "homepage-popup",
     }
+
+
+# -----------------------------------------------------------------------------
+# Fixtures para testes de integracao (API)
+# -----------------------------------------------------------------------------
+
+
+@pytest_asyncio.fixture(scope="function")
+async def test_app(async_engine):
+    """
+    Cria aplicacao FastAPI configurada para testes.
+
+    Substitui a dependencia de banco de dados real por
+    uma sessao SQLite em memoria.
+    """
+    from httpx import ASGITransport, AsyncClient
+
+    from app.database import get_db
+    from app.main import app
+
+    # Override da dependencia de banco
+    async def override_get_db():
+        async_session = sessionmaker(
+            async_engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
+        async with async_session() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    yield app
+
+    # Limpa overrides apos testes
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(test_app) -> AsyncGenerator[Any, None]:
+    """
+    Cliente HTTP async para testar endpoints.
+
+    Uso:
+        async def test_endpoint(client):
+            response = await client.get("/api/v1/users")
+            assert response.status_code == 200
+    """
+    from httpx import ASGITransport, AsyncClient
+
+    async with AsyncClient(
+        transport=ASGITransport(app=test_app),
+        base_url="http://test",
+    ) as ac:
+        yield ac

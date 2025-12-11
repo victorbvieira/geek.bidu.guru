@@ -11,7 +11,7 @@ from sqlalchemy import Boolean, DateTime, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
-from app.models.base import UUIDMixin
+from app.models.base import UUIDMixin, utc_now
 
 
 class NewsletterSignup(Base, UUIDMixin):
@@ -47,7 +47,7 @@ class NewsletterSignup(Base, UUIDMixin):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        default=datetime.utcnow,
+        default=utc_now,
     )
     unsubscribed_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True),
@@ -68,4 +68,4 @@ class NewsletterSignup(Base, UUIDMixin):
     def unsubscribe(self) -> None:
         """Marca a inscricao como cancelada."""
         self.is_active = False
-        self.unsubscribed_at = datetime.utcnow()
+        self.unsubscribed_at = utc_now()

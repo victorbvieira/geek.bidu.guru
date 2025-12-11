@@ -2,7 +2,7 @@
 Repositorio para NewsletterSignup.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -56,7 +56,7 @@ class NewsletterRepository(BaseRepository[NewsletterSignup]):
         signup = await self.get_by_email(email)
         if signup:
             signup.is_active = False
-            signup.unsubscribed_at = datetime.utcnow()
+            signup.unsubscribed_at = datetime.now(UTC)
             await self.db.commit()
             await self.db.refresh(signup)
         return signup
@@ -73,7 +73,7 @@ class NewsletterRepository(BaseRepository[NewsletterSignup]):
 
     async def get_stats(self) -> dict:
         """Retorna estatisticas de newsletter."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_ago = now - timedelta(days=7)
         month_ago = now - timedelta(days=30)

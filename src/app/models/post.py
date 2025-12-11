@@ -24,7 +24,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import JSONBType, TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin, utc_now
 
 if TYPE_CHECKING:
     from app.models.category import Category
@@ -182,6 +182,6 @@ class Post(Base, UUIDMixin, TimestampMixin):
         """Verifica se o post esta publicado e a data ja passou."""
         if self.status != PostStatus.PUBLISHED:
             return False
-        if self.publish_at and self.publish_at > datetime.utcnow():
+        if self.publish_at and self.publish_at > utc_now():
             return False
         return True

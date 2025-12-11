@@ -2,7 +2,7 @@
 Repositorio para AffiliateClick.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -44,7 +44,7 @@ class ClickRepository(BaseRepository[AffiliateClick]):
         self, product_id: UUID, days: int = 30
     ) -> int:
         """Conta cliques de um produto nos ultimos N dias."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         result = await self.db.execute(
             select(func.count())
             .select_from(AffiliateClick)
@@ -59,7 +59,7 @@ class ClickRepository(BaseRepository[AffiliateClick]):
         self, product_id: UUID | None = None, days: int = 30
     ) -> list[dict]:
         """Agrupa cliques por dia."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
 
         query = select(
             func.date(AffiliateClick.clicked_at).label("date"),
@@ -78,7 +78,7 @@ class ClickRepository(BaseRepository[AffiliateClick]):
 
     async def get_top_products(self, days: int = 30, limit: int = 10) -> list[dict]:
         """Lista produtos mais clicados no periodo."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
 
         result = await self.db.execute(
             select(

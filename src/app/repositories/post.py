@@ -2,7 +2,7 @@
 Repositorio para Post.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -49,7 +49,7 @@ class PostRepository(BaseRepository[Post]):
         """Lista posts publicados."""
         query = select(Post).where(
             Post.status == PostStatus.PUBLISHED,
-            Post.publish_at <= datetime.utcnow(),
+            Post.publish_at <= datetime.now(UTC),
         )
 
         if category_id:
@@ -70,7 +70,7 @@ class PostRepository(BaseRepository[Post]):
         """Conta posts publicados."""
         query = select(func.count()).select_from(Post).where(
             Post.status == PostStatus.PUBLISHED,
-            Post.publish_at <= datetime.utcnow(),
+            Post.publish_at <= datetime.now(UTC),
         )
 
         if category_id:
