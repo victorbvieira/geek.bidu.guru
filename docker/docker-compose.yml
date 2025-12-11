@@ -39,14 +39,11 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     container_name: geek_app
+    env_file:
+      - ../.env
     environment:
-      # DATABASE_URL aponta para o PostgreSQL REMOTO (VPS)
-      # Configurar no .env com as credenciais corretas
-      - DATABASE_URL=${DATABASE_URL}
+      # Sobrescreve variaveis do .env se necessario
       - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production-INSECURE}
-      - DEBUG=${DEBUG:-true}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
     volumes:
       - ../src:/app/src
     ports:

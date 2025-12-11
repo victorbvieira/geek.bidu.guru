@@ -31,55 +31,62 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade database schema."""
 
-    # Criar ENUMs
-    user_role = postgresql.ENUM(
-        "admin", "editor", "author", "automation",
-        name="user_role",
-        create_type=True,
-    )
-    user_role.create(op.get_bind(), checkfirst=True)
+    # Criar ENUMs usando SQL puro com DO block para evitar erros de "already exists"
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE user_role AS ENUM ('admin', 'editor', 'author', 'automation');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    post_type = postgresql.ENUM(
-        "product_single", "listicle", "guide",
-        name="post_type",
-        create_type=True,
-    )
-    post_type.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE post_type AS ENUM ('product_single', 'listicle', 'guide');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    post_status = postgresql.ENUM(
-        "draft", "review", "scheduled", "published", "archived",
-        name="post_status",
-        create_type=True,
-    )
-    post_status.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE post_status AS ENUM ('draft', 'review', 'scheduled', 'published', 'archived');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    product_platform = postgresql.ENUM(
-        "amazon", "mercadolivre", "shopee",
-        name="product_platform",
-        create_type=True,
-    )
-    product_platform.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE product_platform AS ENUM ('amazon', 'mercadolivre', 'shopee');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    product_availability = postgresql.ENUM(
-        "available", "unavailable", "unknown",
-        name="product_availability",
-        create_type=True,
-    )
-    product_availability.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE product_availability AS ENUM ('available', 'unavailable', 'unknown');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    price_range = postgresql.ENUM(
-        "0-50", "50-100", "100-200", "200+",
-        name="price_range",
-        create_type=True,
-    )
-    price_range.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE price_range AS ENUM ('0-50', '50-100', '100-200', '200+');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
-    device_type = postgresql.ENUM(
-        "mobile", "desktop", "tablet", "unknown",
-        name="device_type",
-        create_type=True,
-    )
-    device_type.create(op.get_bind(), checkfirst=True)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE device_type AS ENUM ('mobile', 'desktop', 'tablet', 'unknown');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # ==========================================================================
     # Tabela: users
@@ -90,7 +97,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(200), nullable=False),
         sa.Column("email", sa.String(255), nullable=False),
         sa.Column("password_hash", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("admin", "editor", "author", "automation", name="user_role"), nullable=False),
+        sa.Column("role", postgresql.ENUM("admin", "editor", "author", "automation", name="user_role", create_type=False), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=True, default=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -127,7 +134,7 @@ def upgrade() -> None:
     op.create_table(
         "posts",
         sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), nullable=False),
-        sa.Column("type", sa.Enum("product_single", "listicle", "guide", name="post_type"), nullable=False),
+        sa.Column("type", postgresql.ENUM("product_single", "listicle", "guide", name="post_type", create_type=False), nullable=False),
         sa.Column("title", sa.String(200), nullable=False),
         sa.Column("slug", sa.String(250), nullable=False),
         sa.Column("subtitle", sa.String(300), nullable=True),
@@ -139,7 +146,7 @@ def upgrade() -> None:
         sa.Column("category_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("author_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("tags", postgresql.JSONB(astext_type=sa.Text()), server_default="[]", nullable=True),
-        sa.Column("status", sa.Enum("draft", "review", "scheduled", "published", "archived", name="post_status"), nullable=True),
+        sa.Column("status", postgresql.ENUM("draft", "review", "scheduled", "published", "archived", name="post_status", create_type=False), nullable=True),
         sa.Column("publish_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("shared", sa.Boolean(), nullable=True, default=False),
         sa.Column("view_count", sa.Integer(), server_default="0", nullable=True),
@@ -172,16 +179,16 @@ def upgrade() -> None:
         sa.Column("long_description", sa.Text(), nullable=True),
         sa.Column("price", sa.Numeric(10, 2), nullable=True),
         sa.Column("currency", sa.String(3), server_default="BRL", nullable=True),
-        sa.Column("price_range", sa.Enum("0-50", "50-100", "100-200", "200+", name="price_range"), nullable=True),
+        sa.Column("price_range", postgresql.ENUM("0-50", "50-100", "100-200", "200+", name="price_range", create_type=False), nullable=True),
         sa.Column("main_image_url", sa.String(500), nullable=True),
         sa.Column("images", postgresql.JSONB(astext_type=sa.Text()), server_default="[]", nullable=True),
         sa.Column("affiliate_url_raw", sa.Text(), nullable=False),
         sa.Column("affiliate_redirect_slug", sa.String(150), nullable=False),
-        sa.Column("platform", sa.Enum("amazon", "mercadolivre", "shopee", name="product_platform"), nullable=False),
+        sa.Column("platform", postgresql.ENUM("amazon", "mercadolivre", "shopee", name="product_platform", create_type=False), nullable=False),
         sa.Column("platform_product_id", sa.String(200), nullable=True),
         sa.Column("categories", postgresql.JSONB(astext_type=sa.Text()), server_default="[]", nullable=True),
         sa.Column("tags", postgresql.JSONB(astext_type=sa.Text()), server_default="[]", nullable=True),
-        sa.Column("availability", sa.Enum("available", "unavailable", "unknown", name="product_availability"), nullable=True),
+        sa.Column("availability", postgresql.ENUM("available", "unavailable", "unknown", name="product_availability", create_type=False), nullable=True),
         sa.Column("rating", sa.Numeric(3, 2), nullable=True),
         sa.Column("review_count", sa.Integer(), server_default="0", nullable=True),
         sa.Column("internal_score", sa.Numeric(5, 2), server_default="0", nullable=True),
@@ -257,7 +264,7 @@ def upgrade() -> None:
         sa.Column("referer", sa.Text(), nullable=True),
         sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("country", sa.String(2), nullable=True),
-        sa.Column("device_type", sa.Enum("mobile", "desktop", "tablet", "unknown", name="device_type"), nullable=True),
+        sa.Column("device_type", postgresql.ENUM("mobile", "desktop", "tablet", "unknown", name="device_type", create_type=False), nullable=True),
         sa.Column("time_on_page", sa.Integer(), nullable=True),
         sa.Column("scroll_depth", sa.Integer(), nullable=True),
         sa.Column("is_new_user", sa.Boolean(), server_default="true", nullable=True),

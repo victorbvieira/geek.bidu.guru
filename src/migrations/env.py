@@ -13,7 +13,7 @@ from pathlib import Path
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # Adicionar src ao path para imports funcionarem
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -37,8 +37,8 @@ if config.config_file_name is not None:
 # MetaData dos modelos para autogenerate
 target_metadata = Base.metadata
 
-# Sobrescrever sqlalchemy.url com variavel de ambiente
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# URL do banco de dados (direto do settings, sem passar pelo ConfigParser)
+DATABASE_URL = settings.database_url
 
 
 # -----------------------------------------------------------------------------
@@ -53,9 +53,8 @@ def run_migrations_offline() -> None:
     Gera SQL puro sem precisar de conexao com o banco.
     Util para review de migrations antes de aplicar.
     """
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -89,9 +88,9 @@ async def run_async_migrations() -> None:
     """
     Cria engine async e executa migrations.
     """
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    # Criar engine diretamente com a URL (evita problemas com caracteres especiais)
+    connectable = create_async_engine(
+        DATABASE_URL,
         poolclass=pool.NullPool,
     )
 

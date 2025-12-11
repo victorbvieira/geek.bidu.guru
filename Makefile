@@ -68,16 +68,19 @@ redis-cli: ## Acessa o Redis CLI
 # Database / Migrations
 # -----------------------------------------------------------------------------
 migrate: ## Executa todas as migrations pendentes
-	$(DOCKER_COMPOSE) exec app alembic upgrade head
+	$(DOCKER_COMPOSE) exec -w /app/src app alembic upgrade head
 
 migrate-down: ## Reverte ultima migration
-	$(DOCKER_COMPOSE) exec app alembic downgrade -1
+	$(DOCKER_COMPOSE) exec -w /app/src app alembic downgrade -1
 
 migrate-new: ## Cria nova migration (usar: make migrate-new MSG="descricao")
-	$(DOCKER_COMPOSE) exec app alembic revision --autogenerate -m "$(MSG)"
+	$(DOCKER_COMPOSE) exec -w /app/src app alembic revision --autogenerate -m "$(MSG)"
 
 migrate-history: ## Mostra historico de migrations
-	$(DOCKER_COMPOSE) exec app alembic history
+	$(DOCKER_COMPOSE) exec -w /app/src app alembic history
+
+migrate-current: ## Mostra migration atual
+	$(DOCKER_COMPOSE) exec -w /app/src app alembic current
 
 # -----------------------------------------------------------------------------
 # Testes
