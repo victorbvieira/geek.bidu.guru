@@ -89,22 +89,43 @@ Pergunta: "Como implementar autenticação JWT?"
 - **Jinja2** - Templates (SSR)
 
 ### Banco de Dados
-- **PostgreSQL** 15+
-- Rodando em **Docker container**
+- **PostgreSQL** 15+ - Container **compartilhado** na VPS (database: `geek_bidu_guru`)
+- **Redis** - Cache (opcional)
 
 ### Frontend
 - **Server-Side Rendering (SSR)** com Jinja2
 - **HTML/CSS** puro (sem frameworks JS)
 - **JavaScript vanilla** para interatividade
 
-### Infraestrutura
-- **Docker** & **Docker Compose** - TUDO containerizado
-- **Nginx** - Reverse proxy
-- **VPS** - Deploy
-- **Let's Encrypt** - SSL/TLS
+### Infraestrutura de Produção (VPS Hostinger KVM8)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                VPS Hostinger KVM8 (Easypanel)               │
+├─────────────────────────────────────────────────────────────┤
+│  SERVIÇOS COMPARTILHADOS (já existentes):                   │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
+│  │ PostgreSQL │  │    n8n     │  │  Traefik   │            │
+│  └────────────┘  └────────────┘  └────────────┘            │
+│                                                             │
+│  PROJETO EASYPANEL: geek-bidu-guru (NOVO):                 │
+│  ┌─────────────────────────────────────────────┐           │
+│  │  app (FastAPI + Jinja2 SSR)                 │           │
+│  └─────────────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **Easypanel** - Gerenciador de containers (interface web)
+- **Traefik** - Reverse proxy + SSL automático (já configurado)
+- **PostgreSQL** - Container compartilhado (criar database específico)
+- **n8n** - Container compartilhado (criar workflows do projeto)
+
+### Ambiente de Desenvolvimento Local
+- **Docker Compose** - Simula ambiente de produção
+- PostgreSQL e Redis locais em containers
 
 ### Automação
-- **n8n** - Workflows e automação
+- **n8n** - Workflows (container compartilhado na VPS)
 - **OpenAI API** (ou equivalente) - Geração de conteúdo
 - **Amazon API**, **Mercado Livre API**, **Shopee API** - Produtos de afiliados
 
@@ -160,8 +181,9 @@ geek.bidu.guru/
 ├── tests/
 ├── migrations/                 # Alembic migrations
 ├── docker/
-│   ├── Dockerfile
-│   └── docker-compose.yml
+│   ├── Dockerfile                # Imagem para Easypanel e dev local
+│   ├── docker-compose.yml        # DESENVOLVIMENTO LOCAL APENAS
+│   └── .dockerignore
 ├── .env.example
 ├── requirements.txt
 └── README.md
@@ -198,28 +220,56 @@ geek.bidu.guru/
 
 ## 🚀 Comandos Úteis (Lembre o usuário quando relevante)
 
-### Docker
+### Desenvolvimento Local (Docker Compose)
 ```bash
-# Subir containers
-docker-compose up -d
+# Subir ambiente de desenvolvimento
+cd docker && docker-compose up -d
 
 # Ver logs
 docker-compose logs -f app
 
 # Migrations
-docker-compose run --rm app alembic upgrade head
+docker-compose exec app alembic upgrade head
 
 # Shell do container
 docker-compose exec app /bin/bash
 
-# Parar tudo
+# Parar ambiente
 docker-compose down
 ```
 
-### Makefile (se existir)
+### Produção (Easypanel)
+```bash
+# Deploy é feito via Easypanel (interface web)
+# 1. Push para GitHub
+# 2. Easypanel detecta e faz rebuild automático
+
+# Acessar logs via Easypanel UI ou:
+# ssh para VPS e usar docker logs do container
+```
+
+### Banco de Dados (PostgreSQL Compartilhado)
+```bash
+# Conectar no PostgreSQL da VPS (via Easypanel ou SSH)
+psql -h localhost -U postgres -d geek_bidu_guru
+
+# Criar database inicial (apenas uma vez)
+CREATE DATABASE geek_bidu_guru;
+```
+
+### n8n (Workflows)
+```bash
+# n8n roda em container separado na VPS
+# Acessar via: https://n8n.seudominio.com
+
+# Importar workflows do diretório n8n/workflows/
+# Via interface do n8n: Settings > Import from File
+```
+
+### Makefile (desenvolvimento local)
 ```bash
 make help        # Ver todos os comandos
-make up          # Subir containers
+make up          # Subir containers locais
 make logs        # Ver logs
 make migrate     # Rodar migrations
 make test        # Executar testes

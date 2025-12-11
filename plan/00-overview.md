@@ -47,16 +47,47 @@ O **geek.bidu.guru** e um blog/portal brasileiro focado em curadoria de presente
 - **JavaScript** - Vanilla, minimo necessario
 
 ### Banco de Dados
-- **PostgreSQL 15+** - Banco principal
+- **PostgreSQL 15+** - Banco principal (container compartilhado na VPS)
 - **Redis** - Cache (sessoes, queries)
 
-### Infraestrutura
-- **Docker** & **Docker Compose** - Containerizacao
-- **Nginx** - Reverse proxy, SSL
-- **Certbot** - Certificados Let's Encrypt
+### Infraestrutura de Producao (VPS Hostinger KVM8)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                VPS Hostinger KVM8 (Easypanel)               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  SERVICOS COMPARTILHADOS (JA EXISTENTES):                   │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
+│  │ PostgreSQL │  │    n8n     │  │  Traefik   │            │
+│  │ (DB Pool)  │  │ (Workflows)│  │ (SSL/Proxy)│            │
+│  └────────────┘  └────────────┘  └────────────┘            │
+│                                                             │
+│  PROJETO EASYPANEL: geek-bidu-guru (NOVO):                 │
+│  ┌─────────────────────────────────────────────┐           │
+│  │  app (FastAPI + Jinja2 SSR)                 │           │
+│  │  redis (cache - opcional)                   │           │
+│  │  volumes (static files)                     │           │
+│  └─────────────────────────────────────────────┘           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Componente | Status | Descricao |
+|------------|--------|-----------|
+| **Easypanel** | Ja instalado | Gerenciador de containers (interface web) |
+| **Traefik** | Ja configurado | Reverse proxy + SSL automatico (Let's Encrypt) |
+| **PostgreSQL** | Ja rodando | Container compartilhado - criar DB `geek_bidu_guru` |
+| **n8n** | Ja rodando | Container compartilhado - criar workflows do projeto |
+| **App FastAPI** | **A criar** | Container dedicado no projeto Easypanel |
+| **Redis** | **A criar** | Cache (opcional, dentro do projeto) |
+
+### Ambiente de Desenvolvimento Local
+- **Docker Compose** - Simula ambiente de producao localmente
+- Containers locais de PostgreSQL e Redis para desenvolvimento
 
 ### Automacao
-- **n8n** - Orquestracao de workflows
+- **n8n** - Orquestracao de workflows (container compartilhado na VPS)
 - **OpenAI API** - Geracao de conteudo com IA
 - **APIs de Afiliados** - Amazon, Mercado Livre, Shopee
 
@@ -76,9 +107,11 @@ O projeto esta dividido em **4 fases principais**, conforme definido no PRD:
 **Objetivo**: Infraestrutura funcional com MVP do blog
 
 Entregaveis:
-- Ambiente Docker completo
+- Projeto Easypanel `geek-bidu-guru` criado e configurado
+- Database `geek_bidu_guru` no PostgreSQL compartilhado
+- Dockerfile otimizado para FastAPI
+- Docker Compose para desenvolvimento local
 - Backend FastAPI funcional
-- Banco de dados PostgreSQL com schema
 - Sistema de autenticacao JWT
 - Templates Jinja2 basicos
 - CRUD de posts e produtos
@@ -93,7 +126,7 @@ Entregaveis:
 - Robots.txt otimizado
 - Schema.org (BlogPosting, Product, ItemList)
 - Open Graph / Twitter Cards
-- Workflows n8n (posts diarios, listicles semanais)
+- Workflows n8n no container compartilhado (posts diarios, listicles semanais)
 - Integracao com APIs de afiliados
 - Sistema de tracking GA4
 
@@ -130,7 +163,7 @@ geek.bidu.guru/
 │   ├── app/
 │   │   ├── main.py               # Entry point FastAPI
 │   │   ├── config.py             # Configuracoes
-│   │   ├── database.py           # Conexao PostgreSQL
+│   │   ├── database.py           # Conexao PostgreSQL (compartilhado)
 │   │   ├── api/
 │   │   │   └── v1/               # Endpoints REST API
 │   │   │       ├── posts.py
@@ -191,12 +224,10 @@ geek.bidu.guru/
 │       ├── env.py
 │       └── versions/
 ├── docker/                       # Configuracoes Docker
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── docker-compose.prod.yml
-│   └── nginx/
-│       └── nginx.conf
-├── n8n/                          # Workflows n8n (exportados)
+│   ├── Dockerfile                # Imagem para Easypanel e local
+│   ├── docker-compose.yml        # DESENVOLVIMENTO LOCAL
+│   └── .dockerignore
+├── n8n/                          # Workflows n8n (para importar no container compartilhado)
 │   ├── workflows/
 │   │   ├── flow-a-daily-post.json
 │   │   ├── flow-b-weekly-listicle.json
@@ -204,7 +235,7 @@ geek.bidu.guru/
 │   │   ├── flow-d-social-share.json
 │   │   ├── flow-e-product-research.json
 │   │   └── flow-f-deal-monitor.json
-│   └── credentials/
+│   └── README.md                 # Instrucoes de importacao
 ├── plan/                         # Planejamento do projeto
 │   ├── 00-overview.md            # Este arquivo
 │   ├── 01-control-table.md       # Tabela de controle
@@ -216,12 +247,18 @@ geek.bidu.guru/
 ├── agents/                       # Agentes especializados
 ├── docs/                         # Documentacao auxiliar
 ├── reports/                      # Relatorios e analises
-├── .env.example                  # Variaveis de ambiente
+├── .env.example                  # Variaveis de ambiente (local e producao)
 ├── requirements.txt              # Dependencias Python
-├── Makefile                      # Comandos uteis
+├── Makefile                      # Comandos uteis (dev local)
 ├── PRD.md                        # Documento de requisitos
 └── README.md                     # Documentacao principal
 ```
+
+### Nota sobre Infraestrutura
+
+- **Producao**: Easypanel gerencia o container `app` - nao usamos docker-compose.prod.yml
+- **Desenvolvimento**: docker-compose.yml sobe PostgreSQL e Redis locais para simular producao
+- **n8n**: Workflows sao exportados em JSON e importados manualmente no container compartilhado
 
 ---
 
@@ -272,6 +309,6 @@ O projeto conta com **11 agentes especializados** para diferentes areas:
 
 ---
 
-**Versao**: 1.0
-**Data**: 2025-12-10
+**Versao**: 1.1 (atualizado para Easypanel + VPS Hostinger)
+**Data**: 2025-12-11
 **Projeto**: geek.bidu.guru

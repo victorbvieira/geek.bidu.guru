@@ -3,7 +3,8 @@
 
 **Versão:** 1.4
 **Responsável:** Squad Conteúdo & Automação
-**Stack:** Python (frontend + backend), PostgreSQL, n8n, integrações com APIs de afiliados (Amazon, Mercado Livre, Shopee)
+**Stack:** Python (FastAPI + Jinja2), PostgreSQL (compartilhado), n8n (compartilhado), Easypanel, integrações com APIs de afiliados (Amazon, Mercado Livre, Shopee)
+**Infraestrutura:** VPS Hostinger KVM8 com Easypanel
 **Domínio:** `https://geek.bidu.guru`
 
 **Documentos Complementares:**
@@ -514,10 +515,16 @@ Processo padronizado (hipótese → ICE → execução → análise → rollout)
   - Proteção contra SQL Injection, XSS, CSRF.
   - Rate limit em endpoints sensíveis.
 - **Escalabilidade & Infraestrutura:**
-  - **Docker:** Deploy e desenvolvimento baseados 100% em Docker.
-  - **Banco de Dados:** PostgreSQL rodando em container Docker separado (já existente na VPS); para desenvolvimento local, utilizar container local para simulação.
-  - **Orquestração:** Docker Compose para gerenciar os serviços.
-  - Possibilidade de replicação do banco no futuro.
+  - **Easypanel:** Plataforma de gerenciamento de containers na VPS (substitui Docker Compose manual).
+  - **VPS Hostinger KVM8:** Servidor de produção com recursos compartilhados.
+  - **Serviços Compartilhados na VPS:**
+    - **PostgreSQL:** Container já existente, criar database específico `geek_bidu_guru`.
+    - **n8n:** Container já existente, criar workflows específicos do projeto.
+    - **Traefik:** Gerenciador de domínios e certificados SSL (já configurado).
+  - **Projeto Easypanel `geek-bidu-guru`:** Conterá apenas os serviços específicos da aplicação:
+    - **app:** Container FastAPI (aplicação principal).
+    - **redis:** Cache (opcional, pode ser compartilhado futuramente).
+  - **Desenvolvimento Local:** Docker Compose para simular ambiente de produção.
 - **Analytics:**
   - **GA4** com plano de tracking de eventos e parâmetros conforme `docs/analytics/tracking-plan.md`.
   - **Dashboards** (Looker Studio/Metabase) conforme `docs/analytics/dashboards.md` e cadência `docs/analytics/reporting-cadence.md`.
@@ -534,19 +541,94 @@ Processo padronizado (hipótese → ICE → execução → análise → rollout)
 
 ## 8. Arquitetura Técnica (Alta Nível)
 
-- **Infraestrutura:**
-  - **Docker Compose:** Orquestração de todos os serviços.
-  - **VPS:** Utilização de diretório na própria VPS para persistência de dados (volumes mapeados no Docker Compose).
-- **Backend:** FastAPI (Python)  
-- **Frontend:** Templates Jinja2 (SSR) servidos pelo FastAPI  
-- **Banco de Dados:** PostgreSQL (Container Docker)
-- **ORM:** SQLAlchemy (ou equivalente)  
-- **Armazenamento de Imagens:** Diretório estático na VPS (volume Docker) ou S3-compatible.  
-- **Automação:** n8n (self-hosted) rodando via Docker  
+### 8.1. Infraestrutura de Produção (VPS Hostinger KVM8)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    VPS Hostinger KVM8                           │
+│                    (Easypanel Manager)                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              SERVIÇOS COMPARTILHADOS                     │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │   │
+│  │  │  PostgreSQL  │  │     n8n      │  │   Traefik    │   │   │
+│  │  │   (DB Pool)  │  │  (Workflows) │  │  (Proxy/SSL) │   │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                              │                                  │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │         PROJETO: geek-bidu-guru (Easypanel)             │   │
+│  │  ┌──────────────────────────────────────────────────┐   │   │
+│  │  │                    app                            │   │   │
+│  │  │  FastAPI + Jinja2 (SSR)                          │   │   │
+│  │  │  - API REST (/api/v1/*)                          │   │   │
+│  │  │  - Site público (/, /posts/*, /categorias/*)     │   │   │
+│  │  │  - Admin (/admin/*)                              │   │   │
+│  │  │  - Redirect afiliados (/goto/*)                  │   │   │
+│  │  └──────────────────────────────────────────────────┘   │   │
+│  │                                                         │   │
+│  │  ┌──────────────┐  ┌──────────────────────────────┐    │   │
+│  │  │    Redis     │  │   Volume: /data/static       │    │   │
+│  │  │   (Cache)    │  │   (Imagens, CSS, JS)         │    │   │
+│  │  └──────────────┘  └──────────────────────────────┘    │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 8.2. Componentes
+
+- **Easypanel:** Interface de gerenciamento de containers (substitui Docker Compose manual em produção)
+- **Traefik:** Reverse proxy e gerenciador de certificados SSL (já existente na VPS)
+- **PostgreSQL:** Banco de dados compartilhado (criar database `geek_bidu_guru`)
+- **n8n:** Automação de workflows (já existente, criar workflows específicos)
+- **app (FastAPI):** Container único da aplicação com SSR via Jinja2
+- **Redis:** Cache de sessões e queries (dentro do projeto Easypanel)
+
+### 8.3. Stack Técnica
+
+- **Backend:** FastAPI (Python 3.11+)
+- **Frontend:** Templates Jinja2 (SSR) servidos pelo FastAPI
+- **Banco de Dados:** PostgreSQL 15+ (database dedicado no container compartilhado)
+- **ORM:** SQLAlchemy + asyncpg
+- **Cache:** Redis
+- **Armazenamento de Imagens:** Volume persistente no Easypanel ou S3-compatible
+- **Automação:** n8n (self-hosted, container compartilhado)
 - **Integrações Externas:**
-  - Amazon Product Advertising API (quando configurada).
-  - Mercado Livre API.
-  - Shopee API (quando disponível para afiliados).
+  - Amazon Product Advertising API
+  - Mercado Livre API
+  - Shopee API (quando disponível)
+
+### 8.4. Ambiente de Desenvolvimento Local
+
+```yaml
+# docker-compose.yml (desenvolvimento local)
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://...
+    volumes:
+      - ./src:/app
+
+  postgres:
+    image: postgres:15
+    # Simula o PostgreSQL compartilhado
+
+  redis:
+    image: redis:7-alpine
+```
+
+### 8.5. Deploy via Easypanel
+
+1. Criar projeto `geek-bidu-guru` no Easypanel
+2. Adicionar serviço `app` (Docker image ou GitHub repo)
+3. Configurar variáveis de ambiente (DATABASE_URL apontando para PostgreSQL compartilhado)
+4. Configurar domínio `geek.bidu.guru` via Traefik
+5. Adicionar serviço `redis` se necessário
 
 ---
 

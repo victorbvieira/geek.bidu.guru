@@ -9,23 +9,109 @@
 ## Visao Geral da Fase
 
 A Fase 1 estabelece toda a fundacao tecnica do projeto. Ao final desta fase, teremos:
-- Ambiente Docker completo e funcional
+- Projeto Easypanel `geek-bidu-guru` configurado na VPS
+- Database `geek_bidu_guru` criado no PostgreSQL compartilhado
+- Dockerfile otimizado para deploy via Easypanel
+- Docker Compose para desenvolvimento local
 - Backend FastAPI com APIs REST
-- Banco de dados PostgreSQL com schema completo
 - Sistema de autenticacao JWT
 - Templates Jinja2 basicos renderizados
 - Sistema de redirecionamento de afiliados funcionando
 
 ---
 
-## 1.1 Infraestrutura Docker
+## Arquitetura de Infraestrutura
+
+### Producao (VPS Hostinger KVM8 + Easypanel)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                VPS Hostinger KVM8 (Easypanel)               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  SERVICOS COMPARTILHADOS (JA EXISTENTES):                   │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
+│  │ PostgreSQL │  │    n8n     │  │  Traefik   │            │
+│  │ (DB Pool)  │  │ (Workflows)│  │ (SSL/Proxy)│            │
+│  └────────────┘  └────────────┘  └────────────┘            │
+│                                                             │
+│  PROJETO EASYPANEL: geek-bidu-guru (A CRIAR):              │
+│  ┌─────────────────────────────────────────────┐           │
+│  │  app (FastAPI + Jinja2 SSR)                 │           │
+│  │  - Build: GitHub repo                       │           │
+│  │  - Port: 8000 (interno)                     │           │
+│  │  - Domain: geek.bidu.guru                   │           │
+│  └─────────────────────────────────────────────┘           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### O que criar vs. O que ja existe
+
+| Componente | Status | Acao |
+|------------|--------|------|
+| PostgreSQL | :white_check_mark: Existente | Criar database `geek_bidu_guru` |
+| n8n | :white_check_mark: Existente | Criar workflows na Fase 2 |
+| Traefik | :white_check_mark: Existente | Configurar dominio `geek.bidu.guru` |
+| **App FastAPI** | :new: A criar | Container no projeto Easypanel |
+
+### Desenvolvimento Local
+
+Para desenvolvimento, usamos Docker Compose que simula o ambiente de producao:
+- PostgreSQL local (simula o compartilhado)
+- Redis local
+- App FastAPI com hot-reload
+
+---
+
+## 1.1 Configuracao Easypanel (Producao)
 
 **Agente Principal**: DevOps Engineer
 **Referencia**: `agents/devops-engineer.md`
 
-### 1.1.1 Criar Dockerfile
+### 1.1.0 Criar Projeto no Easypanel
+
+**Passos manuais via interface Easypanel:**
+
+1. Acessar Easypanel da VPS (https://painel.seudominio.com)
+2. Criar novo projeto: `geek-bidu-guru`
+3. Adicionar servico "App" do tipo GitHub
+4. Configurar:
+   - Repository: `seu-usuario/geek.bidu.guru`
+   - Branch: `main`
+   - Dockerfile path: `docker/Dockerfile`
+   - Port: `8000`
+5. Configurar variaveis de ambiente:
+   ```
+   DATABASE_URL=postgresql://usuario:senha@postgres:5432/geek_bidu_guru
+   SECRET_KEY=sua-chave-secreta-producao
+   DEBUG=false
+   REDIS_URL=redis://redis:6379/0  (se usar Redis)
+   ```
+6. Configurar dominio: `geek.bidu.guru` (Traefik gerencia SSL)
+
+### 1.1.0b Criar Database no PostgreSQL Compartilhado
+
+**Via Easypanel ou SSH:**
+
+```sql
+-- Conectar no PostgreSQL compartilhado
+CREATE DATABASE geek_bidu_guru;
+CREATE USER geek_app WITH ENCRYPTED PASSWORD 'senha-segura';
+GRANT ALL PRIVILEGES ON DATABASE geek_bidu_guru TO geek_app;
+```
+
+---
+
+## 1.2 Infraestrutura Docker (Desenvolvimento Local)
+
+**Agente Principal**: DevOps Engineer
+**Referencia**: `agents/devops-engineer.md`
+
+### 1.2.1 Criar Dockerfile
 
 **Arquivo**: `docker/Dockerfile`
+**Usado por**: Easypanel (producao) e Docker Compose (desenvolvimento)
 
 ```dockerfile
 # Multi-stage build para producao otimizada
@@ -75,9 +161,10 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-### 1.1.2 Criar docker-compose.yml (Desenvolvimento)
+### 1.2.2 Criar docker-compose.yml (Desenvolvimento Local)
 
 **Arquivo**: `docker/docker-compose.yml`
+**IMPORTANTE**: Este arquivo e usado APENAS para desenvolvimento local. Em producao, o Easypanel gerencia o container.
 
 ```yaml
 version: '3.8'
@@ -135,33 +222,29 @@ services:
         condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-  nginx:
-    image: nginx:alpine
-    container_name: geek_nginx
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../src/app/static:/var/www/static:ro
-    ports:
-      - "80:80"
-    depends_on:
-      - app
+  # NOTA: Nginx NAO e necessario em desenvolvimento
+  # Em producao, Traefik (ja configurado na VPS) faz o proxy
 
 volumes:
   postgres_data:
   redis_data:
 ```
 
-### 1.1.3-1.1.8 Demais Arquivos de Infraestrutura
+### 1.2.3 Demais Arquivos de Infraestrutura
 
 **Verificar**: `agents/devops-engineer.md` para configuracoes detalhadas de:
-- Nginx config
-- docker-compose.prod.yml
-- .env.example
-- Makefile
+- .env.example (variaveis de ambiente)
+- Makefile (comandos de desenvolvimento)
+- .dockerignore
+
+**NOTA SOBRE PRODUCAO**:
+- NAO usamos `docker-compose.prod.yml` - Easypanel gerencia isso
+- NAO precisamos configurar Nginx - Traefik ja esta na VPS
+- NAO precisamos de Certbot - Traefik gerencia SSL automaticamente
 
 ---
 
-## 1.2 Backend FastAPI - Estrutura Base
+## 1.3 Backend FastAPI - Estrutura Base
 
 **Agente Principal**: Backend Developer
 **Referencia**: `agents/backend-developer.md`

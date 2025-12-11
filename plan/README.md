@@ -4,6 +4,53 @@ Este diretorio contem o planejamento completo para execucao do projeto **geek.bi
 
 ---
 
+## Infraestrutura de Producao
+
+### VPS Hostinger KVM8 + Easypanel
+
+O projeto sera hospedado em uma **VPS Hostinger KVM8** gerenciada pelo **Easypanel**, aproveitando servicos ja existentes:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                VPS Hostinger KVM8 (Easypanel)               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  SERVICOS COMPARTILHADOS (ja existentes):                   │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐            │
+│  │ PostgreSQL │  │    n8n     │  │  Traefik   │            │
+│  │ (DB Pool)  │  │ (Workflows)│  │ (SSL/Proxy)│            │
+│  └────────────┘  └────────────┘  └────────────┘            │
+│                                                             │
+│  PROJETO: geek-bidu-guru (NOVO):                           │
+│  ┌─────────────────────────────────────────────┐           │
+│  │  app (FastAPI + Jinja2)                     │           │
+│  │  redis (cache - opcional)                   │           │
+│  │  volumes (static files)                     │           │
+│  └─────────────────────────────────────────────┘           │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### O que vamos criar vs. O que ja existe
+
+| Componente | Status | Acao |
+|------------|--------|------|
+| PostgreSQL | :white_check_mark: Existente | Criar database `geek_bidu_guru` |
+| n8n | :white_check_mark: Existente | Criar workflows especificos |
+| Traefik | :white_check_mark: Existente | Configurar dominio `geek.bidu.guru` |
+| **App FastAPI** | :new: Novo | Criar container no projeto Easypanel |
+| **Redis** | :new: Novo (opcional) | Adicionar ao projeto se necessario |
+
+### Vantagens desta Arquitetura
+
+1. **Simplicidade**: Um unico container para a aplicacao
+2. **Recursos Compartilhados**: PostgreSQL e n8n ja configurados e funcionando
+3. **SSL Automatico**: Traefik gerencia certificados Let's Encrypt
+4. **Deploy Facil**: Push para GitHub → build automatico no Easypanel
+5. **Custo Otimizado**: Sem necessidade de servicos adicionais
+
+---
+
 ## Estrutura do Planejamento
 
 | Arquivo | Descricao |
@@ -71,14 +118,16 @@ O documento [06-agent-reviews.md](06-agent-reviews.md) contem:
 ### Fase 1: Base Tecnica
 **74 tarefas** | Agentes: DevOps, Backend, Database, Frontend, Security
 
-- Docker & Docker Compose
+- **Easypanel**: Criar projeto `geek-bidu-guru` e configurar servico `app`
+- **Dockerfile**: Imagem otimizada para FastAPI
+- **PostgreSQL**: Criar database `geek_bidu_guru` no container compartilhado
 - FastAPI com estrutura completa
-- PostgreSQL com schema
 - Autenticacao JWT
 - CRUD de posts e produtos
 - Templates Jinja2 basicos
 - Sistema de redirecionamento de afiliados
 - **[NOVO]** Exception handlers, logging estruturado, CSP
+- **Docker Compose local**: Ambiente de desenvolvimento simulando producao
 
 ### Fase 2: SEO & Automacao
 **50 tarefas** | Agentes: SEO, Automation, Data Analyst, DevOps
@@ -86,7 +135,7 @@ O documento [06-agent-reviews.md](06-agent-reviews.md) contem:
 - Sitemap.xml e robots.txt
 - Schema.org (BlogPosting, Product, ItemList, FAQ)
 - Open Graph e Twitter Cards
-- n8n configurado
+- **n8n (compartilhado)**: Criar workflows especificos do projeto
 - Workflows A, B, C (posts, listicles, precos)
 - Google Analytics 4
 - **[NOVO]** FAQ Schema, rate limits documentados
@@ -156,7 +205,7 @@ O documento [06-agent-reviews.md](06-agent-reviews.md) contem:
 
 ---
 
-**Versao do Planejamento**: 1.1 (revisado pelos agentes)
-**Data**: 2025-12-10
+**Versao do Planejamento**: 1.2 (atualizado para Easypanel + VPS Hostinger)
+**Data**: 2025-12-11
 **Projeto**: geek.bidu.guru
 **Total de Tarefas**: 193+
