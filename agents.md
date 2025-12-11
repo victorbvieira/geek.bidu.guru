@@ -232,6 +232,43 @@ make lint        # Verificar código
 
 ---
 
+## 🎨 Padrões de Código (OBRIGATÓRIO!)
+
+### Comentários e Documentação
+- **TODOS os comentários em português brasileiro (pt-BR)**
+- **Código ricamente comentado** explicando:
+  - O "porquê" das decisões técnicas
+  - Lógica de negócio complexa
+  - Parâmetros e retornos de funções
+  - Fluxos de dados importantes
+- **Docstrings completas** em todas as funções e classes públicas
+- **Exemplos de uso** em funções mais complexas
+
+### Clean Code
+- **Nomes significativos**: variáveis, funções e classes devem ter nomes descritivos
+- **Funções pequenas**: cada função deve fazer apenas uma coisa
+- **Sem comentários óbvios**: código auto-explicativo quando possível
+- **DRY (Don't Repeat Yourself)**: evitar duplicação de código
+- **KISS (Keep It Simple, Stupid)**: preferir soluções simples
+- **Tratamento de erros explícito**: não ignorar exceções silenciosamente
+
+### Princípios SOLID
+- **S - Single Responsibility**: cada classe/módulo tem uma única responsabilidade
+- **O - Open/Closed**: aberto para extensão, fechado para modificação
+- **L - Liskov Substitution**: subtipos devem ser substituíveis por seus tipos base
+- **I - Interface Segregation**: interfaces específicas são melhores que uma geral
+- **D - Dependency Inversion**: depender de abstrações, não de implementações concretas
+
+### Testes Unitários
+- **Criar testes para toda lógica de negócio**
+- **Cobertura mínima de 80%** para código novo
+- **Testes devem ser independentes** e executáveis em qualquer ordem
+- **Usar fixtures e mocks** para isolar dependências externas
+- **Nomenclatura clara**: `test_<funcionalidade>_<cenario>_<resultado_esperado>`
+- **Arrange-Act-Assert (AAA)** como padrão de estrutura de testes
+
+---
+
 ## 🎯 Diretrizes para IAs
 
 ### Quando Consultar Agentes
@@ -297,7 +334,7 @@ Quando adicionar ou modificar um agente:
 
 ### Versionamento
 
-- **Versão atual**: 1.2
+- **Versão atual**: 1.3
 - **Última atualização**: 2025-12-11
 - **Projeto**: geek.bidu.guru
 
