@@ -30,6 +30,25 @@ Status de Post (Workflow Editorial):
 Métricas:
     - view_count: Contador de visualizações
     - click_count: Contador de cliques em links de afiliados
+
+Protecao de Endpoints:
+    Para proteger um endpoint, adicione a dependencia require_role ou ActiveUser:
+
+    from app.core.deps import ActiveUser, require_role
+    from app.models.user import UserRole
+
+    # Qualquer usuario autenticado:
+    @router.get("/protected")
+    async def protected_route(current_user: ActiveUser):
+        return {"user": current_user.email}
+
+    # Apenas admin ou editor (criar/editar posts):
+    @router.post("", dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR))])
+    async def create_post(...): ...
+
+    # Apenas admin (deletar posts):
+    @router.delete("/{id}", dependencies=[Depends(require_role(UserRole.ADMIN))])
+    async def admin_only(id: UUID): ...
 """
 
 from uuid import UUID

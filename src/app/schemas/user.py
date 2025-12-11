@@ -98,16 +98,23 @@ class UserLogin(BaseSchema):
 
 
 class TokenResponse(BaseSchema):
-    """Schema de resposta com token JWT."""
+    """Schema de resposta com tokens JWT."""
 
-    access_token: str
+    access_token: str = Field(..., description="Token de acesso JWT")
+    refresh_token: str = Field(..., description="Token de refresh JWT")
     token_type: str = "bearer"
-    expires_in: int = Field(..., description="Tempo de expiracao em segundos")
+
+
+class RefreshTokenRequest(BaseSchema):
+    """Schema para requisicao de refresh de token."""
+
+    refresh_token: str = Field(..., description="Token de refresh JWT")
 
 
 class TokenPayload(BaseSchema):
-    """Payload do token JWT."""
+    """Payload do token JWT decodificado."""
 
-    sub: str  # user_id
-    exp: int  # expiration timestamp
-    role: str
+    sub: str = Field(..., description="Subject (user_id)")
+    exp: int = Field(..., description="Expiration timestamp")
+    type: str = Field(..., description="Tipo do token (access/refresh)")
+    iat: int = Field(..., description="Issued at timestamp")

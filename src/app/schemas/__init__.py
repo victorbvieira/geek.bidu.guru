@@ -26,6 +26,7 @@ from app.schemas.base import (
 
 # User
 from app.schemas.user import (
+    RefreshTokenRequest,
     TokenPayload,
     TokenResponse,
     UserBase,
@@ -133,6 +134,7 @@ __all__ = [
     "UserLogin",
     "TokenResponse",
     "TokenPayload",
+    "RefreshTokenRequest",
     # Category
     "CategoryBase",
     "CategoryCreate",

@@ -34,6 +34,25 @@ Disponibilidade:
 Métricas:
     - click_count: Contador de cliques no link de afiliado
     - internal_score: Score para curadoria de produtos
+
+Protecao de Endpoints:
+    Para proteger um endpoint, adicione a dependencia require_role ou ActiveUser:
+
+    from app.core.deps import ActiveUser, require_role
+    from app.models.user import UserRole
+
+    # Qualquer usuario autenticado:
+    @router.get("/protected")
+    async def protected_route(current_user: ActiveUser):
+        return {"user": current_user.email}
+
+    # Admin, Editor ou Automation (criar/editar produtos):
+    @router.post("", dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTOMATION))])
+    async def create_product(...): ...
+
+    # Apenas automation (atualizar precos via workflow):
+    @router.patch("/{id}/price", dependencies=[Depends(require_role(UserRole.AUTOMATION, UserRole.ADMIN))])
+    async def update_price(...): ...
 """
 
 from uuid import UUID

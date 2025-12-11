@@ -23,6 +23,27 @@ Validações:
     - Slugs devem ser únicos
     - Parent_id deve referenciar categoria existente
     - Categoria não pode ser pai de si mesma
+
+Protecao de Endpoints:
+    Para proteger um endpoint, adicione a dependencia require_role ou ActiveUser:
+
+    from app.core.deps import ActiveUser, require_role
+    from app.models.user import UserRole
+
+    # Qualquer usuario autenticado:
+    @router.get("/protected")
+    async def protected_route(current_user: ActiveUser):
+        return {"user": current_user.email}
+
+    # Apenas admin:
+    @router.delete("/{id}", dependencies=[Depends(require_role(UserRole.ADMIN))])
+    async def admin_only(id: UUID):
+        ...
+
+    # Admin ou Editor:
+    @router.patch("/{id}", dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.EDITOR))])
+    async def admin_or_editor(id: UUID):
+        ...
 """
 
 from uuid import UUID
