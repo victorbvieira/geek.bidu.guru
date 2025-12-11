@@ -1,0 +1,57 @@
+Migrations - geek.bidu.guru
+===========================
+
+Este diretorio contem as migrations do Alembic para o banco de dados PostgreSQL.
+
+Comandos Uteis
+--------------
+
+# Criar nova migration (autogenerate)
+make migrate-new MSG="descricao_da_mudanca"
+
+# Ou manualmente:
+alembic revision --autogenerate -m "descricao_da_mudanca"
+
+# Aplicar todas as migrations pendentes
+make migrate
+
+# Ou manualmente:
+alembic upgrade head
+
+# Reverter ultima migration
+make migrate-down
+
+# Ou manualmente:
+alembic downgrade -1
+
+# Ver historico de migrations
+make migrate-history
+
+# Ou manualmente:
+alembic history
+
+# Ver migration atual
+alembic current
+
+# Ver SQL que seria executado (sem aplicar)
+alembic upgrade head --sql
+
+Estrutura
+---------
+
+migrations/
+├── env.py              # Configuracao do ambiente Alembic
+├── script.py.mako      # Template para novas migrations
+├── README              # Este arquivo
+└── versions/           # Migrations individuais
+    ├── 20251211_xxx_initial_schema.py
+    └── ...
+
+Boas Praticas
+-------------
+
+1. Sempre crie migrations com --autogenerate para detectar mudancas nos modelos
+2. Revise o codigo gerado antes de aplicar
+3. Teste migrations em ambiente de desenvolvimento primeiro
+4. Faca backup do banco antes de aplicar em producao
+5. Nunca edite migrations ja aplicadas em producao

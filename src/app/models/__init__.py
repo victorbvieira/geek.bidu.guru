@@ -1,0 +1,35 @@
+"""
+Modelos SQLAlchemy para geek.bidu.guru.
+
+Todos os modelos sao importados aqui para facilitar o uso
+e para que o Alembic detecte automaticamente as mudancas.
+"""
+
+from app.models.base import TimestampMixin, UUIDMixin
+from app.models.user import User
+from app.models.category import Category
+from app.models.post import Post, PostStatus, PostType
+from app.models.product import Product, ProductPlatform, ProductAvailability
+from app.models.post_product import PostProduct
+from app.models.click import AffiliateClick
+from app.models.session import Session
+from app.models.newsletter import NewsletterSignup
+
+__all__ = [
+    # Mixins
+    "TimestampMixin",
+    "UUIDMixin",
+    # Models
+    "User",
+    "Category",
+    "Post",
+    "PostStatus",
+    "PostType",
+    "Product",
+    "ProductPlatform",
+    "ProductAvailability",
+    "PostProduct",
+    "AffiliateClick",
+    "Session",
+    "NewsletterSignup",
+]

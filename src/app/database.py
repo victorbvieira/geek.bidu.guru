@@ -73,9 +73,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def check_database_connection() -> bool:
     """Verifica se a conexao com o banco esta funcionando."""
+    from sqlalchemy import text
+
     try:
         async with async_session_maker() as session:
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
             return True
     except Exception:
         return False
