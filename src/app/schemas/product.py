@@ -1,0 +1,180 @@
+"""
+Schemas para Product (produtos de afiliados).
+"""
+
+from datetime import datetime
+from decimal import Decimal
+from uuid import UUID
+
+from pydantic import Field, HttpUrl, field_validator
+
+from app.models.product import PriceRange, ProductAvailability, ProductPlatform
+from app.schemas.base import BaseSchema, ResponseSchema
+
+
+# -----------------------------------------------------------------------------
+# Base
+# -----------------------------------------------------------------------------
+
+
+class ProductBase(BaseSchema):
+    """Campos compartilhados de Product."""
+
+    name: str = Field(..., min_length=5, max_length=300, description="Nome do produto")
+    slug: str = Field(..., min_length=5, max_length=350, description="Slug para URL")
+    short_description: str | None = Field(None, max_length=500, description="Descricao curta")
+    long_description: str | None = Field(None, description="Descricao longa")
+    price: Decimal | None = Field(None, ge=0, decimal_places=2, description="Preco atual")
+    currency: str = Field(default="BRL", max_length=3, description="Moeda")
+    price_range: PriceRange | None = Field(None, description="Faixa de preco")
+    main_image_url: str | None = Field(None, max_length=500, description="URL imagem principal")
+    images: list[str] = Field(default_factory=list, description="URLs imagens adicionais")
+
+
+# -----------------------------------------------------------------------------
+# Affiliate
+# -----------------------------------------------------------------------------
+
+
+class ProductAffiliate(BaseSchema):
+    """Campos de afiliado do produto."""
+
+    affiliate_url_raw: str = Field(..., description="URL completa do afiliado")
+    affiliate_redirect_slug: str = Field(..., max_length=150, description="Slug para redirect")
+    platform: ProductPlatform = Field(..., description="Plataforma (amazon, mercadolivre, shopee)")
+    platform_product_id: str | None = Field(None, max_length=200, description="ID na plataforma")
+
+
+# -----------------------------------------------------------------------------
+# Create
+# -----------------------------------------------------------------------------
+
+
+class ProductCreate(ProductBase, ProductAffiliate):
+    """Schema para criacao de produto."""
+
+    categories: list[str] = Field(default_factory=list, description="Categorias do produto")
+    tags: list[str] = Field(default_factory=list, description="Tags do produto")
+    availability: ProductAvailability = Field(
+        default=ProductAvailability.UNKNOWN,
+        description="Disponibilidade",
+    )
+    rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2, description="Rating 0-5")
+    review_count: int = Field(default=0, ge=0, description="Numero de reviews")
+
+    @field_validator("affiliate_redirect_slug")
+    @classmethod
+    def validate_redirect_slug(cls, v: str) -> str:
+        """Garante que slug nao tem caracteres especiais."""
+        import re
+        if not re.match(r"^[a-z0-9-]+$", v):
+            raise ValueError("Slug deve conter apenas letras minusculas, numeros e hifens")
+        return v
+
+
+# -----------------------------------------------------------------------------
+# Update
+# -----------------------------------------------------------------------------
+
+
+class ProductUpdate(BaseSchema):
+    """Schema para atualizacao de produto (todos campos opcionais)."""
+
+    name: str | None = Field(None, min_length=5, max_length=300)
+    slug: str | None = Field(None, min_length=5, max_length=350)
+    short_description: str | None = Field(None, max_length=500)
+    long_description: str | None = None
+    price: Decimal | None = Field(None, ge=0, decimal_places=2)
+    currency: str | None = Field(None, max_length=3)
+    price_range: PriceRange | None = None
+    main_image_url: str | None = None
+    images: list[str] | None = None
+    affiliate_url_raw: str | None = None
+    platform_product_id: str | None = None
+    categories: list[str] | None = None
+    tags: list[str] | None = None
+    availability: ProductAvailability | None = None
+    rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2)
+    review_count: int | None = Field(None, ge=0)
+
+
+class ProductUpdatePrice(BaseSchema):
+    """Schema para atualizacao de preco do produto."""
+
+    price: Decimal = Field(..., ge=0, decimal_places=2)
+    price_range: PriceRange | None = None
+    availability: ProductAvailability | None = None
+
+
+class ProductUpdateScore(BaseSchema):
+    """Schema para atualizacao do score interno."""
+
+    internal_score: Decimal = Field(..., ge=0, le=100, decimal_places=2)
+
+
+# -----------------------------------------------------------------------------
+# Response
+# -----------------------------------------------------------------------------
+
+
+class ProductResponse(ProductBase, ProductAffiliate, ResponseSchema):
+    """Schema de resposta completa de Product."""
+
+    categories: list[str]
+    tags: list[str]
+    availability: ProductAvailability
+    rating: Decimal | None
+    review_count: int
+    internal_score: Decimal
+    last_price_update: datetime | None
+    click_count: int
+
+
+class ProductBrief(BaseSchema):
+    """Schema resumido de Product (para listagens)."""
+
+    id: UUID
+    name: str
+    slug: str
+    price: Decimal | None
+    price_range: PriceRange | None
+    main_image_url: str | None
+    platform: ProductPlatform
+    availability: ProductAvailability
+    rating: Decimal | None
+    click_count: int
+
+
+class ProductPublic(BaseSchema):
+    """Schema de produto para exibicao publica (frontend)."""
+
+    id: UUID
+    name: str
+    slug: str
+    short_description: str | None
+    long_description: str | None
+    price: Decimal | None
+    currency: str
+    price_range: PriceRange | None
+    main_image_url: str | None
+    images: list[str]
+    affiliate_redirect_slug: str  # Usado para construir URL de redirect
+    platform: ProductPlatform
+    availability: ProductAvailability
+    rating: Decimal | None
+    review_count: int
+
+
+class ProductCard(BaseSchema):
+    """Schema de produto para cards (listagens publicas)."""
+
+    id: UUID
+    name: str
+    slug: str
+    short_description: str | None
+    price: Decimal | None
+    price_range: PriceRange | None
+    main_image_url: str | None
+    affiliate_redirect_slug: str
+    platform: ProductPlatform
+    rating: Decimal | None
