@@ -9,6 +9,9 @@ Mixins disponíveis:
     - UUIDMixin: Adiciona campo UUID como chave primária
     - TimestampMixin: Adiciona campos de auditoria (created_at, updated_at)
 
+Tipos customizados:
+    - JSONBType: Tipo JSONB adaptável que usa JSONB no PostgreSQL e JSON no SQLite
+
 Exemplo de uso:
     class MinhaEntidade(Base, UUIDMixin, TimestampMixin):
         __tablename__ = "minha_tabela"
@@ -24,9 +27,36 @@ Notas:
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import DateTime, JSON, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.types import TypeDecorator
+
+
+class JSONBType(TypeDecorator):
+    """
+    Tipo JSONB adaptável para múltiplos dialetos de banco.
+
+    Usa JSONB nativo no PostgreSQL (com índices GIN, operadores @>, etc.)
+    e JSON padrão em outros bancos (SQLite, MySQL, etc.) para testes.
+
+    Isso permite:
+    - Testes unitários com SQLite em memória (rápido, sem infraestrutura)
+    - Produção com PostgreSQL e todos os benefícios do JSONB
+    - Compatibilidade total com migrations Alembic
+
+    Uso:
+        tags: Mapped[list] = mapped_column(JSONBType, default=list)
+    """
+
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        """Seleciona implementação baseada no dialeto do banco."""
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(JSONB())
+        return dialect.type_descriptor(JSON())
 
 
 class UUIDMixin:

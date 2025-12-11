@@ -9,11 +9,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, Enum, Index, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.click import AffiliateClick
@@ -94,9 +93,9 @@ class Product(Base, UUIDMixin, TimestampMixin):
         nullable=True,
     )
 
-    # Imagens
+    # Imagens (JSONBType para compatibilidade com SQLite em testes)
     main_image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    images: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    images: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
 
     # Afiliado
     affiliate_url_raw: Mapped[str] = mapped_column(Text, nullable=False)
@@ -111,9 +110,9 @@ class Product(Base, UUIDMixin, TimestampMixin):
         String(200), nullable=True
     )
 
-    # Categorias e Tags (JSONB para flexibilidade)
-    categories: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
-    tags: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    # Categorias e Tags (JSONBType para flexibilidade e compatibilidade com SQLite)
+    categories: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
+    tags: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
 
     # Disponibilidade e avaliacao
     availability: Mapped[ProductAvailability] = mapped_column(

@@ -5,7 +5,7 @@ Todos os modelos sao importados aqui para facilitar o uso
 e para que o Alembic detecte automaticamente as mudancas.
 """
 
-from app.models.base import TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 from app.models.user import User
 from app.models.category import Category
 from app.models.post import Post, PostStatus, PostType
@@ -16,9 +16,10 @@ from app.models.session import Session
 from app.models.newsletter import NewsletterSignup
 
 __all__ = [
-    # Mixins
+    # Mixins e Tipos
     "TimestampMixin",
     "UUIDMixin",
+    "JSONBType",
     # Models
     "User",
     "Category",

@@ -20,11 +20,11 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.category import Category
@@ -113,8 +113,8 @@ class Post(Base, UUIDMixin, TimestampMixin):
         nullable=True,
     )
 
-    # Tags (array JSON)
-    tags: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    # Tags (array JSON - usa JSONBType para compatibilidade com SQLite em testes)
+    tags: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
 
     # Status e publicacao
     status: Mapped[PostStatus] = mapped_column(
