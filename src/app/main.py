@@ -150,14 +150,17 @@ async def home(request: Request):
 
 
 # -----------------------------------------------------------------------------
-# Incluir Routers (a implementar)
+# API Routes
 # -----------------------------------------------------------------------------
 
-# from app.api.v1 import auth, posts, products, affiliates
-# app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
-# app.include_router(posts.router, prefix="/api/v1/posts", tags=["posts"])
-# app.include_router(products.router, prefix="/api/v1/products", tags=["products"])
-# app.include_router(affiliates.router, prefix="/api/v1/affiliates", tags=["affiliates"])
+from app.api.v1.router import api_router
+
+app.include_router(api_router, prefix="/api/v1")
+
+
+# -----------------------------------------------------------------------------
+# SSR Routes (a implementar)
+# -----------------------------------------------------------------------------
 
 # from app.routers import home, post, category, search
 # app.include_router(home.router)

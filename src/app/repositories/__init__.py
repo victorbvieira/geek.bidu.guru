@@ -1,0 +1,25 @@
+"""
+Repositorios para acesso ao banco de dados.
+
+Padrao Repository: abstrai operacoes de banco das rotas/services.
+"""
+
+from app.repositories.base import BaseRepository
+from app.repositories.user import UserRepository
+from app.repositories.category import CategoryRepository
+from app.repositories.post import PostRepository
+from app.repositories.product import ProductRepository
+from app.repositories.click import ClickRepository
+from app.repositories.session import SessionRepository
+from app.repositories.newsletter import NewsletterRepository
+
+__all__ = [
+    "BaseRepository",
+    "UserRepository",
+    "CategoryRepository",
+    "PostRepository",
+    "ProductRepository",
+    "ClickRepository",
+    "SessionRepository",
+    "NewsletterRepository",
+]
