@@ -5,7 +5,15 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(docker ps:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(/Users/victorborringvieira/Documents/GitHub/geek.bidu.guru/.venv/bin/python:*)",
+      "Bash(pyenv versions:*)",
+      "Bash(pyenv install:*)",
+      "Bash(pyenv local:*)",
+      "Bash(rm:*)",
+      "Bash(~/.pyenv/versions/3.12.7/bin/python -m venv .venv)",
+      "Bash(/Users/victorborringvieira/Documents/GitHub/geek.bidu.guru/.venv/bin/pip install:*)",
+      "Bash(.venv/bin/python -m pytest:*)"
     ],
     "deny": [],
     "ask": []

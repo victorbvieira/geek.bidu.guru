@@ -78,12 +78,12 @@ bleach==6.2.0
 # (geracao manual via FastAPI)
 
 # -----------------------------------------------------------------------------
-# Desenvolvimento (comentar em producao se necessario)
+# Desenvolvimento e Testes
 # -----------------------------------------------------------------------------
-# pytest==8.3.4
-# pytest-asyncio==0.24.0
-# pytest-cov==6.0.0
-# httpx==0.28.1  # ja incluido acima, usado em testes
-# black==24.10.0
-# ruff==0.8.2
-# mypy==1.13.0
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+aiosqlite==0.20.0
+black==24.10.0
+ruff==0.8.2
+mypy==1.13.0
