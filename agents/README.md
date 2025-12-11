@@ -12,6 +12,7 @@ Este diretório contém definições de agentes especializados que atuam como co
 | **Content Strategist** | [content-strategist.md](./content-strategist.md) | Estratégia de conteúdo, calendário editorial, personas, tom de voz | Planejamento de conteúdo, definição de temas, estratégia editorial |
 | **Affiliate Marketing Specialist** | [affiliate-marketing-specialist.md](./affiliate-marketing-specialist.md) | Links de afiliados, conversões, CTR, monetização | Otimização de links de afiliados, estratégias de conversão, análise de receita |
 | **UX/UI Designer** | [ux-ui-designer.md](./ux-ui-designer.md) | Experiência do usuário, design visual, identidade de marca | Design de interfaces, experiência do usuário, guia visual |
+| **Brand/Logo Designer** | [brand-logo-designer.md](./brand-logo-designer.md) | Criação de logos, branding, identidade visual, prompts para IA de imagem | Criação de logo, branding, identidade de marca, geração de assets visuais |
 | **Data Analyst** | [data-analyst.md](./data-analyst.md) | Métricas, KPIs, analytics, relatórios | Análise de dados, métricas de desempenho, dashboards |
 
 ### ⚙️ Agentes Técnicos
