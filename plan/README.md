@@ -35,7 +35,7 @@ O projeto sera hospedado em uma **VPS Hostinger KVM8** gerenciada pelo **Easypan
 
 | Componente | Status | Acao |
 |------------|--------|------|
-| PostgreSQL | :white_check_mark: Existente | Criar database `geek_bidu_guru` |
+| PostgreSQL | :white_check_mark: Existente | Criar databases: `geek_bidu_dev` e `geek_bidu_prod` |
 | n8n | :white_check_mark: Existente | Criar workflows especificos |
 | Traefik | :white_check_mark: Existente | Configurar dominio `geek.bidu.guru` |
 | **App FastAPI** | :new: Novo | Criar container no projeto Easypanel |

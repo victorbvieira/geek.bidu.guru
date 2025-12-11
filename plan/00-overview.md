@@ -77,7 +77,7 @@ O **geek.bidu.guru** e um blog/portal brasileiro focado em curadoria de presente
 |------------|--------|-----------|
 | **Easypanel** | Ja instalado | Gerenciador de containers (interface web) |
 | **Traefik** | Ja configurado | Reverse proxy + SSL automatico (Let's Encrypt) |
-| **PostgreSQL** | Ja rodando | Container compartilhado - criar DB `geek_bidu_guru` |
+| **PostgreSQL** | Ja rodando | Container compartilhado - criar DBs: `geek_bidu_dev` e `geek_bidu_prod` |
 | **n8n** | Ja rodando | Container compartilhado - criar workflows do projeto |
 | **App FastAPI** | **A criar** | Container dedicado no projeto Easypanel |
 | **Redis** | **A criar** | Cache (opcional, dentro do projeto) |

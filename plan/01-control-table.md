@@ -16,32 +16,43 @@
 
 # FASE 1: BASE TECNICA
 
-## 1.1 Infraestrutura Docker
+## 1.0 Infraestrutura Easypanel (Producao - VPS Hostinger KVM8)
+
+> **NOTA**: PostgreSQL, n8n e Traefik ja existem na VPS. Vamos apenas criar o projeto e databases.
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.1.1 | Criar Dockerfile para aplicacao FastAPI | DevOps Engineer | - | :white_large_square: | Python 3.11, multi-stage build |
-| 1.1.2 | Criar docker-compose.yml (dev) | DevOps Engineer | 1.1.1 | :white_large_square: | db, redis, app, nginx |
-| 1.1.3 | Configurar servico PostgreSQL | DevOps Engineer | 1.1.2 | :white_large_square: | Volume persistente |
-| 1.1.4 | Configurar servico Redis | DevOps Engineer | 1.1.2 | :white_large_square: | Para cache e sessoes |
-| 1.1.5 | Configurar Nginx como reverse proxy | DevOps Engineer | 1.1.2 | :white_large_square: | SSL, gzip, cache headers |
-| 1.1.6 | Criar docker-compose.prod.yml | DevOps Engineer | 1.1.5 | :white_large_square: | Certbot, volumes producao |
-| 1.1.7 | Configurar .env.example | DevOps Engineer | - | :white_large_square: | Todas variaveis necessarias |
-| 1.1.8 | Criar Makefile com comandos uteis | DevOps Engineer | 1.1.6 | :white_large_square: | up, down, logs, migrate, shell |
+| 1.0.1 | Criar projeto `geek-bidu-guru` no Easypanel | DevOps Engineer | - | :white_large_square: | Via interface web |
+| 1.0.2 | Criar database `geek_bidu_dev` no PostgreSQL | Database Architect | - | :white_check_mark: | Usuario: `geek_app_dev` |
+| 1.0.3 | Criar database `geek_bidu_prod` no PostgreSQL | Database Architect | - | :white_check_mark: | Usuario: `geek_app_prod` |
+| 1.0.4 | Configurar dominio `geek.bidu.guru` no Traefik | DevOps Engineer | 1.0.1 | :white_large_square: | SSL automatico |
+| 1.0.5 | Configurar variaveis de ambiente no Easypanel | DevOps Engineer | 1.0.3 | :white_large_square: | DATABASE_URL, SECRET_KEY, etc |
+
+## 1.1 Infraestrutura Docker (Desenvolvimento Local)
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 1.1.1 | Criar Dockerfile para aplicacao FastAPI | DevOps Engineer | - | :white_check_mark: | Multi-stage build |
+| 1.1.2 | Criar docker-compose.yml (dev local) | DevOps Engineer | 1.1.1 | :white_check_mark: | db, redis, app |
+| 1.1.3 | Configurar servico PostgreSQL local | DevOps Engineer | 1.1.2 | :white_check_mark: | No docker-compose |
+| 1.1.4 | Configurar servico Redis local | DevOps Engineer | 1.1.2 | :white_check_mark: | No docker-compose |
+| 1.1.5 | Configurar .env.example | DevOps Engineer | - | :white_check_mark: | Completo |
+| 1.1.6 | Criar Makefile com comandos uteis | DevOps Engineer | 1.1.2 | :white_check_mark: | 25+ comandos |
+| 1.1.7 | Criar .dockerignore | DevOps Engineer | 1.1.1 | :white_check_mark: | Completo |
 
 ## 1.2 Backend FastAPI - Estrutura Base
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.2.1 | Criar estrutura de pastas src/app/ | Backend Developer | 1.1.2 | :white_large_square: | Conforme PRD |
-| 1.2.2 | Implementar main.py (entry point) | Backend Developer | 1.2.1 | :white_large_square: | FastAPI app, middlewares |
-| 1.2.3 | Implementar config.py (Settings) | Backend Developer | 1.2.1 | :white_large_square: | Pydantic BaseSettings |
-| 1.2.4 | Implementar database.py (conexao) | Backend Developer | 1.2.3 | :white_large_square: | SQLAlchemy async |
-| 1.2.5 | Configurar requirements.txt | Backend Developer | - | :white_large_square: | Todas dependencias |
+| 1.2.1 | Criar estrutura de pastas src/app/ | Backend Developer | 1.1.2 | :white_check_mark: | Conforme PRD |
+| 1.2.2 | Implementar main.py (entry point) | Backend Developer | 1.2.1 | :white_check_mark: | FastAPI + lifespan |
+| 1.2.3 | Implementar config.py (Settings) | Backend Developer | 1.2.1 | :white_check_mark: | Pydantic Settings |
+| 1.2.4 | Implementar database.py (conexao) | Backend Developer | 1.2.3 | :white_check_mark: | SQLAlchemy async |
+| 1.2.5 | Configurar requirements.txt | Backend Developer | - | :white_check_mark: | 30+ dependencias |
 | 1.2.6 | Configurar Alembic | Database Architect | 1.2.4 | :white_large_square: | alembic.ini, env.py |
 | 1.2.7 | Implementar exception handlers globais | Backend Developer | 1.2.2 | :white_large_square: | **[NOVO]** HTTPException, ValidationError |
 | 1.2.8 | Configurar logging estruturado (JSON) | Backend Developer | 1.2.2 | :white_large_square: | **[NOVO]** pythonjsonlogger |
-| 1.2.9 | Implementar health check completo | Backend Developer | 1.2.4 | :white_large_square: | **[NOVO]** Verificar DB + Redis |
+| 1.2.9 | Implementar health check completo | Backend Developer | 1.2.4 | :white_check_mark: | Verifica DB |
 
 ## 1.3 Banco de Dados - Schema
 
@@ -129,7 +140,7 @@
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
 | 1.10.1 | Configurar CORS adequado | Security Engineer | 1.2.2 | :white_large_square: | Nao usar * em prod |
-| 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.1.5 | :white_large_square: | CSP, HSTS, etc |
+| 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.2.2 | :white_large_square: | CSP, HSTS, etc (via FastAPI) |
 | 1.10.3 | Sanitizar inputs | Security Engineer | 1.5.3, 1.6.3 | :white_large_square: | XSS prevention |
 | 1.10.4 | Validar uploads (se houver) | Security Engineer | 1.5.3 | :white_large_square: | Tipo, tamanho |
 | 1.10.5 | Revisar checklist OWASP Top 10 | Security Engineer | 1.10.1-1.10.4 | :white_large_square: | Auditoria |
