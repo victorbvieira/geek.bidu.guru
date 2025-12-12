@@ -138,10 +138,10 @@ class TestHomePageAccessibility:
     async def test_homepage_links_are_navigable(self, client: AsyncClient):
         """Links importantes devem estar presentes."""
         response = await client.get("/")
-        # Link para blog
-        assert 'href="/blog"' in response.text
-        # Link para categorias
+        # Link para categorias (no header ou no grid)
         assert 'href="/categorias"' in response.text or 'href="/categoria/' in response.text
+        # Link para produtos
+        assert 'href="/produtos"' in response.text or 'href="/produto/' in response.text
 
 
 class TestHomePagePerformance:
