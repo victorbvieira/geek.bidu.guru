@@ -159,8 +159,12 @@ async def test_app(async_engine):
     """
     from httpx import ASGITransport, AsyncClient
 
+    from app.core.rate_limit import limiter
     from app.database import get_db
     from app.main import app
+
+    # Reset rate limiter para cada teste
+    limiter.reset()
 
     # Override da dependencia de banco
     async def override_get_db():

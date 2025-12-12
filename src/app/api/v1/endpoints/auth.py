@@ -10,10 +10,11 @@ Rotas:
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.deps import ActiveUser
+from app.core.rate_limit import limiter, RATE_LIMIT_AUTH
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -33,7 +34,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     summary="Login com email e senha",
     description="Autentica usuario e retorna tokens JWT (access e refresh).",
 )
+@limiter.limit(RATE_LIMIT_AUTH)
 async def login(
+    request: Request,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db=Depends(get_db),
 ):
@@ -96,8 +99,10 @@ async def login(
     summary="Renovar tokens",
     description="Usa refresh token para obter novos tokens JWT.",
 )
+@limiter.limit(RATE_LIMIT_AUTH)
 async def refresh_tokens(
-    request: RefreshTokenRequest,
+    request: Request,
+    body: RefreshTokenRequest,
     db=Depends(get_db),
 ):
     """
@@ -107,7 +112,7 @@ async def refresh_tokens(
     sem necessidade de fazer login novamente.
     """
     # Verificar refresh token
-    payload = verify_token(request.refresh_token, token_type="refresh")
+    payload = verify_token(body.refresh_token, token_type="refresh")
 
     if payload is None:
         raise HTTPException(

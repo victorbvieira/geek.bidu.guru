@@ -11,11 +11,15 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import settings
+from app.core.middleware import SecurityHeadersMiddleware
+from app.core.rate_limit import limiter
 from app.database import check_database_connection
 
 # -----------------------------------------------------------------------------
@@ -72,6 +76,9 @@ app = FastAPI(
 # Middlewares
 # -----------------------------------------------------------------------------
 
+# Security Headers (deve ser o primeiro para aplicar a todas as respostas)
+app.add_middleware(SecurityHeadersMiddleware)
+
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -80,6 +87,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate Limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # -----------------------------------------------------------------------------

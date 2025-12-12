@@ -80,7 +80,7 @@
 | 1.4.3 | Implementar api/v1/auth.py | Backend Developer | 1.4.2 | :white_check_mark: | /login, /me, /refresh |
 | 1.4.4 | Implementar dependencia get_current_user | Backend Developer | 1.4.3 | :white_check_mark: | core/deps.py |
 | 1.4.5 | Implementar controle de roles | Security Engineer | 1.4.4 | :white_check_mark: | require_role(), ActiveUser |
-| 1.4.6 | Criar middleware de rate limiting | Security Engineer | 1.2.2 | :white_large_square: | SlowAPI ou custom |
+| 1.4.6 | Criar middleware de rate limiting | Security Engineer | 1.2.2 | :white_check_mark: | SlowAPI + 3 testes |
 
 ## 1.5 Backend - CRUD Posts
 
@@ -144,11 +144,11 @@
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
 | 1.10.1 | Configurar CORS adequado | Security Engineer | 1.2.2 | :white_check_mark: | Configurado em main.py |
-| 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.2.2 | :white_large_square: | CSP, HSTS, etc |
+| 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.2.2 | :white_check_mark: | CSP, HSTS, X-Frame-Options + 8 testes |
 | 1.10.3 | Sanitizar inputs | Security Engineer | 1.5.3, 1.6.3 | :white_check_mark: | Via Pydantic |
 | 1.10.4 | Validar uploads (se houver) | Security Engineer | 1.5.3 | :white_large_square: | Tipo, tamanho |
 | 1.10.5 | Revisar checklist OWASP Top 10 | Security Engineer | 1.10.1-1.10.4 | :white_large_square: | Auditoria |
-| 1.10.6 | Definir Content Security Policy (CSP) | Security Engineer | 1.10.2 | :white_large_square: | Politica detalhada |
+| 1.10.6 | Definir Content Security Policy (CSP) | Security Engineer | 1.10.2 | :white_check_mark: | Incluido em 1.10.2 |
 
 ## 1.11 Painel Administrativo (Admin)
 
@@ -420,11 +420,11 @@
 
 | Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
 |------|---------------|------------|-----------|-----------|
-| Fase 1 | 93 | 68 | 25 | 73% |
+| Fase 1 | 93 | 71 | 22 | 76% |
 | Fase 2 | 48 | 6 | 42 | 13% |
 | Fase 3 | 26 | 0 | 26 | 0% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **212** | **78** | **134** | **37%** |
+| **TOTAL** | **212** | **81** | **131** | **38%** |
 
 ---
 
@@ -437,7 +437,7 @@
 | Automation Engineer | 28 | 0 | 2, 3, 4 |
 | Database Architect | 16 | 10 | 1, 4 |
 | Frontend Developer | 28 | 14 | 1, 2, 4 |
-| Security Engineer | 16 | 3 | 1, 4 |
+| Security Engineer | 16 | 6 | 1, 4 |
 | SEO Specialist | 18 | 4 | 2, 3, 4 |
 | Data Analyst | 18 | 0 | 1, 2, 4 |
 | UX/UI Designer | 5 | 2 | 1 |
@@ -452,10 +452,8 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ## Fase 1 (Finalizar Base Tecnica)
 1. **1.11.x** - Painel Administrativo completo (16 tarefas)
-2. **1.10.2** - Headers de seguranca (CSP, HSTS)
-3. **1.4.6** - Rate limiting
-4. **1.2.7** - Exception handlers globais
-5. **1.2.8** - Logging estruturado (JSON)
+2. **1.2.7** - Exception handlers globais
+3. **1.2.8** - Logging estruturado (JSON)
 
 ## Fase 2 (SEO & Automacao)
 1. **2.1.3** - Canonical URLs
@@ -464,7 +462,7 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ---
 
-**Versao**: 2.3
-**Ultima atualizacao**: 2025-12-12
+**Versao**: 2.4
+**Ultima atualizacao**: 2025-12-11
 **Projeto**: geek.bidu.guru
-**Testes**: 225 passando
+**Testes**: 236 passando
