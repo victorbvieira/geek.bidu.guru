@@ -45,10 +45,12 @@ Protecao de Endpoints:
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from passlib.hash import bcrypt
 
 from app.api.deps import Pagination, UserRepo
+from app.core.deps import require_role
+from app.models.user import UserRole
 from app.schemas import (
     MessageResponse,
     PaginatedResponse,
@@ -270,7 +272,11 @@ async def update_user(user_id: UUID, data: UserUpdate, repo: UserRepo):
     return UserResponse.model_validate(user)
 
 
-@router.delete("/{user_id}", response_model=MessageResponse)
+@router.delete(
+    "/{user_id}",
+    response_model=MessageResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def delete_user(user_id: UUID, repo: UserRepo):
     """
     Remove um usuário do sistema.
@@ -286,6 +292,8 @@ async def delete_user(user_id: UUID, repo: UserRepo):
         MessageResponse confirmando a remoção
 
     Raises:
+        HTTPException 401: Se não estiver autenticado
+        HTTPException 403: Se não for admin
         HTTPException 404: Se o usuário não for encontrado
 
     Exemplo de resposta:
@@ -297,7 +305,7 @@ async def delete_user(user_id: UUID, repo: UserRepo):
     Cuidados:
         - Esta ação é irreversível
         - Posts do usuário terão author_id definido como NULL
-        - TODO: Implementar verificação de permissões (apenas admin)
+        - Apenas administradores podem executar esta ação
     """
     # Verifica existência antes de deletar (mais eficiente que get completo)
     if not await repo.exists(user_id):

@@ -740,6 +740,31 @@ async def upload_category_image(
     )
 
 
+@router.post("/upload/post-image")
+async def upload_post_image(
+    current_user: AdminUser,
+    file: UploadFile = File(...),
+):
+    """
+    Upload de imagem de destaque para posts.
+
+    A imagem e automaticamente redimensionada para 1200x630 px (Open Graph).
+    Aceita: JPEG, PNG, WebP, GIF
+    Tamanho maximo: 5MB
+
+    Returns:
+        JSON com URL da imagem salva
+    """
+    from app.services.upload import save_post_image
+
+    image_url = await save_post_image(file)
+
+    return JSONResponse(
+        content={"url": image_url, "message": "Imagem enviada com sucesso"},
+        status_code=http_status.HTTP_201_CREATED,
+    )
+
+
 # -----------------------------------------------------------------------------
 # API Endpoints (JSON) - Para AJAX
 # -----------------------------------------------------------------------------

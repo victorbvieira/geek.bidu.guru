@@ -202,15 +202,38 @@
             <!-- Featured Image -->
             <div class="admin-card">
                 <div class="admin-form-group" style="margin-bottom: 0;">
-                    <label for="featured_image_url" class="admin-form-label">Imagem Destacada</label>
+                    <label class="admin-form-label">Imagem Destacada</label>
+
+                    <!-- Preview da imagem -->
+                    <div class="featured-image-preview" id="featured-image-preview">
+                        {% if post and post.featured_image_url %}
+                        <img src="{{ post.featured_image_url }}" alt="Preview">
+                        {% else %}
+                        <div class="image-placeholder">
+                            <span>1200x630 px</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Upload e URL -->
+                    <div class="featured-image-controls">
+                        <input type="file" id="featured-image-file" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="document.getElementById('featured-image-file').click()">
+                            Upload
+                        </button>
+                        <span class="upload-status" id="featured-upload-status"></span>
+                    </div>
+
                     <input
                         type="url"
                         id="featured_image_url"
                         name="featured_image_url"
                         class="admin-form-input"
-                        value="{{ post.featured_image_url if post else '' }}"
-                        placeholder="https://..."
+                        value="{{ post.featured_image_url if post and post.featured_image_url else '' }}"
+                        placeholder="Ou cole uma URL externa..."
+                        style="margin-top: 0.5rem;"
                     >
+                    <div class="admin-form-hint">Redimensionada para 1200x630 px (Open Graph). Max: 5MB.</div>
                 </div>
             </div>
 
@@ -612,5 +635,77 @@ document.addEventListener('keydown', (e) => {
         closeProductModal();
     }
 });
+
+// =============================================================================
+// Upload de Imagem Destacada
+// =============================================================================
+
+const featuredImageFile = document.getElementById('featured-image-file');
+const featuredImageUrl = document.getElementById('featured_image_url');
+const featuredImagePreview = document.getElementById('featured-image-preview');
+const featuredUploadStatus = document.getElementById('featured-upload-status');
+
+if (featuredImageFile) {
+    featuredImageFile.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            featuredUploadStatus.textContent = 'Tipo nao permitido';
+            featuredUploadStatus.style.color = 'var(--admin-danger)';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            featuredUploadStatus.textContent = 'Arquivo muito grande (max 5MB)';
+            featuredUploadStatus.style.color = 'var(--admin-danger)';
+            return;
+        }
+
+        featuredUploadStatus.textContent = 'Enviando...';
+        featuredUploadStatus.style.color = 'var(--admin-text-muted)';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/admin/upload/post-image', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                featuredImageUrl.value = data.url;
+                featuredImagePreview.innerHTML = `<img src="${data.url}" alt="Preview">`;
+                featuredUploadStatus.textContent = '1200x630 OK!';
+                featuredUploadStatus.style.color = 'var(--admin-success)';
+            } else {
+                featuredUploadStatus.textContent = data.detail || 'Erro';
+                featuredUploadStatus.style.color = 'var(--admin-danger)';
+            }
+        } catch (error) {
+            featuredUploadStatus.textContent = 'Erro de conexao';
+            featuredUploadStatus.style.color = 'var(--admin-danger)';
+        }
+
+        // Limpa input file
+        featuredImageFile.value = '';
+    });
+}
+
+// Atualiza preview quando URL e alterada manualmente
+if (featuredImageUrl) {
+    featuredImageUrl.addEventListener('change', function() {
+        const url = this.value.trim();
+        if (url) {
+            featuredImagePreview.innerHTML = `<img src="${url}" alt="Preview">`;
+        } else {
+            featuredImagePreview.innerHTML = '<div class="image-placeholder"><span>1200x630 px</span></div>';
+        }
+    });
+}
 </script>
 {% endblock %}

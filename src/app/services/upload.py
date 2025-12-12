@@ -37,6 +37,9 @@ PRODUCT_IMAGE_SIZES = {
     "thumb": (200, 200),   # Thumbnail para listagens
 }
 
+# Posts: 1200x630 px (1.91:1) - Padrao Open Graph para redes sociais
+POST_FEATURED_IMAGE_SIZE = (1200, 630)
+
 # Qualidade JPEG (0-100)
 IMAGE_QUALITY = 85
 
@@ -236,6 +239,54 @@ async def save_category_image(file: UploadFile) -> str:
 
     # Retorna URL relativa
     return f"/static/uploads/categories/{filename}"
+
+
+async def save_post_image(file: UploadFile) -> str:
+    """
+    Salva imagem de destaque de post com redimensionamento padronizado.
+
+    A imagem e redimensionada para 1200x630 px (padrao Open Graph)
+    mantendo proporcao e preenchendo com fundo branco se necessario.
+
+    Args:
+        file: Arquivo de imagem
+
+    Returns:
+        URL relativa da imagem salva (ex: /static/uploads/posts/xxx.jpg)
+
+    Raises:
+        HTTPException: Se erro no upload
+    """
+    # Valida arquivo (extensao ignorada pois sempre salvamos como .jpg)
+    validate_image(file)
+
+    # Gera nome unico - sempre salva como .jpg apos processamento
+    filename = f"{uuid.uuid4().hex}.jpg"
+
+    # Caminho completo
+    upload_path = UPLOAD_DIR / "posts" / filename
+
+    # Garante que diretorio existe
+    upload_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Le conteudo e valida tamanho
+    content = await file.read()
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Arquivo muito grande. Tamanho maximo: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        )
+
+    # Redimensiona imagem para tamanho padrao Open Graph
+    resized_content = resize_image(content, POST_FEATURED_IMAGE_SIZE, "JPEG")
+
+    # Salva arquivo
+    with open(upload_path, "wb") as f:
+        f.write(resized_content)
+
+    # Retorna URL relativa
+    return f"/static/uploads/posts/{filename}"
 
 
 def delete_category_image(image_url: str) -> bool:
