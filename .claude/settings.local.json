@@ -14,7 +14,12 @@
       "Bash(~/.pyenv/versions/3.12.7/bin/python -m venv .venv)",
       "Bash(/Users/victorborringvieira/Documents/GitHub/geek.bidu.guru/.venv/bin/pip install:*)",
       "Bash(.venv/bin/python -m pytest:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(source .env)",
+      "Bash(echo:*)",
+      "Bash(psql:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(../.venv/bin/python:*)"
     ],
     "deny": [],
     "ask": []
