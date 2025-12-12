@@ -164,11 +164,9 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 # -----------------------------------------------------------------------------
-# SSR Routes (a implementar)
+# SSR Routes (paginas publicas do blog)
 # -----------------------------------------------------------------------------
 
-# from app.routers import home, post, category, search
-# app.include_router(home.router)
-# app.include_router(post.router)
-# app.include_router(category.router)
-# app.include_router(search.router)
+from app.routers.blog import router as blog_router
+
+app.include_router(blog_router)
