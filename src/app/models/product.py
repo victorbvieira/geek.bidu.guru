@@ -89,7 +89,7 @@ class Product(Base, UUIDMixin, TimestampMixin):
     price: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
     currency: Mapped[str] = mapped_column(String(3), default="BRL", server_default="BRL")
     price_range: Mapped[Optional[PriceRange]] = mapped_column(
-        Enum(PriceRange, name="price_range"),
+        Enum(PriceRange, name="price_range", values_callable=lambda x: [e.value for e in x]),
         nullable=True,
     )
 
@@ -103,7 +103,7 @@ class Product(Base, UUIDMixin, TimestampMixin):
         String(150), unique=True, nullable=False
     )
     platform: Mapped[ProductPlatform] = mapped_column(
-        Enum(ProductPlatform, name="product_platform"),
+        Enum(ProductPlatform, name="product_platform", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
     )
     platform_product_id: Mapped[Optional[str]] = mapped_column(
@@ -116,7 +116,7 @@ class Product(Base, UUIDMixin, TimestampMixin):
 
     # Disponibilidade e avaliacao
     availability: Mapped[ProductAvailability] = mapped_column(
-        Enum(ProductAvailability, name="product_availability"),
+        Enum(ProductAvailability, name="product_availability", values_callable=lambda x: [e.value for e in x]),
         default=ProductAvailability.UNKNOWN,
     )
     rating: Mapped[Optional[float]] = mapped_column(Numeric(3, 2), nullable=True)

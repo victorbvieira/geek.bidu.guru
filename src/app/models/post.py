@@ -83,7 +83,7 @@ class Post(Base, UUIDMixin, TimestampMixin):
 
     # Campos principais
     type: Mapped[PostType] = mapped_column(
-        Enum(PostType, name="post_type"),
+        Enum(PostType, name="post_type", values_callable=lambda x: [e.value for e in x]),
         nullable=False,
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -118,7 +118,7 @@ class Post(Base, UUIDMixin, TimestampMixin):
 
     # Status e publicacao
     status: Mapped[PostStatus] = mapped_column(
-        Enum(PostStatus, name="post_status"),
+        Enum(PostStatus, name="post_status", values_callable=lambda x: [e.value for e in x]),
         default=PostStatus.DRAFT,
     )
     publish_at: Mapped[Optional[datetime]] = mapped_column(
