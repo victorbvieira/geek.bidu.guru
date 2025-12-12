@@ -170,8 +170,10 @@
 | 1.11.12 | Implementar controle de acesso por role | Security Engineer | 1.11.11 | :white_check_mark: | admin: tudo, editor: posts/products |
 | 1.11.13 | Criar static/css/admin.css | UX/UI Designer | 1.11.1 | :white_check_mark: | Estilos do admin |
 | 1.11.14 | Criar static/js/admin.js | Frontend Developer | 1.11.1 | :white_check_mark: | Interatividade admin |
-| 1.11.15 | Implementar dashboard com metricas | Data Analyst | 1.11.3 | :white_check_mark: | Posts mais vistos, cliques |
-| 1.11.16 | Criar testes de integracao admin | Backend Developer | 1.11.10-1.11.12 | :white_check_mark: | 16 testes |
+| 1.11.15 | Implementar dashboard com metricas | Data Analyst | 1.11.3 | :white_check_mark: | Posts mais vistos, cliques reais |
+| 1.11.16 | Criar testes de integracao admin | Backend Developer | 1.11.10-1.11.12 | :white_check_mark: | 34 testes |
+| 1.11.17 | Implementar routers/admin_actions.py | Backend Developer | 1.11.10 | :white_check_mark: | **[NOVO]** CRUD completo (POST/DELETE) |
+| 1.11.18 | Corrigir enums nos templates | Frontend Developer | 1.11.5, 1.11.7 | :white_check_mark: | **[NOVO]** PostType, ProductAvailability |
 
 ## 1.12 Testes Automatizados
 
@@ -420,11 +422,11 @@
 
 | Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
 |------|---------------|------------|-----------|-----------|
-| Fase 1 | 93 | 91 | 2 | 98% |
+| Fase 1 | 95 | 93 | 2 | 98% |
 | Fase 2 | 48 | 6 | 42 | 13% |
 | Fase 3 | 26 | 0 | 26 | 0% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **212** | **101** | **111** | **48%** |
+| **TOTAL** | **214** | **103** | **111** | **48%** |
 
 ---
 
@@ -432,14 +434,14 @@
 
 | Agente | Total Tarefas | Concluidas | Fases |
 |--------|---------------|------------|-------|
-| Backend Developer | 38 | 28 | 1, 2, 3, 4 |
+| Backend Developer | 40 | 30 | 1, 2, 3, 4 |
 | DevOps Engineer | 24 | 8 | 1, 2, 4 |
 | Automation Engineer | 28 | 0 | 2, 3, 4 |
 | Database Architect | 16 | 10 | 1, 4 |
-| Frontend Developer | 28 | 14 | 1, 2, 4 |
+| Frontend Developer | 29 | 15 | 1, 2, 4 |
 | Security Engineer | 16 | 6 | 1, 4 |
 | SEO Specialist | 18 | 4 | 2, 3, 4 |
-| Data Analyst | 18 | 0 | 1, 2, 4 |
+| Data Analyst | 18 | 1 | 1, 2, 4 |
 | UX/UI Designer | 5 | 2 | 1 |
 | Content Strategist | 6 | 0 | 3, 4 |
 | Affiliate Marketing | 2 | 1 | 1 |
@@ -463,7 +465,7 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ---
 
-**Versao**: 2.5
-**Ultima atualizacao**: 2025-12-11
+**Versao**: 2.6
+**Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 252 passando
+**Testes**: 286+ passando (incluindo 34 testes admin)
