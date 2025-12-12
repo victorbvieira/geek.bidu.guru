@@ -270,12 +270,12 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 2.8.1 | Configurar conta GA4 | Data Analyst | 1.8.1 | :white_large_square: | Property e stream |
-| 2.8.2 | Implementar gtag.js no base.html | Data Analyst | 2.8.1 | :white_large_square: | Tracking basico |
-| 2.8.3 | Implementar eventos customizados | Data Analyst | 2.8.2 | :white_large_square: | affiliate_click, share |
+| 2.8.1 | Configurar conta GA4 | Data Analyst | 1.8.1 | :white_check_mark: | config.py: ga4_measurement_id |
+| 2.8.2 | Implementar gtag.js no base.html | Data Analyst | 2.8.1 | :white_check_mark: | Condicional se GA4 configurado |
+| 2.8.3 | Implementar eventos customizados | Data Analyst | 2.8.2 | :white_check_mark: | affiliate_click, share, scroll, newsletter |
 | 2.8.4 | Configurar Google Search Console | SEO Specialist | 2.8.1 | :white_large_square: | Verificacao |
-| 2.8.5 | Criar static/js/analytics.js | Data Analyst | 2.8.3 | :white_large_square: | Event helpers |
-| 2.8.6 | Implementar tracking de scroll | Data Analyst | 2.8.5 | :white_large_square: | 25%, 50%, 75%, 100% |
+| 2.8.5 | Criar static/js/analytics.js | Data Analyst | 2.8.3 | :white_check_mark: | GeekAnalytics namespace completo |
+| 2.8.6 | Implementar tracking de scroll | Data Analyst | 2.8.5 | :white_check_mark: | 25%, 50%, 75%, 90%, 100% |
 
 ---
 
@@ -288,20 +288,20 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 3.1.1 | Adicionar litellm ao requirements.txt | Backend Developer | 1.2.5 | :white_large_square: | pip install litellm |
-| 3.1.2 | Criar core/llm/config.py | Backend Developer | 3.1.1 | :white_large_square: | Configuracao de modelos por funcao |
-| 3.1.3 | Criar core/llm/client.py | Backend Developer | 3.1.2 | :white_large_square: | Cliente LiteLLM unificado |
-| 3.1.4 | Implementar LLMConfig model | Backend Developer | 3.1.2 | :white_large_square: | Pydantic settings para cada provider |
-| 3.1.5 | Configurar provider OpenRouter (free tier) | Backend Developer | 3.1.3 | :white_large_square: | Para tarefas simples (slugs, tags) |
-| 3.1.6 | Configurar provider OpenAI | Backend Developer | 3.1.3 | :white_large_square: | Para geracao de conteudo (GPT-4) |
-| 3.1.7 | Configurar provider Anthropic (opcional) | Backend Developer | 3.1.3 | :white_large_square: | Claude como alternativa |
-| 3.1.8 | Criar services/llm_service.py | Backend Developer | 3.1.3-3.1.6 | :white_large_square: | Abstrai chamadas por tipo de tarefa |
-| 3.1.9 | Implementar generate_slug() | Backend Developer | 3.1.8 | :white_large_square: | Usa modelo free (OpenRouter) |
-| 3.1.10 | Implementar generate_content() | Backend Developer | 3.1.8 | :white_large_square: | Usa OpenAI GPT-4 |
-| 3.1.11 | Implementar generate_seo_meta() | Backend Developer | 3.1.8 | :white_large_square: | Usa modelo intermediario |
-| 3.1.12 | Implementar fallback entre providers | Backend Developer | 3.1.8 | :white_large_square: | Se um falhar, usa outro |
-| 3.1.13 | Criar testes unitarios LLM service | Backend Developer | 3.1.8-3.1.12 | :white_large_square: | Mocks para providers |
-| 3.1.14 | Documentar configuracao de providers | Backend Developer | 3.1.13 | :white_large_square: | .env.example + README |
+| 3.1.1 | Adicionar litellm ao requirements.txt | Backend Developer | 1.2.5 | :white_check_mark: | litellm==1.54.1 |
+| 3.1.2 | Criar config LLM em config.py | Backend Developer | 3.1.1 | :white_check_mark: | llm_default_model, temperature, etc |
+| 3.1.3 | Criar services/llm.py | Backend Developer | 3.1.2 | :white_check_mark: | Cliente LiteLLM unificado |
+| 3.1.4 | Implementar LLMResponse, GeneratedPost models | Backend Developer | 3.1.2 | :white_check_mark: | Pydantic models para respostas |
+| 3.1.5 | Configurar provider OpenAI | Backend Developer | 3.1.3 | :white_check_mark: | Via OPENAI_API_KEY |
+| 3.1.6 | Configurar provider Anthropic | Backend Developer | 3.1.3 | :white_check_mark: | Via ANTHROPIC_API_KEY |
+| 3.1.7 | Criar services/prompts.py | Backend Developer | 3.1.3 | :white_check_mark: | Templates e personas |
+| 3.1.8 | Criar services/content_generator.py | Backend Developer | 3.1.3-3.1.7 | :white_check_mark: | Abstrai geracao de conteudo |
+| 3.1.9 | Implementar generate() | Backend Developer | 3.1.8 | :white_check_mark: | Geracao de texto basico |
+| 3.1.10 | Implementar generate_structured() | Backend Developer | 3.1.8 | :white_check_mark: | Geracao JSON com Pydantic |
+| 3.1.11 | Implementar generate_stream() | Backend Developer | 3.1.8 | :white_check_mark: | Streaming de respostas |
+| 3.1.12 | Implementar sistema de personas | Backend Developer | 3.1.7 | :white_check_mark: | Ana, Lucas, Marina, Padrao |
+| 3.1.13 | Criar testes unitarios LLM service | Backend Developer | 3.1.8-3.1.12 | :white_check_mark: | 24 testes (test_llm.py) |
+| 3.1.14 | Documentar configuracao de providers | Backend Developer | 3.1.13 | :white_check_mark: | config.py com comentarios |
 
 ### Mapeamento de Modelos por Funcionalidade
 
@@ -349,10 +349,12 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 3.5.1 | Implementar utils/cache.py | Backend Developer | 1.1.4 | :white_large_square: | Redis client |
-| 3.5.2 | Cachear queries frequentes | Backend Developer | 3.5.1 | :white_large_square: | Posts, produtos |
-| 3.5.3 | Implementar cache de sessoes | Backend Developer | 3.5.1 | :white_large_square: | JWT blacklist |
-| 3.5.4 | Implementar invalidacao inteligente | Backend Developer | 3.5.2 | :white_large_square: | On update/delete |
+| 3.5.1 | Implementar utils/cache.py | Backend Developer | 1.1.4 | :white_check_mark: | Redis client async |
+| 3.5.2 | Implementar operacoes basicas | Backend Developer | 3.5.1 | :white_check_mark: | get, set, delete, exists |
+| 3.5.3 | Implementar @cached decorator | Backend Developer | 3.5.1 | :white_check_mark: | Para funcoes async |
+| 3.5.4 | Implementar invalidacao por padrao | Backend Developer | 3.5.2 | :white_check_mark: | cache_delete_pattern() |
+| 3.5.5 | Implementar cache LLM | Backend Developer | 3.5.2 | :white_check_mark: | cache_llm_response, hash_prompt |
+| 3.5.6 | Criar testes unitarios cache | Backend Developer | 3.5.1-3.5.5 | :white_check_mark: | 26 testes (test_cache.py) |
 
 ## 3.6 Internacionalizacao (i18n)
 
@@ -457,10 +459,10 @@
 | Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
 |------|---------------|------------|-----------|-----------|
 | Fase 1 | 95 | 95 | 0 | 100% |
-| Fase 2 | 48 | 16 | 32 | 33% |
-| Fase 3 | 40 | 0 | 40 | 0% |
+| Fase 2 | 48 | 21 | 27 | 44% |
+| Fase 3 | 42 | 20 | 22 | 48% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **228** | **115** | **113** | **50%** |
+| **TOTAL** | **230** | **140** | **90** | **61%** |
 
 ---
 
@@ -501,25 +503,56 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 6. **2.4.x** - Configuracao n8n
 7. **2.7.2** - Integracao API Amazon
 
-## Fase 3 (IA & Internacionalizacao - 0% concluido)
-> **PRIORIDADE**: Integracao LiteLLM deve ser feita antes dos workflows de automacao que usam IA
+## Fase 3 (IA & Internacionalizacao - 48% concluido)
+> :white_check_mark: **CONCLUIDO**: Integracao LiteLLM e Cache Redis
 
-1. **3.1.1-3.1.3** - Setup inicial LiteLLM (client + config)
-2. **3.1.5-3.1.6** - Configurar providers OpenRouter (free) e OpenAI
-3. **3.1.8** - Criar LLM service abstrato
-4. **3.1.9-3.1.11** - Implementar funcoes (slug, content, SEO)
-5. **3.1.12** - Fallback entre providers
+1. ~~**3.1.x** - Integracao LiteLLM~~ :white_check_mark: (14 tarefas)
+2. ~~**3.5.x** - Cache Redis~~ :white_check_mark: (6 tarefas)
+3. **3.2.x** - Prompts e Templates (parcialmente em services/prompts.py)
+4. **3.3.x** - Workflow E (Pesquisa de Produtos)
+5. **3.4.x** - Workflow F (Monitor de Deals)
+6. **3.6.x** - Internacionalizacao (i18n)
 
 ---
 
-**Versao**: 3.2
+**Versao**: 3.4
 **Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 427 passando
+**Testes**: 477 passando
 
 ---
 
 # CHANGELOG
+
+## v3.4 (2025-12-12)
+- :white_check_mark: **2.8.1** - Configurar conta GA4 (config.py: ga4_measurement_id)
+- :white_check_mark: **2.8.2** - Implementar gtag.js no base.html (condicional)
+- :white_check_mark: **2.8.3** - Implementar eventos customizados (affiliate_click, share, scroll, newsletter, search, cta_click, errors)
+- :white_check_mark: **2.8.5** - Criar static/js/analytics.js (GeekAnalytics namespace)
+- :white_check_mark: **2.8.6** - Implementar tracking de scroll (25%, 50%, 75%, 90%, 100%)
+- :sparkles: Auto-tracking de cliques em afiliados (/goto/*)
+- :sparkles: Auto-tracking de botoes de share
+- :sparkles: Tracking global de erros JavaScript
+- :sparkles: Variaveis globais Jinja2 (ga4_measurement_id, is_production)
+- :chart_with_upwards_trend: Fase 2 progresso: 33% → 44%
+- :chart_with_upwards_trend: Projeto total: 59% → 61%
+
+## v3.3 (2025-12-12)
+- :white_check_mark: **FASE 3 - Integracao LiteLLM** (14 tarefas concluidas)
+  - `services/llm.py` - Servico LLM com LiteLLM (generate, generate_structured, generate_stream)
+  - `services/prompts.py` - Sistema de prompts com 4 personas e 5 templates
+  - `services/content_generator.py` - Gerador de conteudo (posts, listicles, guias, deals)
+  - Configuracao multi-provider (OpenAI, Anthropic) via variaveis de ambiente
+  - 24 testes unitarios (test_llm.py)
+- :white_check_mark: **FASE 3 - Cache Redis** (6 tarefas concluidas)
+  - `utils/cache.py` - Cliente Redis async com operacoes completas
+  - Decorator `@cached` para funcoes async
+  - Cache especifico para respostas LLM
+  - Invalidacao por padrao (glob patterns)
+  - 26 testes unitarios (test_cache.py)
+- :package: Removido `openai` do requirements.txt (LiteLLM ja inclui)
+- :chart_with_upwards_trend: Fase 3 progresso: 0% → 48%
+- :chart_with_upwards_trend: Projeto total: 50% → 59%
 
 ## v3.2 (2025-12-12)
 - :white_check_mark: **2.1.6** - Redirects 301 para URLs antigas

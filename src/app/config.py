@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     log_format: Literal["json", "text"] = "json"
 
     # -------------------------------------------------------------------------
+    # Google Analytics 4
+    # -------------------------------------------------------------------------
+    ga4_measurement_id: str | None = None  # Ex: G-XXXXXXXXXX
+
+    # -------------------------------------------------------------------------
     # LLM / IA (LiteLLM - suporta OpenAI, Anthropic, etc.)
     # -------------------------------------------------------------------------
     # Chaves de API (configure apenas as que for usar)

@@ -9,6 +9,20 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
 
+    <!-- Google Analytics 4 -->
+    {% if ga4_measurement_id %}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ ga4_measurement_id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ ga4_measurement_id }}', {
+            'send_page_view': true,
+            'cookie_flags': 'SameSite=None;Secure'
+        });
+    </script>
+    {% endif %}
+
     <!-- CSS -->
     <link rel="stylesheet" href="/static/css/main.css">
     {% block extra_css %}{% endblock %}
@@ -32,6 +46,9 @@
 
     <!-- JavaScript -->
     <script src="/static/js/main.js"></script>
+    {% if ga4_measurement_id %}
+    <script src="/static/js/analytics.js"></script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
+from app.config import settings
 from app.utils.markdown import markdown_to_html
 
 
@@ -26,6 +27,11 @@ def setup_templates(directory: Path) -> Jinja2Templates:
     # Adiciona filtros customizados
     templates.env.filters["markdown"] = _markdown_filter
     templates.env.filters["format_price"] = _format_price_filter
+
+    # Adiciona variaveis globais disponiveis em todos os templates
+    templates.env.globals["ga4_measurement_id"] = settings.ga4_measurement_id
+    templates.env.globals["is_production"] = settings.is_production
+    templates.env.globals["app_name"] = settings.app_name
 
     return templates
 
