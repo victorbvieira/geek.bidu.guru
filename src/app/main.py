@@ -225,22 +225,29 @@ async def home(request: Request):
     from app.api.deps import get_db
     from app.repositories.product import ProductRepository
     from app.repositories.post import PostRepository
+    from app.repositories.category import CategoryRepository
 
     base_url = settings.app_url.rstrip("/")
 
-    # Busca produtos e posts em destaque
+    # Busca produtos, posts e categorias em destaque
     featured_products = []
     featured_posts = []
+    categories = []
 
     async for db in get_db():
         product_repo = ProductRepository(db)
         post_repo = PostRepository(db)
+        category_repo = CategoryRepository(db)
 
         # Busca até 6 produtos disponíveis (ordenados por score)
         featured_products = await product_repo.get_available(limit=6)
 
         # Busca até 3 posts publicados recentes
         featured_posts = await post_repo.get_published(limit=3)
+
+        # Busca categorias raiz (até 6 para exibir na home)
+        all_categories = await category_repo.get_root_categories()
+        categories = all_categories[:6]
 
     return templates.TemplateResponse(
         request=request,
@@ -250,6 +257,7 @@ async def home(request: Request):
             "description": "Encontre o presente geek perfeito para quem voce ama",
             "featured_products": featured_products,
             "featured_posts": featured_posts,
+            "categories": categories,
             # SEO
             "base_url": base_url,
             "canonical_url": base_url,

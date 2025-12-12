@@ -486,11 +486,11 @@
 
 Com base no progresso atual, as proximas tarefas prioritarias sao:
 
-## Fase 1 (Finalizar Base Tecnica - 99% concluido)
+## Fase 1 (Base Tecnica - 100% concluido) :white_check_mark:
 1. ~~**1.0.1** - Criar projeto no Easypanel (VPS)~~ :white_check_mark:
 2. ~~**1.0.4** - Configurar dominio no Traefik (VPS)~~ :white_check_mark:
 3. ~~**1.0.5** - Configurar variaveis de ambiente (VPS)~~ :white_check_mark:
-4. **1.10.5** - Revisar checklist OWASP Top 10
+4. ~~**1.10.5** - Revisar checklist OWASP Top 10~~ :white_check_mark:
 
 ## Fase 2 (SEO & Automacao - 27% concluido)
 1. ~~**2.1.3** - Canonical URLs~~ :white_check_mark:
@@ -510,14 +510,25 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ---
 
-**Versao**: 3.0
+**Versao**: 3.1
 **Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 294 passando (incluindo 34 admin + 24 SEO)
+**Testes**: 334 passando (incluindo 37 OWASP + 34 admin + 24 SEO)
 
 ---
 
 # CHANGELOG
+
+## v3.1 (2025-12-12)
+- :white_check_mark: **FASE 1 COMPLETA** - 100% das tarefas concluidas
+- :shield: Corrigidas 3 vulnerabilidades OWASP:
+  - **IDOR (A01)**: DELETE /users/{id} agora exige autenticacao admin
+  - **XSS (A03)**: Campos name/description sanitizados via bleach
+  - **Input Validation (A04)**: Slugs validados e sanitizados (sem path traversal)
+- :sparkles: Novo arquivo `utils/sanitize.py` com funcoes de sanitizacao
+- :test_tube: 37 testes OWASP passando (antes: 34 passed + 3 skipped)
+- :test_tube: 2 novos testes de autorizacao em test_api_users.py
+- :chart_with_upwards_trend: Total de testes: 294 → 334 (+40)
 
 ## v3.0 (2025-12-12)
 - :sparkles: **NOVA SECAO 3.1**: Integracao LiteLLM (Multi-Provider LLM)
