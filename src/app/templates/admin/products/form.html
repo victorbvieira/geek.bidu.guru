@@ -278,9 +278,112 @@
                     <div class="admin-form-hint">Separadas por virgula</div>
                 </div>
             </div>
+
+            <!-- Categorias -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Categorias</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label class="admin-form-label">Selecione as categorias</label>
+                    <div class="category-selector" id="category-selector">
+                        {% if categories %}
+                        <div class="category-checkboxes">
+                            {% for category in categories %}
+                            <label class="admin-checkbox" data-slug="{{ category.slug }}">
+                                <input
+                                    type="checkbox"
+                                    name="category_ids"
+                                    value="{{ category.slug }}"
+                                    {% if product and category.slug in product.categories %}checked{% endif %}
+                                >
+                                <span>{{ category.name }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="admin-form-hint">Nenhuma categoria cadastrada.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="openCategoryModal()">
+                    + Nova Categoria
+                </button>
+
+                <!-- Hidden input para categorias selecionadas (slugs) -->
+                <input type="hidden" id="categories_json" name="categories_json" value="{{ product.categories | tojson if product and product.categories else '[]' }}">
+            </div>
         </div>
     </div>
 </form>
+
+<!-- Modal Nova Categoria -->
+<div class="admin-modal" id="category-modal" style="display: none;">
+    <div class="admin-modal-backdrop" onclick="closeCategoryModal()"></div>
+    <div class="admin-modal-content">
+        <div class="admin-modal-header">
+            <h3>Nova Categoria</h3>
+            <button type="button" class="admin-modal-close" onclick="closeCategoryModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+            <div class="admin-form-group">
+                <label for="new_category_name" class="admin-form-label">Nome *</label>
+                <input
+                    type="text"
+                    id="new_category_name"
+                    class="admin-form-input"
+                    placeholder="Ex: Gamer, Star Wars..."
+                    required
+                >
+            </div>
+            <div class="admin-form-group">
+                <label for="new_category_slug" class="admin-form-label">Slug</label>
+                <input
+                    type="text"
+                    id="new_category_slug"
+                    class="admin-form-input"
+                    placeholder="gerado-automaticamente"
+                >
+                <div class="admin-form-hint">Deixe vazio para gerar automaticamente</div>
+            </div>
+            <div class="admin-form-group">
+                <label for="new_category_description" class="admin-form-label">Descricao</label>
+                <textarea
+                    id="new_category_description"
+                    class="admin-form-textarea"
+                    rows="2"
+                    placeholder="Descricao breve da categoria"
+                ></textarea>
+            </div>
+
+            <!-- Upload de imagem da categoria -->
+            <div class="admin-form-group">
+                <label class="admin-form-label">Imagem da Categoria</label>
+                <div class="category-image-upload">
+                    <div class="category-image-preview" id="category-image-preview">
+                        <div class="image-placeholder">
+                            <span>Sem imagem</span>
+                        </div>
+                    </div>
+                    <div class="category-image-controls">
+                        <input type="file" id="category-image-file" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="document.getElementById('category-image-file').click()">
+                            Upload
+                        </button>
+                        <span class="upload-status" id="category-upload-status"></span>
+                    </div>
+                    <input type="hidden" id="new_category_image_url" value="">
+                </div>
+            </div>
+        </div>
+        <div class="admin-modal-footer">
+            <button type="button" class="admin-btn admin-btn-secondary" onclick="closeCategoryModal()">Cancelar</button>
+            <button type="button" class="admin-btn admin-btn-primary" onclick="createCategory()">Criar Categoria</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -452,5 +555,152 @@ function renderGallery() {
         imageGallery.insertBefore(item, addButton);
     });
 }
+
+// =============================================================================
+// Modal de Categoria
+// =============================================================================
+
+const categoryModal = document.getElementById('category-modal');
+const categoryImageFile = document.getElementById('category-image-file');
+const categoryImagePreview = document.getElementById('category-image-preview');
+const categoryUploadStatus = document.getElementById('category-upload-status');
+const categoryImageUrlInput = document.getElementById('new_category_image_url');
+
+function openCategoryModal() {
+    categoryModal.style.display = 'flex';
+    document.getElementById('new_category_name').focus();
+}
+
+function closeCategoryModal() {
+    categoryModal.style.display = 'none';
+    // Limpa campos
+    document.getElementById('new_category_name').value = '';
+    document.getElementById('new_category_slug').value = '';
+    document.getElementById('new_category_description').value = '';
+    categoryImageUrlInput.value = '';
+    categoryImagePreview.innerHTML = '<div class="image-placeholder"><span>Sem imagem</span></div>';
+    categoryUploadStatus.textContent = '';
+}
+
+// Upload de imagem da categoria
+categoryImageFile.addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        categoryUploadStatus.textContent = 'Tipo nao permitido';
+        categoryUploadStatus.style.color = 'var(--admin-danger)';
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        categoryUploadStatus.textContent = 'Max 5MB';
+        categoryUploadStatus.style.color = 'var(--admin-danger)';
+        return;
+    }
+
+    categoryUploadStatus.textContent = 'Enviando...';
+    categoryUploadStatus.style.color = 'var(--admin-text-muted)';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/admin/upload/image', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            categoryImageUrlInput.value = data.url;
+            categoryImagePreview.innerHTML = `<img src="${data.url}" alt="Preview">`;
+            categoryUploadStatus.textContent = 'OK!';
+            categoryUploadStatus.style.color = 'var(--admin-success)';
+        } else {
+            categoryUploadStatus.textContent = data.detail || 'Erro';
+            categoryUploadStatus.style.color = 'var(--admin-danger)';
+        }
+    } catch (error) {
+        categoryUploadStatus.textContent = 'Erro de conexao';
+        categoryUploadStatus.style.color = 'var(--admin-danger)';
+    }
+
+    categoryImageFile.value = '';
+});
+
+// Criar categoria via AJAX
+async function createCategory() {
+    const name = document.getElementById('new_category_name').value.trim();
+    const slug = document.getElementById('new_category_slug').value.trim();
+    const description = document.getElementById('new_category_description').value.trim();
+    const imageUrl = categoryImageUrlInput.value;
+
+    if (!name) {
+        alert('Nome da categoria e obrigatorio');
+        return;
+    }
+
+    try {
+        const response = await fetch('/admin/api/categories', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                slug: slug || null,
+                description: description || null,
+                image_url: imageUrl || null,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Adiciona checkbox da nova categoria
+            addCategoryToList(data);
+            closeCategoryModal();
+        } else {
+            alert(data.detail || 'Erro ao criar categoria');
+        }
+    } catch (error) {
+        alert('Erro de conexao ao criar categoria');
+        console.error(error);
+    }
+}
+
+// Adiciona nova categoria a lista de checkboxes
+function addCategoryToList(category) {
+    const selector = document.getElementById('category-selector');
+    let checkboxes = selector.querySelector('.category-checkboxes');
+
+    // Se nao existe container de checkboxes, cria
+    if (!checkboxes) {
+        selector.innerHTML = '<div class="category-checkboxes"></div>';
+        checkboxes = selector.querySelector('.category-checkboxes');
+    }
+
+    // Cria novo checkbox com data-slug
+    const label = document.createElement('label');
+    label.className = 'admin-checkbox';
+    label.dataset.slug = category.slug;
+    label.innerHTML = `
+        <input type="checkbox" name="category_ids" value="${category.slug}" checked>
+        <span>${category.name}</span>
+    `;
+
+    checkboxes.appendChild(label);
+}
+
+// Atualiza hidden input com categorias selecionadas antes do submit
+document.querySelector('form.admin-form').addEventListener('submit', function(e) {
+    const checkboxes = document.querySelectorAll('input[name="category_ids"]:checked');
+    const categories = Array.from(checkboxes).map(cb => cb.value);
+
+    document.getElementById('categories_json').value = JSON.stringify(categories);
+});
 </script>
 {% endblock %}

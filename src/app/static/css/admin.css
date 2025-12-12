@@ -1200,6 +1200,141 @@ input, select, textarea, button {
 }
 
 /* -----------------------------------------------------------------------------
+   Modal
+   ----------------------------------------------------------------------------- */
+.admin-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.admin-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.admin-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-modal-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.admin-modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--admin-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.admin-modal-close:hover {
+    background: var(--admin-border);
+    color: var(--admin-text);
+}
+
+.admin-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.admin-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--admin-border);
+}
+
+/* Category Image Upload in Modal */
+.category-image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.category-image-preview {
+    width: 100%;
+    height: 120px;
+    background: var(--admin-bg);
+    border: 2px dashed var(--admin-border);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.category-image-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Category Checkboxes */
+.category-selector {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.category-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.category-checkboxes .admin-checkbox {
+    padding: 0.375rem 0;
+}
+
+/* -----------------------------------------------------------------------------
    Responsive
    ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {

@@ -267,6 +267,7 @@ async def create_product(
     rating: str = Form(""),
     review_count: str = Form(""),
     tags: str = Form(""),
+    categories_json: str = Form("[]"),
 ):
     """Cria novo produto."""
     # Gera slug se nao fornecido
@@ -293,6 +294,9 @@ async def create_product(
     images_list = json.loads(images) if images else []
     main_image = images_list[0] if images_list else None
 
+    # Processa lista de categorias (slugs)
+    categories_list = json.loads(categories_json) if categories_json else []
+
     # Monta dados do produto
     product_data = {
         "name": name.strip(),
@@ -307,6 +311,7 @@ async def create_product(
         "availability": ProductAvailability(availability),
         "main_image_url": main_image,
         "images": images_list,
+        "categories": categories_list,
         "rating": float(rating) if rating else None,
         "review_count": int(review_count) if review_count else 0,
         "tags": parse_tags(tags),
@@ -344,6 +349,7 @@ async def update_product(
     rating: str = Form(""),
     review_count: str = Form(""),
     tags: str = Form(""),
+    categories_json: str = Form("[]"),
 ):
     """Atualiza produto existente."""
     product = await repo.get(product_id)
@@ -374,6 +380,9 @@ async def update_product(
     images_list = json.loads(images) if images else []
     main_image = images_list[0] if images_list else None
 
+    # Processa lista de categorias (slugs)
+    categories_list = json.loads(categories_json) if categories_json else []
+
     # Monta dados de atualizacao
     update_data = {
         "name": name.strip(),
@@ -388,6 +397,7 @@ async def update_product(
         "availability": ProductAvailability(availability),
         "main_image_url": main_image,
         "images": images_list,
+        "categories": categories_list,
         "rating": float(rating) if rating else None,
         "review_count": int(review_count) if review_count else 0,
         "tags": parse_tags(tags),
@@ -677,5 +687,69 @@ async def upload_image(
 
     return JSONResponse(
         content={"url": image_url, "message": "Imagem enviada com sucesso"},
+        status_code=http_status.HTTP_201_CREATED,
+    )
+
+
+# -----------------------------------------------------------------------------
+# API Endpoints (JSON) - Para AJAX
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/categories")
+async def api_create_category(
+    request: Request,
+    current_user: AdminUser,
+    repo: CategoryRepo,
+):
+    """
+    Cria nova categoria via AJAX.
+
+    Aceita JSON com: name, slug (opcional), description (opcional), image_url (opcional)
+
+    Returns:
+        JSON com dados da categoria criada
+    """
+    data = await request.json()
+
+    name = data.get("name", "").strip()
+    if not name:
+        return JSONResponse(
+            content={"detail": "Nome da categoria e obrigatorio"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Gera slug se nao fornecido
+    slug = data.get("slug")
+    if slug:
+        slug = slug.strip()
+    else:
+        slug = generate_slug(name)
+
+    # Verifica se slug ja existe
+    if await repo.slug_exists(slug):
+        base_slug = slug
+        counter = 1
+        while await repo.slug_exists(slug):
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
+    # Monta dados da categoria
+    category_data = {
+        "name": name,
+        "slug": slug,
+        "description": data.get("description", "").strip() or None,
+        "parent_id": None,
+    }
+
+    category = await repo.create(category_data)
+
+    return JSONResponse(
+        content={
+            "id": str(category.id),
+            "name": category.name,
+            "slug": category.slug,
+            "description": category.description,
+        },
         status_code=http_status.HTTP_201_CREATED,
     )

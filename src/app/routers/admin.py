@@ -410,8 +410,11 @@ async def list_products(
 async def new_product(
     request: Request,
     current_user: AdminUser,
+    category_repo: CategoryRepo,
 ):
     """Formulario de novo produto."""
+    categories = await category_repo.get_all()
+
     return templates.TemplateResponse(
         request=request,
         name="admin/products/form.html",
@@ -419,6 +422,7 @@ async def new_product(
             "title": "Novo Produto - Admin",
             "current_user": current_user,
             "product": None,
+            "categories": categories,
         },
     )
 
@@ -429,11 +433,14 @@ async def edit_product(
     product_id: UUID,
     current_user: AdminUser,
     repo: ProductRepo,
+    category_repo: CategoryRepo,
 ):
     """Formulario de edicao de produto."""
     product = await repo.get(product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    categories = await category_repo.get_all()
 
     return templates.TemplateResponse(
         request=request,
@@ -442,6 +449,7 @@ async def edit_product(
             "title": f"Editar: {product.name} - Admin",
             "current_user": current_user,
             "product": product,
+            "categories": categories,
         },
     )
 
