@@ -204,7 +204,7 @@
 | 2.1.3 | Implementar canonical URLs | SEO Specialist | 1.9.1-1.9.4 | :white_check_mark: | Em todas as rotas SSR |
 | 2.1.4 | Implementar breadcrumbs | SEO Specialist | 1.9.2 | :white_check_mark: | Em blog/post.html |
 | 2.1.5 | Otimizar URLs (slug structure) | SEO Specialist | 1.5.4 | :white_check_mark: | Clean URLs implementadas |
-| 2.1.6 | Implementar redirects 301 | SEO Specialist | 1.9.1 | :white_large_square: | Old URLs |
+| 2.1.6 | Implementar redirects 301 | SEO Specialist | 1.9.1 | :white_check_mark: | routers/redirects.py + models/redirect.py |
 
 ## 2.2 Schema.org / Structured Data
 
@@ -223,8 +223,8 @@
 |----|--------|--------|-------------|--------|-------|
 | 2.3.1 | Implementar meta tags Open Graph | SEO Specialist | 1.8.1 | :white_check_mark: | Em base.html |
 | 2.3.2 | Implementar Twitter Cards | SEO Specialist | 1.8.1 | :white_check_mark: | Em base.html |
-| 2.3.3 | Criar gerador de imagens OG | Frontend Developer | 2.3.1 | :white_large_square: | Dinamico ou template |
-| 2.3.4 | Implementar botoes de share | Frontend Developer | 2.3.1 | :white_large_square: | WhatsApp, Telegram, X |
+| 2.3.3 | Criar gerador de imagens OG | Frontend Developer | 2.3.1 | :white_check_mark: | services/og_image.py + routers/og_images.py (Pillow) |
+| 2.3.4 | Implementar botoes de share | Frontend Developer | 2.3.1 | :white_check_mark: | components/share_buttons.html (WhatsApp, Telegram, X, FB, LinkedIn) |
 
 ## 2.4 n8n - Configuracao Base
 
@@ -457,10 +457,10 @@
 | Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
 |------|---------------|------------|-----------|-----------|
 | Fase 1 | 95 | 95 | 0 | 100% |
-| Fase 2 | 48 | 13 | 35 | 27% |
+| Fase 2 | 48 | 16 | 32 | 33% |
 | Fase 3 | 40 | 0 | 40 | 0% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **228** | **112** | **116** | **49%** |
+| **TOTAL** | **228** | **115** | **113** | **50%** |
 
 ---
 
@@ -492,12 +492,14 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 3. ~~**1.0.5** - Configurar variaveis de ambiente (VPS)~~ :white_check_mark:
 4. ~~**1.10.5** - Revisar checklist OWASP Top 10~~ :white_check_mark:
 
-## Fase 2 (SEO & Automacao - 27% concluido)
+## Fase 2 (SEO & Automacao - 33% concluido)
 1. ~~**2.1.3** - Canonical URLs~~ :white_check_mark:
 2. ~~**2.2.x** - Schema.org / Structured Data~~ :white_check_mark: (todos os 6 schemas)
-3. **2.1.6** - Redirects 301 (old URLs)
-4. **2.4.x** - Configuracao n8n
-5. **2.7.2** - Integracao API Amazon
+3. ~~**2.1.6** - Redirects 301 (old URLs)~~ :white_check_mark:
+4. ~~**2.3.3** - Gerador de imagens OG dinamicas~~ :white_check_mark:
+5. ~~**2.3.4** - Botoes de share (social)~~ :white_check_mark:
+6. **2.4.x** - Configuracao n8n
+7. **2.7.2** - Integracao API Amazon
 
 ## Fase 3 (IA & Internacionalizacao - 0% concluido)
 > **PRIORIDADE**: Integracao LiteLLM deve ser feita antes dos workflows de automacao que usam IA
@@ -510,14 +512,33 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ---
 
-**Versao**: 3.1
+**Versao**: 3.2
 **Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 334 passando (incluindo 37 OWASP + 34 admin + 24 SEO)
+**Testes**: 427 passando
 
 ---
 
 # CHANGELOG
+
+## v3.2 (2025-12-12)
+- :white_check_mark: **2.1.6** - Redirects 301 para URLs antigas
+  - `models/redirect.py` - Modelo SQLAlchemy para redirects
+  - `routers/redirects.py` - Router com logica de redirect (estatico, pattern, DB)
+  - Suporte a redirects exatos e por padrao (prefixo)
+  - Contador de hits para analytics
+- :white_check_mark: **2.3.3** - Gerador de imagens OG dinamicas
+  - `services/og_image.py` - Geracao de imagens 1200x630px com Pillow
+  - `routers/og_images.py` - Endpoints /og/post.png, /og/product.png, /og/category.png, /og/home.png
+  - Cache em disco para performance
+  - Tema dark geek com gradientes
+- :white_check_mark: **2.3.4** - Botoes de compartilhamento social
+  - `components/share_buttons.html` - Componente reutilizavel
+  - Suporte a WhatsApp, Telegram, X, Facebook, LinkedIn + copy link
+  - Integrado em blog/post.html e products/detail.html
+  - Tracking GA4 para eventos de share
+- :chart_with_upwards_trend: Fase 2 progresso: 27% → 33%
+- :chart_with_upwards_trend: Projeto total: 49% → 50%
 
 ## v3.1 (2025-12-12)
 - :white_check_mark: **FASE 1 COMPLETA** - 100% das tarefas concluidas

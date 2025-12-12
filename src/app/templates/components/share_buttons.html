@@ -1,0 +1,306 @@
+{#
+    Componente de Botoes de Compartilhamento
+
+    Variaveis esperadas:
+    - share_url: URL para compartilhar (obrigatorio)
+    - share_title: Titulo para compartilhar (obrigatorio)
+    - share_description: Descricao para compartilhar (opcional)
+    - share_position: Posicao (inline, fixed-left, fixed-right) - default: inline
+    - show_labels: Mostrar labels dos botoes (default: false)
+
+    Redes suportadas:
+    - WhatsApp
+    - Telegram
+    - X (Twitter)
+    - Facebook
+    - LinkedIn
+    - Copy link
+#}
+
+{% set position = share_position | default('inline') %}
+{% set labels = show_labels | default(false) %}
+
+{# URL encode dos parametros #}
+{% set encoded_url = share_url | urlencode %}
+{% set encoded_title = share_title | urlencode %}
+{% set encoded_text = (share_title ~ ((' - ' ~ share_description) if share_description else '')) | urlencode %}
+
+<div class="share-buttons share-{{ position }}" data-share-url="{{ share_url }}" data-share-title="{{ share_title }}">
+    <span class="share-label">Compartilhar:</span>
+
+    {# WhatsApp #}
+    <a href="https://api.whatsapp.com/send?text={{ encoded_text }}%20{{ encoded_url }}"
+       class="share-btn share-whatsapp"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Compartilhar no WhatsApp"
+       aria-label="Compartilhar no WhatsApp">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        {% if labels %}<span>WhatsApp</span>{% endif %}
+    </a>
+
+    {# Telegram #}
+    <a href="https://t.me/share/url?url={{ encoded_url }}&text={{ encoded_text }}"
+       class="share-btn share-telegram"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Compartilhar no Telegram"
+       aria-label="Compartilhar no Telegram">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        {% if labels %}<span>Telegram</span>{% endif %}
+    </a>
+
+    {# X (Twitter) #}
+    <a href="https://twitter.com/intent/tweet?text={{ encoded_text }}&url={{ encoded_url }}"
+       class="share-btn share-x"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Compartilhar no X"
+       aria-label="Compartilhar no X">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+        </svg>
+        {% if labels %}<span>X</span>{% endif %}
+    </a>
+
+    {# Facebook #}
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ encoded_url }}"
+       class="share-btn share-facebook"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Compartilhar no Facebook"
+       aria-label="Compartilhar no Facebook">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+        {% if labels %}<span>Facebook</span>{% endif %}
+    </a>
+
+    {# LinkedIn #}
+    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ encoded_url }}"
+       class="share-btn share-linkedin"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="Compartilhar no LinkedIn"
+       aria-label="Compartilhar no LinkedIn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+        {% if labels %}<span>LinkedIn</span>{% endif %}
+    </a>
+
+    {# Copy Link #}
+    <button type="button"
+            class="share-btn share-copy"
+            title="Copiar link"
+            aria-label="Copiar link"
+            onclick="copyShareLink(this)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        {% if labels %}<span>Copiar</span>{% endif %}
+    </button>
+</div>
+
+<style>
+/* Share Buttons Base Styles */
+.share-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.share-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-bg-muted);
+    color: var(--color-text);
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+}
+
+.share-btn span {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* With labels - make rectangular */
+.share-buttons.share-with-labels .share-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+/* Platform-specific colors on hover */
+.share-whatsapp:hover {
+    background: #25D366;
+    color: white;
+}
+
+.share-telegram:hover {
+    background: #0088cc;
+    color: white;
+}
+
+.share-x:hover {
+    background: #000000;
+    color: white;
+}
+
+.share-facebook:hover {
+    background: #1877F2;
+    color: white;
+}
+
+.share-linkedin:hover {
+    background: #0A66C2;
+    color: white;
+}
+
+.share-copy:hover {
+    background: var(--color-primary);
+    color: white;
+}
+
+.share-copy.copied {
+    background: var(--color-success, #10b981);
+    color: white;
+}
+
+/* Fixed position variants */
+.share-fixed-left,
+.share-fixed-right {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    z-index: 100;
+    background: var(--color-bg-card);
+    padding: 0.75rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.share-fixed-left {
+    left: 1rem;
+}
+
+.share-fixed-right {
+    right: 1rem;
+}
+
+.share-fixed-left .share-label,
+.share-fixed-right .share-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    margin-bottom: 0.5rem;
+}
+
+/* Inline variant (default) */
+.share-inline {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--color-bg-muted);
+    border-radius: 8px;
+}
+
+/* Responsive: hide fixed on mobile */
+@media (max-width: 1200px) {
+    .share-fixed-left,
+    .share-fixed-right {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .share-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .share-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .share-label {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+
+<script>
+// Funcao para copiar link
+function copyShareLink(button) {
+    const container = button.closest('.share-buttons');
+    const url = container.dataset.shareUrl || window.location.href;
+
+    navigator.clipboard.writeText(url).then(() => {
+        // Visual feedback
+        button.classList.add('copied');
+        const originalTitle = button.title;
+        button.title = 'Link copiado!';
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+            button.classList.remove('copied');
+            button.title = originalTitle;
+        }, 2000);
+    }).catch(err => {
+        console.error('Erro ao copiar link:', err);
+        // Fallback para navegadores antigos
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        button.classList.add('copied');
+        setTimeout(() => button.classList.remove('copied'), 2000);
+    });
+}
+
+// Tracking de compartilhamentos (GA4)
+document.querySelectorAll('.share-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const container = this.closest('.share-buttons');
+        const url = container.dataset.shareUrl;
+        const platform = this.classList[1]?.replace('share-', '') || 'unknown';
+
+        // Envia evento para GA4 se disponivel
+        if (typeof gtag === 'function') {
+            gtag('event', 'share', {
+                method: platform,
+                content_type: 'page',
+                item_id: url
+            });
+        }
+    });
+});
+</script>

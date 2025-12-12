@@ -14,6 +14,7 @@ from app.models.post_product import PostProduct
 from app.models.click import AffiliateClick
 from app.models.session import Session
 from app.models.newsletter import NewsletterSignup
+from app.models.redirect import Redirect
 
 __all__ = [
     # Mixins e Tipos
@@ -33,4 +34,5 @@ __all__ = [
     "AffiliateClick",
     "Session",
     "NewsletterSignup",
+    "Redirect",
 ]

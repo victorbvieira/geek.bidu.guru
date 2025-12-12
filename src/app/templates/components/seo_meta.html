@@ -6,16 +6,32 @@
     - title: Titulo da pagina
     - description: Descricao meta
     - og_type: Tipo Open Graph (default: website)
-    - og_image: URL da imagem Open Graph
+    - og_image: URL da imagem Open Graph (se nao fornecida, gera dinamicamente)
+    - og_image_type: Tipo de imagem OG dinamica (post, product, category, home)
     - article_published: Data de publicacao (para artigos)
     - article_modified: Data de modificacao (para artigos)
     - article_author: Nome do autor (para artigos)
+    - article_section: Secao do artigo (categoria)
     - schema_type: Tipo de schema (BlogPosting, Product, ItemList, etc)
     - post: Objeto Post (para BlogPosting)
     - product: Objeto Product (para Product schema)
     - products: Lista de produtos (para ItemList)
     - breadcrumbs: Lista de breadcrumbs [{"name": "...", "url": "..."}]
 #}
+
+{# Gera URL da imagem OG dinamica se nao fornecida #}
+{% set og_image_url = og_image %}
+{% if not og_image_url %}
+    {% if og_image_type == 'product' and product %}
+        {% set og_image_url = base_url ~ '/og/product.png?title=' ~ (product.name | urlencode) ~ ('&price=' ~ (product.price | format_price | urlencode) if product.price else '') ~ ('&platform=' ~ product.platform.value if product.platform else '') %}
+    {% elif og_image_type == 'category' or og_type == 'category' %}
+        {% set og_image_url = base_url ~ '/og/category.png?title=' ~ (title | urlencode) ~ ('&subtitle=' ~ (description | urlencode) if description else '') %}
+    {% elif og_type == 'article' or schema_type == 'BlogPosting' %}
+        {% set og_image_url = base_url ~ '/og/post.png?title=' ~ (title | urlencode) ~ ('&subtitle=' ~ (description | urlencode) if description else '') ~ ('&category=' ~ (article_section | urlencode) if article_section else '') %}
+    {% else %}
+        {% set og_image_url = base_url ~ '/og/home.png' %}
+    {% endif %}
+{% endif %}
 
 {# Canonical URL - Evita conteudo duplicado #}
 <link rel="canonical" href="{{ canonical_url }}">
@@ -40,8 +56,8 @@
 <meta property="og:url" content="{{ canonical_url }}">
 <meta property="og:site_name" content="geek.bidu.guru">
 <meta property="og:locale" content="pt_BR">
-{% if og_image %}
-<meta property="og:image" content="{{ og_image }}">
+{% if og_image_url %}
+<meta property="og:image" content="{{ og_image_url }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 {% endif %}
@@ -71,8 +87,8 @@
 <meta name="twitter:card" content="{{ twitter_card | default('summary_large_image') }}">
 <meta name="twitter:title" content="{{ title | default('geek.bidu.guru') }}">
 <meta name="twitter:description" content="{{ description | default('Encontre o presente geek perfeito') }}">
-{% if og_image %}
-<meta name="twitter:image" content="{{ og_image }}">
+{% if og_image_url %}
+<meta name="twitter:image" content="{{ og_image_url }}">
 {% endif %}
 
 {# ============================================================================= #}

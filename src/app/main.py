@@ -327,3 +327,21 @@ app.include_router(admin_actions_router)
 async def admin_redirect_exception_handler(request: Request, exc: AdminRedirectException):
     """Handler para redirecionar usuarios nao autenticados no admin para o login."""
     return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# -----------------------------------------------------------------------------
+# Redirects 301 (URLs antigas)
+# -----------------------------------------------------------------------------
+
+from app.routers.redirects import router as redirects_router
+
+app.include_router(redirects_router)
+
+
+# -----------------------------------------------------------------------------
+# OG Images (imagens Open Graph dinamicas)
+# -----------------------------------------------------------------------------
+
+from app.routers.og_images import router as og_images_router
+
+app.include_router(og_images_router)

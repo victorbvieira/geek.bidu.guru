@@ -113,6 +113,12 @@
         </div>
         {% endif %}
 
+        {# Botoes de compartilhamento #}
+        {% set share_url = canonical_url %}
+        {% set share_title = product.name %}
+        {% set share_description = product.short_description %}
+        {% include "components/share_buttons.html" %}
+
         {% if product.tags %}
         <aside class="product-tags">
             <h3>Tags</h3>

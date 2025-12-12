@@ -57,10 +57,24 @@ class Settings(BaseSettings):
     log_format: Literal["json", "text"] = "json"
 
     # -------------------------------------------------------------------------
-    # APIs Externas (opcionais)
+    # LLM / IA (LiteLLM - suporta OpenAI, Anthropic, etc.)
     # -------------------------------------------------------------------------
+    # Chaves de API (configure apenas as que for usar)
     openai_api_key: str | None = None
-    openai_model: str = "gpt-4o-mini"
+    anthropic_api_key: str | None = None
+
+    # Modelo padrao (ex: gpt-4o-mini, claude-3-haiku-20240307, groq/llama-3.1-8b)
+    llm_default_model: str = "gpt-4o-mini"
+
+    # Configuracoes de geracao
+    llm_max_tokens: int = 2000
+    llm_temperature: float = 0.7
+
+    # Timeout em segundos
+    llm_timeout: int = 60
+
+    # Cache de respostas (em minutos, 0 = desabilitado)
+    llm_cache_ttl: int = 60
 
     # -------------------------------------------------------------------------
     # Propriedades computadas
