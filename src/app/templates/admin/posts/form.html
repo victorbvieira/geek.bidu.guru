@@ -56,15 +56,34 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="content" class="admin-form-label">Conteudo *</label>
-                    <textarea
-                        id="content"
-                        name="content"
-                        class="admin-form-textarea"
-                        style="min-height: 400px;"
-                        required
-                    >{{ post.content if post else '' }}</textarea>
-                    <div class="admin-form-hint">Suporta HTML</div>
+                    <label for="content" class="admin-form-label">Conteudo * (Markdown)</label>
+                    <div class="markdown-editor">
+                        <div class="markdown-toolbar">
+                            <button type="button" class="md-btn" data-action="bold" title="Negrito (Ctrl+B)"><strong>B</strong></button>
+                            <button type="button" class="md-btn" data-action="italic" title="Italico (Ctrl+I)"><em>I</em></button>
+                            <button type="button" class="md-btn" data-action="heading" title="Titulo">H</button>
+                            <button type="button" class="md-btn" data-action="link" title="Link">🔗</button>
+                            <button type="button" class="md-btn" data-action="image" title="Imagem">🖼</button>
+                            <button type="button" class="md-btn" data-action="list" title="Lista">•</button>
+                            <button type="button" class="md-btn" data-action="olist" title="Lista numerada">1.</button>
+                            <button type="button" class="md-btn" data-action="quote" title="Citacao">"</button>
+                            <button type="button" class="md-btn" data-action="code" title="Codigo">&lt;/&gt;</button>
+                            <span class="md-toolbar-separator"></span>
+                            <button type="button" class="md-btn md-btn-preview" data-action="preview" title="Preview">Preview</button>
+                        </div>
+                        <div class="markdown-panels">
+                            <textarea
+                                id="content"
+                                name="content"
+                                class="admin-form-textarea markdown-input"
+                                required
+                            >{{ post.content if post else '' }}</textarea>
+                            <div class="markdown-preview" id="markdown-preview">
+                                <p class="preview-placeholder">Clique em "Preview" para visualizar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-form-hint">Suporta Markdown: **negrito**, *italico*, # titulo, [link](url), ![imagem](url)</div>
                 </div>
             </div>
 
@@ -205,7 +224,296 @@
                     <div class="admin-form-hint">Separadas por virgula</div>
                 </div>
             </div>
+
+            <!-- Produtos Vinculados -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Produtos Vinculados</h3>
+                </div>
+                <input type="hidden" name="products" id="products-input" value="{{ selected_product_ids | map('string') | join(',') }}">
+
+                <div class="product-selector">
+                    <div class="selected-products" id="selected-products">
+                        {% if products and selected_product_ids %}
+                        {% for product in products if product.id in selected_product_ids %}
+                        <div class="selected-product" data-id="{{ product.id }}">
+                            <span class="product-name">{{ product.name[:30] }}{% if product.name|length > 30 %}...{% endif %}</span>
+                            <button type="button" class="remove-product" onclick="removeProduct('{{ product.id }}')">&times;</button>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <select id="product-select" class="admin-form-select" onchange="addProduct(this)">
+                        <option value="">+ Adicionar produto</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" {% if product.id in selected_product_ids %}disabled{% endif %}>
+                            {{ product.name[:40] }}{% if product.name|length > 40 %}...{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="admin-form-hint">Selecione produtos para exibir no post</div>
+                </div>
+            </div>
         </div>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Markdown Editor com Preview
+(function() {
+    const textarea = document.getElementById('content');
+    const preview = document.getElementById('markdown-preview');
+    const panels = document.querySelector('.markdown-panels');
+    const previewBtn = document.querySelector('[data-action="preview"]');
+    const toolbar = document.querySelector('.markdown-toolbar');
+
+    if (!textarea || !preview) return;
+
+    let previewMode = 'edit'; // 'edit', 'split', 'preview'
+    let previewTimeout = null;
+
+    // Toolbar actions
+    const actions = {
+        bold: () => wrapText('**', '**'),
+        italic: () => wrapText('*', '*'),
+        heading: () => insertAtLineStart('## '),
+        link: () => {
+            const url = prompt('URL do link:');
+            if (url) wrapText('[', `](${url})`);
+        },
+        image: () => {
+            const url = prompt('URL da imagem:');
+            if (url) insertText(`![Imagem](${url})`);
+        },
+        list: () => insertAtLineStart('- '),
+        olist: () => insertAtLineStart('1. '),
+        quote: () => insertAtLineStart('> '),
+        code: () => {
+            const selection = getSelection();
+            if (selection.includes('\n')) {
+                wrapText('\n```\n', '\n```\n');
+            } else {
+                wrapText('`', '`');
+            }
+        },
+        preview: () => togglePreview()
+    };
+
+    // Bind toolbar buttons
+    toolbar.querySelectorAll('.md-btn').forEach(btn => {
+        const action = btn.dataset.action;
+        if (action && actions[action]) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                actions[action]();
+                textarea.focus();
+            });
+        }
+    });
+
+    // Helper functions
+    function getSelection() {
+        return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+    }
+
+    function wrapText(before, after) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selection = textarea.value.substring(start, end);
+        const replacement = before + selection + after;
+
+        textarea.setRangeText(replacement, start, end, 'select');
+        textarea.selectionStart = start + before.length;
+        textarea.selectionEnd = end + before.length;
+    }
+
+    function insertText(text) {
+        const start = textarea.selectionStart;
+        textarea.setRangeText(text, start, start, 'end');
+    }
+
+    function insertAtLineStart(prefix) {
+        const start = textarea.selectionStart;
+        const value = textarea.value;
+
+        // Find line start
+        let lineStart = start;
+        while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+            lineStart--;
+        }
+
+        // Check if already has prefix
+        const lineContent = value.substring(lineStart);
+        if (lineContent.startsWith(prefix)) {
+            return; // Already has prefix
+        }
+
+        textarea.setRangeText(prefix, lineStart, lineStart, 'end');
+    }
+
+    // Toggle preview modes
+    function togglePreview() {
+        if (previewMode === 'edit') {
+            previewMode = 'split';
+            panels.classList.add('split-view');
+            panels.classList.remove('preview-only');
+            previewBtn.classList.add('active');
+            previewBtn.textContent = 'Split';
+            updatePreview();
+        } else if (previewMode === 'split') {
+            previewMode = 'preview';
+            panels.classList.remove('split-view');
+            panels.classList.add('preview-only');
+            previewBtn.textContent = 'Editar';
+            updatePreview();
+        } else {
+            previewMode = 'edit';
+            panels.classList.remove('split-view', 'preview-only');
+            previewBtn.classList.remove('active');
+            previewBtn.textContent = 'Preview';
+        }
+    }
+
+    // Update preview content
+    async function updatePreview() {
+        if (previewMode === 'edit') return;
+
+        const content = textarea.value;
+        if (!content.trim()) {
+            preview.innerHTML = '<p class="preview-placeholder">Nenhum conteudo para visualizar</p>';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/posts/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                preview.innerHTML = data.html;
+            } else {
+                preview.innerHTML = '<p class="preview-placeholder">Erro ao renderizar preview</p>';
+            }
+        } catch (error) {
+            console.error('Preview error:', error);
+            preview.innerHTML = '<p class="preview-placeholder">Erro ao renderizar preview</p>';
+        }
+    }
+
+    // Debounced preview update
+    function schedulePreviewUpdate() {
+        if (previewMode === 'edit') return;
+
+        if (previewTimeout) {
+            clearTimeout(previewTimeout);
+        }
+        previewTimeout = setTimeout(updatePreview, 500);
+    }
+
+    // Listen for content changes
+    textarea.addEventListener('input', schedulePreviewUpdate);
+
+    // Keyboard shortcuts
+    textarea.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+                case 'b':
+                    e.preventDefault();
+                    actions.bold();
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    actions.italic();
+                    break;
+                case 'k':
+                    e.preventDefault();
+                    actions.link();
+                    break;
+            }
+        }
+    });
+
+    // Tab handling for code blocks
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            if (e.shiftKey) {
+                // Unindent
+                const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+                const lineContent = textarea.value.substring(lineStart);
+                if (lineContent.startsWith('    ') || lineContent.startsWith('\t')) {
+                    const removeChars = lineContent.startsWith('    ') ? 4 : 1;
+                    textarea.setRangeText('', lineStart, lineStart + removeChars, 'end');
+                }
+            } else {
+                // Indent
+                textarea.setRangeText('    ', start, end, 'end');
+            }
+        }
+    });
+})();
+
+// Product Selector
+const productsInput = document.getElementById('products-input');
+const selectedProductsDiv = document.getElementById('selected-products');
+const productSelect = document.getElementById('product-select');
+
+function updateProductsInput() {
+    const selectedIds = [];
+    selectedProductsDiv.querySelectorAll('.selected-product').forEach(el => {
+        selectedIds.push(el.dataset.id);
+    });
+    productsInput.value = selectedIds.join(',');
+}
+
+function addProduct(selectEl) {
+    const productId = selectEl.value;
+    if (!productId) return;
+
+    const option = selectEl.options[selectEl.selectedIndex];
+    const productName = option.text.trim();
+
+    // Create selected product element
+    const div = document.createElement('div');
+    div.className = 'selected-product';
+    div.dataset.id = productId;
+    div.innerHTML = `
+        <span class="product-name">${productName}</span>
+        <button type="button" class="remove-product" onclick="removeProduct('${productId}')">&times;</button>
+    `;
+
+    selectedProductsDiv.appendChild(div);
+
+    // Disable option
+    option.disabled = true;
+
+    // Reset select
+    selectEl.value = '';
+
+    updateProductsInput();
+}
+
+function removeProduct(productId) {
+    // Remove from selected
+    const el = selectedProductsDiv.querySelector(`[data-id="${productId}"]`);
+    if (el) el.remove();
+
+    // Enable option
+    const option = productSelect.querySelector(`option[value="${productId}"]`);
+    if (option) option.disabled = false;
+
+    updateProductsInput();
+}
+</script>
 {% endblock %}

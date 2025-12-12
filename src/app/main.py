@@ -257,6 +257,15 @@ app.include_router(blog_router)
 
 
 # -----------------------------------------------------------------------------
+# SSR Routes (paginas publicas de produtos)
+# -----------------------------------------------------------------------------
+
+from app.routers.products import router as products_router
+
+app.include_router(products_router)
+
+
+# -----------------------------------------------------------------------------
 # Affiliate Redirect Routes (/goto/{slug})
 # -----------------------------------------------------------------------------
 

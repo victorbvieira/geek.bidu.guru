@@ -707,6 +707,279 @@ input, select, textarea, button {
 }
 
 /* -----------------------------------------------------------------------------
+   Markdown Editor
+   ----------------------------------------------------------------------------- */
+.markdown-editor {
+    border: 1px solid var(--admin-border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--admin-bg);
+}
+
+.markdown-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px;
+    background: var(--admin-sidebar-bg);
+    border-bottom: 1px solid var(--admin-border);
+    flex-wrap: wrap;
+}
+
+.md-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--admin-text);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.md-btn:hover {
+    background: var(--admin-border);
+}
+
+.md-btn:active {
+    background: var(--admin-primary);
+}
+
+.md-toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--admin-border);
+    margin: 0 8px;
+}
+
+.md-btn-preview {
+    width: auto;
+    padding: 0 12px;
+    font-weight: 500;
+}
+
+.md-btn-preview.active {
+    background: var(--admin-primary);
+    color: white;
+}
+
+.markdown-panels {
+    display: flex;
+    min-height: 400px;
+}
+
+.markdown-input {
+    flex: 1;
+    border: none !important;
+    border-radius: 0 !important;
+    resize: none;
+    min-height: 400px;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.markdown-input:focus {
+    outline: none;
+    border: none !important;
+}
+
+.markdown-preview {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: var(--admin-card-bg);
+    border-left: 1px solid var(--admin-border);
+    display: none;
+}
+
+.markdown-preview.active {
+    display: block;
+}
+
+.markdown-panels.split-view .markdown-input {
+    flex: 1;
+}
+
+.markdown-panels.split-view .markdown-preview {
+    display: block;
+    flex: 1;
+}
+
+.markdown-panels.preview-only .markdown-input {
+    display: none;
+}
+
+.markdown-panels.preview-only .markdown-preview {
+    display: block;
+    flex: 1;
+    border-left: none;
+}
+
+.preview-placeholder {
+    color: var(--admin-text-muted);
+    font-style: italic;
+}
+
+/* Markdown Preview Content Styles */
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--admin-text);
+}
+
+.markdown-preview h1 { font-size: 1.75rem; }
+.markdown-preview h2 { font-size: 1.5rem; }
+.markdown-preview h3 { font-size: 1.25rem; }
+.markdown-preview h4 { font-size: 1.1rem; }
+
+.markdown-preview p {
+    margin: 0 0 1rem;
+    line-height: 1.7;
+}
+
+.markdown-preview a {
+    color: var(--admin-primary);
+    text-decoration: underline;
+}
+
+.markdown-preview strong {
+    font-weight: 600;
+}
+
+.markdown-preview em {
+    font-style: italic;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+    margin: 0 0 1rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-preview li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-preview blockquote {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid var(--admin-primary);
+    background: var(--admin-sidebar-bg);
+    color: var(--admin-text-muted);
+}
+
+.markdown-preview code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.875em;
+    padding: 2px 6px;
+    background: var(--admin-sidebar-bg);
+    border-radius: 4px;
+}
+
+.markdown-preview pre {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--admin-sidebar-bg);
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+.markdown-preview pre code {
+    padding: 0;
+    background: none;
+}
+
+.markdown-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
+.markdown-preview hr {
+    border: none;
+    border-top: 1px solid var(--admin-border);
+    margin: 2rem 0;
+}
+
+.markdown-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+    padding: 0.5rem;
+    border: 1px solid var(--admin-border);
+    text-align: left;
+}
+
+.markdown-preview th {
+    background: var(--admin-sidebar-bg);
+    font-weight: 600;
+}
+
+/* -----------------------------------------------------------------------------
+   Product Selector
+   ----------------------------------------------------------------------------- */
+.product-selector {
+    padding: 0 1rem 1rem;
+}
+
+.selected-products {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    min-height: 10px;
+}
+
+.selected-product {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--admin-sidebar-bg);
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+.selected-product .product-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selected-product .remove-product {
+    background: none;
+    border: none;
+    color: var(--admin-text-muted);
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.selected-product .remove-product:hover {
+    color: var(--admin-danger);
+}
+
+/* -----------------------------------------------------------------------------
    Responsive
    ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {
@@ -730,5 +1003,18 @@ input, select, textarea, button {
 
     .admin-content {
         padding: 1rem;
+    }
+
+    .admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .markdown-panels {
+        flex-direction: column;
+    }
+
+    .markdown-preview {
+        border-left: none;
+        border-top: 1px solid var(--admin-border);
     }
 }

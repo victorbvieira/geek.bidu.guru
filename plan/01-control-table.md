@@ -281,54 +281,88 @@
 
 # FASE 3: IA & INTERNACIONALIZACAO
 
-## 3.1 Integracao IA Avancada
+## 3.1 Integracao LiteLLM (Multi-Provider LLM)
+
+> **NOVA SECAO**: Integracao com multiplos provedores de LLM via LiteLLM para otimizar custos e performance.
+> Cada funcionalidade pode usar um modelo diferente conforme necessidade (custo vs qualidade).
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 3.1.1 | Criar prompts otimizados | Content Strategist | 2.5.3 | :white_large_square: | Para diferentes tipos de post |
-| 3.1.2 | Implementar variacao de tom | Content Strategist | 3.1.1 | :white_large_square: | Conforme persona |
-| 3.1.3 | Criar sistema de templates de conteudo | Automation Engineer | 3.1.1 | :white_large_square: | Reusaveis |
-| 3.1.4 | Implementar revisao automatica | Automation Engineer | 3.1.3 | :white_large_square: | Gramatica, SEO |
-| 3.1.5 | Implementar geracao de meta description | SEO Specialist | 3.1.3 | :white_large_square: | Automatica |
+| 3.1.1 | Adicionar litellm ao requirements.txt | Backend Developer | 1.2.5 | :white_large_square: | pip install litellm |
+| 3.1.2 | Criar core/llm/config.py | Backend Developer | 3.1.1 | :white_large_square: | Configuracao de modelos por funcao |
+| 3.1.3 | Criar core/llm/client.py | Backend Developer | 3.1.2 | :white_large_square: | Cliente LiteLLM unificado |
+| 3.1.4 | Implementar LLMConfig model | Backend Developer | 3.1.2 | :white_large_square: | Pydantic settings para cada provider |
+| 3.1.5 | Configurar provider OpenRouter (free tier) | Backend Developer | 3.1.3 | :white_large_square: | Para tarefas simples (slugs, tags) |
+| 3.1.6 | Configurar provider OpenAI | Backend Developer | 3.1.3 | :white_large_square: | Para geracao de conteudo (GPT-4) |
+| 3.1.7 | Configurar provider Anthropic (opcional) | Backend Developer | 3.1.3 | :white_large_square: | Claude como alternativa |
+| 3.1.8 | Criar services/llm_service.py | Backend Developer | 3.1.3-3.1.6 | :white_large_square: | Abstrai chamadas por tipo de tarefa |
+| 3.1.9 | Implementar generate_slug() | Backend Developer | 3.1.8 | :white_large_square: | Usa modelo free (OpenRouter) |
+| 3.1.10 | Implementar generate_content() | Backend Developer | 3.1.8 | :white_large_square: | Usa OpenAI GPT-4 |
+| 3.1.11 | Implementar generate_seo_meta() | Backend Developer | 3.1.8 | :white_large_square: | Usa modelo intermediario |
+| 3.1.12 | Implementar fallback entre providers | Backend Developer | 3.1.8 | :white_large_square: | Se um falhar, usa outro |
+| 3.1.13 | Criar testes unitarios LLM service | Backend Developer | 3.1.8-3.1.12 | :white_large_square: | Mocks para providers |
+| 3.1.14 | Documentar configuracao de providers | Backend Developer | 3.1.13 | :white_large_square: | .env.example + README |
 
-## 3.2 n8n - Workflow E (Pesquisa de Produtos)
+### Mapeamento de Modelos por Funcionalidade
 
-| ID | Tarefa | Agente | Dependencia | Status | Notas |
-|----|--------|--------|-------------|--------|-------|
-| 3.2.1 | Criar workflow Flow E | Automation Engineer | 2.7.6 | :white_large_square: | Pesquisa inteligente |
-| 3.2.2 | Implementar busca por trends | Automation Engineer | 3.2.1 | :white_large_square: | Google Trends API |
-| 3.2.3 | Implementar analise de concorrentes | Automation Engineer | 3.2.2 | :white_large_square: | Scraping seguro |
-| 3.2.4 | Implementar sugestao de novos produtos | Automation Engineer | 3.2.3 | :white_large_square: | Com IA |
-| 3.2.5 | Testar e validar Flow E | Automation Engineer | 3.2.4 | :white_large_square: | End-to-end |
+| Funcionalidade | Provider Padrao | Modelo | Justificativa |
+|----------------|-----------------|--------|---------------|
+| Geracao de slugs | OpenRouter | mistral-7b-free | Tarefa simples, custo zero |
+| Geracao de tags | OpenRouter | mistral-7b-free | Tarefa simples, custo zero |
+| SEO meta description | OpenRouter | llama-3-8b | Qualidade media, baixo custo |
+| Conteudo de posts | OpenAI | gpt-4-turbo | Alta qualidade, criatividade |
+| Listicles (Top 10) | OpenAI | gpt-4-turbo | Alta qualidade, estrutura |
+| Traducoes (i18n) | Anthropic | claude-3-haiku | Bom para traducao, custo medio |
+| Revisao gramatical | OpenRouter | llama-3-70b | Boa qualidade, custo baixo |
 
-## 3.3 n8n - Workflow F (Monitor de Deals)
-
-| ID | Tarefa | Agente | Dependencia | Status | Notas |
-|----|--------|--------|-------------|--------|-------|
-| 3.3.1 | Criar workflow Flow F | Automation Engineer | 2.7.6 | :white_large_square: | Monitor de ofertas |
-| 3.3.2 | Implementar deteccao de queda de preco | Automation Engineer | 3.3.1 | :white_large_square: | > 20% desconto |
-| 3.3.3 | Implementar criacao de post urgente | Automation Engineer | 3.3.2 | :white_large_square: | "Oferta relampago" |
-| 3.3.4 | Implementar alerta para admin | Automation Engineer | 3.3.3 | :white_large_square: | Telegram |
-| 3.3.5 | Testar e validar Flow F | Automation Engineer | 3.3.4 | :white_large_square: | End-to-end |
-
-## 3.4 Cache Redis
-
-| ID | Tarefa | Agente | Dependencia | Status | Notas |
-|----|--------|--------|-------------|--------|-------|
-| 3.4.1 | Implementar utils/cache.py | Backend Developer | 1.1.4 | :white_large_square: | Redis client |
-| 3.4.2 | Cachear queries frequentes | Backend Developer | 3.4.1 | :white_large_square: | Posts, produtos |
-| 3.4.3 | Implementar cache de sessoes | Backend Developer | 3.4.1 | :white_large_square: | JWT blacklist |
-| 3.4.4 | Implementar invalidacao inteligente | Backend Developer | 3.4.2 | :white_large_square: | On update/delete |
-
-## 3.5 Internacionalizacao (i18n)
+## 3.2 Integracao IA - Prompts e Templates
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 3.5.1 | Estruturar sistema i18n | Backend Developer | 1.2.2 | :white_large_square: | Flask-Babel ou similar |
-| 3.5.2 | Criar arquivos de traducao pt-BR | Content Strategist | 3.5.1 | :white_large_square: | Base inicial |
-| 3.5.3 | Implementar deteccao de idioma | Backend Developer | 3.5.1 | :white_large_square: | Accept-Language |
-| 3.5.4 | Adaptar templates para i18n | Frontend Developer | 3.5.1-3.5.3 | :white_large_square: | {{ _('texto') }} |
-| 3.5.5 | Implementar hreflang tags | SEO Specialist | 3.5.4 | :white_large_square: | SEO internacional |
+| 3.2.1 | Criar prompts otimizados | Content Strategist | 3.1.8 | :white_large_square: | Para diferentes tipos de post |
+| 3.2.2 | Implementar variacao de tom | Content Strategist | 3.2.1 | :white_large_square: | Conforme persona |
+| 3.2.3 | Criar sistema de templates de conteudo | Automation Engineer | 3.2.1 | :white_large_square: | Reusaveis |
+| 3.2.4 | Implementar revisao automatica | Automation Engineer | 3.2.3 | :white_large_square: | Gramatica, SEO |
+| 3.2.5 | Implementar geracao de meta description | SEO Specialist | 3.2.3 | :white_large_square: | Automatica |
+
+## 3.3 n8n - Workflow E (Pesquisa de Produtos)
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 3.3.1 | Criar workflow Flow E | Automation Engineer | 2.7.6 | :white_large_square: | Pesquisa inteligente |
+| 3.3.2 | Implementar busca por trends | Automation Engineer | 3.3.1 | :white_large_square: | Google Trends API |
+| 3.3.3 | Implementar analise de concorrentes | Automation Engineer | 3.3.2 | :white_large_square: | Scraping seguro |
+| 3.3.4 | Implementar sugestao de novos produtos | Automation Engineer | 3.3.3 | :white_large_square: | Com IA (usa 3.1.x) |
+| 3.3.5 | Testar e validar Flow E | Automation Engineer | 3.3.4 | :white_large_square: | End-to-end |
+
+## 3.4 n8n - Workflow F (Monitor de Deals)
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 3.4.1 | Criar workflow Flow F | Automation Engineer | 2.7.6 | :white_large_square: | Monitor de ofertas |
+| 3.4.2 | Implementar deteccao de queda de preco | Automation Engineer | 3.4.1 | :white_large_square: | > 20% desconto |
+| 3.4.3 | Implementar criacao de post urgente | Automation Engineer | 3.4.2 | :white_large_square: | "Oferta relampago" |
+| 3.4.4 | Implementar alerta para admin | Automation Engineer | 3.4.3 | :white_large_square: | Telegram |
+| 3.4.5 | Testar e validar Flow F | Automation Engineer | 3.4.4 | :white_large_square: | End-to-end |
+
+## 3.5 Cache Redis
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 3.5.1 | Implementar utils/cache.py | Backend Developer | 1.1.4 | :white_large_square: | Redis client |
+| 3.5.2 | Cachear queries frequentes | Backend Developer | 3.5.1 | :white_large_square: | Posts, produtos |
+| 3.5.3 | Implementar cache de sessoes | Backend Developer | 3.5.1 | :white_large_square: | JWT blacklist |
+| 3.5.4 | Implementar invalidacao inteligente | Backend Developer | 3.5.2 | :white_large_square: | On update/delete |
+
+## 3.6 Internacionalizacao (i18n)
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 3.6.1 | Estruturar sistema i18n | Backend Developer | 1.2.2 | :white_large_square: | Flask-Babel ou similar |
+| 3.6.2 | Criar arquivos de traducao pt-BR | Content Strategist | 3.6.1 | :white_large_square: | Base inicial |
+| 3.6.3 | Implementar deteccao de idioma | Backend Developer | 3.6.1 | :white_large_square: | Accept-Language |
+| 3.6.4 | Adaptar templates para i18n | Frontend Developer | 3.6.1-3.6.3 | :white_large_square: | {{ _('texto') }} |
+| 3.6.5 | Implementar hreflang tags | SEO Specialist | 3.6.4 | :white_large_square: | SEO internacional |
 
 ---
 
@@ -338,7 +372,7 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 4.1.1 | Criar modelo ABTest | Database Architect | 3.4.4 | :white_large_square: | Tabela de testes |
+| 4.1.1 | Criar modelo ABTest | Database Architect | 3.5.4 | :white_large_square: | Tabela de testes |
 | 4.1.2 | Criar modelo ABTestEvent | Database Architect | 4.1.1 | :white_large_square: | Eventos de teste |
 | 4.1.3 | Implementar services/ab_test_service.py | Data Analyst | 4.1.1-4.1.2 | :white_large_square: | Logica de testes |
 | 4.1.4 | Implementar atribuicao de variante | Data Analyst | 4.1.3 | :white_large_square: | Consistente por sessao |
@@ -424,9 +458,9 @@
 |------|---------------|------------|-----------|-----------|
 | Fase 1 | 95 | 94 | 1 | 99% |
 | Fase 2 | 48 | 13 | 35 | 27% |
-| Fase 3 | 26 | 0 | 26 | 0% |
+| Fase 3 | 40 | 0 | 40 | 0% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **214** | **111** | **103** | **52%** |
+| **TOTAL** | **228** | **111** | **117** | **49%** |
 
 ---
 
@@ -434,7 +468,7 @@
 
 | Agente | Total Tarefas | Concluidas | Fases |
 |--------|---------------|------------|-------|
-| Backend Developer | 40 | 30 | 1, 2, 3, 4 |
+| Backend Developer | 54 | 30 | 1, 2, 3, 4 |
 | DevOps Engineer | 24 | 8 | 1, 2, 4 |
 | Automation Engineer | 28 | 0 | 2, 3, 4 |
 | Database Architect | 16 | 10 | 1, 4 |
@@ -465,9 +499,18 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 4. **2.4.x** - Configuracao n8n
 5. **2.7.2** - Integracao API Amazon
 
+## Fase 3 (IA & Internacionalizacao - 0% concluido)
+> **PRIORIDADE**: Integracao LiteLLM deve ser feita antes dos workflows de automacao que usam IA
+
+1. **3.1.1-3.1.3** - Setup inicial LiteLLM (client + config)
+2. **3.1.5-3.1.6** - Configurar providers OpenRouter (free) e OpenAI
+3. **3.1.8** - Criar LLM service abstrato
+4. **3.1.9-3.1.11** - Implementar funcoes (slug, content, SEO)
+5. **3.1.12** - Fallback entre providers
+
 ---
 
-**Versao**: 2.9
+**Versao**: 3.0
 **Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
 **Testes**: 294 passando (incluindo 34 admin + 24 SEO)
@@ -475,6 +518,17 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 ---
 
 # CHANGELOG
+
+## v3.0 (2025-12-12)
+- :sparkles: **NOVA SECAO 3.1**: Integracao LiteLLM (Multi-Provider LLM)
+  - 14 novas tarefas para integracao com multiplos provedores de LLM
+  - Mapeamento de modelos por funcionalidade (custo vs qualidade)
+  - OpenRouter (free tier) para tarefas simples (slugs, tags)
+  - OpenAI GPT-4 para geracao de conteudo de alta qualidade
+  - Anthropic Claude como alternativa para traducoes
+  - Sistema de fallback entre providers
+- :pencil: Renumeradas secoes da Fase 3 (3.2 a 3.6)
+- :chart_with_upwards_trend: Total de tarefas: 214 → 228 (+14)
 
 ## v2.9 (2025-12-12)
 - :white_check_mark: Criados 24 testes para funcionalidades SEO (test_seo.py)

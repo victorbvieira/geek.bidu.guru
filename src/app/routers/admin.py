@@ -301,9 +301,11 @@ async def new_post(
     request: Request,
     current_user: AdminUser,
     category_repo: CategoryRepo,
+    product_repo: ProductRepo,
 ):
     """Formulario de novo post."""
     categories = await category_repo.get_all()
+    products = await product_repo.get_multi(limit=100)
 
     return templates.TemplateResponse(
         request=request,
@@ -313,6 +315,8 @@ async def new_post(
             "current_user": current_user,
             "post": None,
             "categories": categories,
+            "products": products,
+            "selected_product_ids": [],
         },
     )
 
@@ -324,6 +328,7 @@ async def edit_post(
     current_user: AdminUser,
     post_repo: PostRepo,
     category_repo: CategoryRepo,
+    product_repo: ProductRepo,
 ):
     """Formulario de edicao de post."""
     post = await post_repo.get(post_id)
@@ -331,6 +336,8 @@ async def edit_post(
         raise HTTPException(status_code=404, detail="Post nao encontrado")
 
     categories = await category_repo.get_all()
+    products = await product_repo.get_multi(limit=100)
+    selected_product_ids = await post_repo.get_post_product_ids(post_id)
 
     return templates.TemplateResponse(
         request=request,
@@ -340,6 +347,8 @@ async def edit_post(
             "current_user": current_user,
             "post": post,
             "categories": categories,
+            "products": products,
+            "selected_product_ids": selected_product_ids,
         },
     )
 

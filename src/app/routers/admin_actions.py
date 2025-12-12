@@ -79,6 +79,21 @@ def parse_datetime(dt_str: str) -> datetime | None:
 # -----------------------------------------------------------------------------
 
 
+def parse_product_ids(products_str: str) -> list[UUID]:
+    """Converte string de IDs de produtos separados por virgula em lista de UUIDs."""
+    if not products_str:
+        return []
+    ids = []
+    for id_str in products_str.split(","):
+        id_str = id_str.strip()
+        if id_str:
+            try:
+                ids.append(UUID(id_str))
+            except ValueError:
+                pass
+    return ids
+
+
 @router.post("/posts", response_class=RedirectResponse)
 async def create_post(
     request: Request,
@@ -97,6 +112,7 @@ async def create_post(
     tags: str = Form(""),
     status: str = Form("draft"),
     publish_at: str = Form(""),
+    products: str = Form(""),
 ):
     """Cria novo post."""
     # Gera slug se nao fornecido
@@ -129,7 +145,12 @@ async def create_post(
         "publish_at": parse_datetime(publish_at),
     }
 
-    await repo.create(post_data)
+    post = await repo.create(post_data)
+
+    # Vincula produtos ao post
+    product_ids = parse_product_ids(products)
+    if product_ids:
+        await repo.set_post_products(post.id, product_ids)
 
     return RedirectResponse(
         url="/admin/posts",
@@ -156,6 +177,7 @@ async def update_post(
     tags: str = Form(""),
     post_status: str = Form("draft", alias="status"),
     publish_at: str = Form(""),
+    products: str = Form(""),
 ):
     """Atualiza post existente."""
     post = await repo.get(post_id)
@@ -191,6 +213,10 @@ async def update_post(
     }
 
     await repo.update(post, update_data)
+
+    # Atualiza produtos vinculados
+    product_ids = parse_product_ids(products)
+    await repo.set_post_products(post_id, product_ids)
 
     return RedirectResponse(
         url="/admin/posts",

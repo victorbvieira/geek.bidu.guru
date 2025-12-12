@@ -54,6 +54,7 @@ Protecao de Endpoints:
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
+from pydantic import BaseModel
 
 from app.api.deps import Pagination, PostRepo
 from app.models.post import PostStatus, PostType
@@ -65,6 +66,17 @@ from app.schemas import (
     PostUpdate,
     PostUpdateStatus,
 )
+from app.utils.markdown import markdown_to_html
+
+
+class MarkdownPreviewRequest(BaseModel):
+    """Request para preview de Markdown."""
+    content: str
+
+
+class MarkdownPreviewResponse(BaseModel):
+    """Response com HTML renderizado."""
+    html: str
 
 # Router com prefixo /posts e tag para documentação OpenAPI
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -439,3 +451,26 @@ async def delete_post(post_id: UUID, repo: PostRepo):
 
     await repo.delete(post_id)
     return MessageResponse(message="Post removido com sucesso")
+
+
+# =============================================================================
+# Markdown Preview (para editor admin)
+# =============================================================================
+
+
+@router.post("/preview", response_model=MarkdownPreviewResponse)
+async def preview_markdown(data: MarkdownPreviewRequest):
+    """
+    Converte Markdown para HTML para preview no editor.
+
+    Usado pelo editor de posts no admin para mostrar
+    preview em tempo real do conteudo formatado.
+
+    Args:
+        data: Conteudo Markdown a ser convertido
+
+    Returns:
+        MarkdownPreviewResponse com HTML sanitizado
+    """
+    html = markdown_to_html(data.content, sanitize=True)
+    return MarkdownPreviewResponse(html=html)

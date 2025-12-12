@@ -11,19 +11,19 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from urllib.parse import unquote_plus
 
 from app.api.deps import CategoryRepo, PostRepo
 from app.config import settings
 from app.models.post import PostStatus
-from urllib.parse import unquote_plus
+from app.core.templates import setup_templates
 
 # Router para rotas publicas do blog
 router = APIRouter(tags=["blog"])
 
-# Templates (caminho absoluto)
+# Templates com filtros customizados (markdown, format_price)
 BASE_DIR = Path(__file__).resolve().parent.parent
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
+templates = setup_templates(BASE_DIR / "templates")
 
 
 def get_base_url() -> str:

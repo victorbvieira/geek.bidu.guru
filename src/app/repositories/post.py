@@ -11,6 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models import Post
 from app.models.post import PostStatus, PostType
+from app.models.post_product import PostProduct
 from app.repositories.base import BaseRepository
 
 
@@ -168,3 +169,88 @@ class PostRepository(BaseRepository[Post]):
         )
         result = await self.db.execute(stmt)
         return result.scalar_one()
+
+    # -------------------------------------------------------------------------
+    # Gerenciamento de Produtos vinculados (PostProduct)
+    # -------------------------------------------------------------------------
+
+    async def get_post_products(self, post_id: UUID) -> list[PostProduct]:
+        """Busca produtos vinculados a um post, ordenados por posicao."""
+        result = await self.db.execute(
+            select(PostProduct)
+            .where(PostProduct.post_id == post_id)
+            .order_by(PostProduct.position)
+        )
+        return list(result.scalars().all())
+
+    async def get_post_product_ids(self, post_id: UUID) -> list[UUID]:
+        """Retorna lista de IDs de produtos vinculados a um post."""
+        result = await self.db.execute(
+            select(PostProduct.product_id)
+            .where(PostProduct.post_id == post_id)
+            .order_by(PostProduct.position)
+        )
+        return list(result.scalars().all())
+
+    async def set_post_products(
+        self, post_id: UUID, product_ids: list[UUID]
+    ) -> None:
+        """
+        Define os produtos vinculados a um post.
+
+        Remove vinculos antigos e cria novos na ordem fornecida.
+        """
+        from sqlalchemy import delete
+
+        # Remove vinculos antigos
+        await self.db.execute(
+            delete(PostProduct).where(PostProduct.post_id == post_id)
+        )
+
+        # Cria novos vinculos com posicao
+        for position, product_id in enumerate(product_ids):
+            post_product = PostProduct(
+                post_id=post_id,
+                product_id=product_id,
+                position=position,
+            )
+            self.db.add(post_product)
+
+        await self.db.commit()
+
+    async def add_product_to_post(
+        self, post_id: UUID, product_id: UUID, position: int | None = None
+    ) -> PostProduct:
+        """Adiciona um produto a um post."""
+        # Se posicao nao fornecida, adiciona no final
+        if position is None:
+            result = await self.db.execute(
+                select(func.coalesce(func.max(PostProduct.position), -1) + 1)
+                .where(PostProduct.post_id == post_id)
+            )
+            position = result.scalar_one()
+
+        post_product = PostProduct(
+            post_id=post_id,
+            product_id=product_id,
+            position=position,
+        )
+        self.db.add(post_product)
+        await self.db.commit()
+        await self.db.refresh(post_product)
+        return post_product
+
+    async def remove_product_from_post(
+        self, post_id: UUID, product_id: UUID
+    ) -> bool:
+        """Remove um produto de um post."""
+        from sqlalchemy import delete
+
+        result = await self.db.execute(
+            delete(PostProduct).where(
+                PostProduct.post_id == post_id,
+                PostProduct.product_id == product_id,
+            )
+        )
+        await self.db.commit()
+        return result.rowcount > 0

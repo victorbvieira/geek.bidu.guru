@@ -292,7 +292,7 @@
         {% endif %}
 
         <div class="post-content">
-            {{ post.content | safe }}
+            {{ post.content | markdown }}
         </div>
 
         {% if post.tags %}

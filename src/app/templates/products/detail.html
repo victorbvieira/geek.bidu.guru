@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="product-header">
+    <div class="container">
+        <nav class="product-breadcrumb">
+            <a href="/">Home</a> /
+            <a href="/produtos">Produtos</a> /
+            <span>{{ product.name }}</span>
+        </nav>
+    </div>
+</section>
+
+<article class="product-detail">
+    <div class="container">
+        <div class="product-layout">
+            <!-- Imagem -->
+            <div class="product-image-section">
+                {% if product.main_image_url %}
+                <figure class="product-main-image">
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}">
+                </figure>
+                {% else %}
+                <div class="product-image-placeholder">
+                    <span>Sem imagem</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Info -->
+            <div class="product-info-section">
+                <span class="product-platform platform-{{ product.platform.value }}">
+                    {{ product.platform.value | title }}
+                </span>
+
+                <h1 class="product-title">{{ product.name }}</h1>
+
+                {% if product.rating %}
+                <div class="product-rating">
+                    <div class="stars">
+                        {% for i in range(5) %}
+                        <span class="star {% if i < product.rating|int %}filled{% endif %}">★</span>
+                        {% endfor %}
+                    </div>
+                    <span class="rating-value">{{ "%.1f"|format(product.rating) }}</span>
+                    {% if product.review_count %}
+                    <span class="review-count">({{ product.review_count }} avaliacoes)</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if product.short_description %}
+                <p class="product-short-description">{{ product.short_description }}</p>
+                {% endif %}
+
+                <div class="product-price-box">
+                    {% if product.price %}
+                    <span class="price">{{ product.price | format_price }}</span>
+                    {% endif %}
+                    {% if product.availability.value == 'available' %}
+                    <span class="availability available">Em estoque</span>
+                    {% elif product.availability.value == 'unavailable' %}
+                    <span class="availability unavailable">Indisponivel</span>
+                    {% else %}
+                    <span class="availability unknown">Verificar disponibilidade</span>
+                    {% endif %}
+                </div>
+
+                <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-buy-btn" target="_blank" rel="noopener sponsored">
+                    Comprar na {{ product.platform.value | title }}
+                </a>
+
+                <p class="affiliate-disclaimer">
+                    * Este e um link de afiliado. Ao comprar atraves dele, voce nos ajuda a manter o site sem custo adicional para voce.
+                </p>
+            </div>
+        </div>
+
+        <!-- Descricao longa -->
+        {% if product.long_description %}
+        <div class="product-description-section">
+            <h2>Descricao</h2>
+            <div class="product-long-description">
+                {{ product.long_description | markdown }}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if product.tags %}
+        <aside class="product-tags">
+            <h3>Tags</h3>
+            <div class="tags-list">
+                {% for tag in product.tags %}
+                <span class="tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </aside>
+        {% endif %}
+    </div>
+</article>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-header {
+    background: var(--color-bg-muted);
+    padding: 1rem 0;
+}
+
+.product-breadcrumb {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.product-breadcrumb a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+}
+
+.product-breadcrumb a:hover {
+    color: var(--color-primary);
+}
+
+.product-detail {
+    padding: 2rem 0 4rem;
+}
+
+.product-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 3rem;
+}
+
+.product-main-image {
+    margin: 0;
+}
+
+.product-main-image img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 400px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.product-info-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-platform {
+    display: inline-block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    width: fit-content;
+}
+
+.platform-amazon {
+    background: #ff9900;
+    color: #111;
+}
+
+.platform-mercadolivre {
+    background: #fff159;
+    color: #333;
+}
+
+.platform-shopee {
+    background: #ee4d2d;
+    color: white;
+}
+
+.product-title {
+    font-size: 2rem;
+    margin: 0 0 1rem;
+    line-height: 1.2;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.product-rating .stars {
+    display: flex;
+}
+
+.product-rating .star {
+    color: #ddd;
+    font-size: 1.25rem;
+}
+
+.product-rating .star.filled {
+    color: #f59e0b;
+}
+
+.product-rating .rating-value {
+    font-weight: 600;
+}
+
+.product-rating .review-count {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.product-short-description {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    margin: 0 0 1.5rem;
+}
+
+.product-price-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--color-bg-muted);
+    border-radius: 8px;
+}
+
+.product-price-box .price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.availability {
+    font-size: 0.875rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.availability.available {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.availability.unavailable {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.availability.unknown {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.product-buy-btn {
+    display: block;
+    text-align: center;
+    padding: 1rem 2rem;
+    background: var(--color-cta, #ff6b00);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: background 0.2s, transform 0.1s;
+    margin-bottom: 1rem;
+}
+
+.product-buy-btn:hover {
+    background: var(--color-cta-hover, #e55a00);
+    transform: scale(1.02);
+}
+
+.affiliate-disclaimer {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.product-description-section {
+    border-top: 1px solid var(--color-border);
+    padding-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.product-description-section h2 {
+    font-size: 1.5rem;
+    margin: 0 0 1rem;
+}
+
+.product-long-description {
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.product-tags {
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.product-tags h3 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
+}
+
+.tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--color-bg-muted);
+    color: var(--color-text);
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .product-layout {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .product-title {
+        font-size: 1.5rem;
+    }
+
+    .product-price-box .price {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
