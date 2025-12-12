@@ -19,7 +19,9 @@
       "Bash(echo:*)",
       "Bash(psql:*)",
       "Bash(.venv/bin/python:*)",
-      "Bash(../.venv/bin/python:*)"
+      "Bash(../.venv/bin/python:*)",
+      "Bash(python3:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

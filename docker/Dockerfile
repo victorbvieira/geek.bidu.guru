@@ -45,10 +45,16 @@ RUN pip install --no-cache-dir /wheels/*
 # Copiar codigo fonte
 COPY src/ ./src/
 
+# Criar diretorio para uploads (persistente via volume)
+RUN mkdir -p /app/uploads
+
 # Criar usuario nao-root para seguranca
 RUN useradd --create-home --shell /bin/bash appuser \
     && chown -R appuser:appuser /app
 USER appuser
+
+# Volume para uploads persistentes
+VOLUME ["/app/uploads"]
 
 # Variaveis de ambiente
 ENV PYTHONPATH=/app/src
@@ -63,4 +69,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Comando padrao (producao)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Executa migrations e depois inicia o servidor
+CMD ["sh", "-c", "cd /app/src && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

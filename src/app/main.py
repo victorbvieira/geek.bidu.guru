@@ -151,9 +151,18 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handler para erros de validacao Pydantic."""
+    # Converte body para string se nao for serializavel (ex: FormData)
+    body = exc.body
+    if body is not None:
+        try:
+            import json
+            json.dumps(body)
+        except (TypeError, ValueError):
+            body = str(body) if body else None
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": exc.errors(), "body": exc.body},
+        content={"detail": exc.errors(), "body": body},
     )
 
 
