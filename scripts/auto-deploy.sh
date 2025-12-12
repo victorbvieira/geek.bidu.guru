@@ -1,100 +1,77 @@
 #!/bin/bash
 # =============================================================================
 # Auto Deploy Script - geek.bidu.guru
-# Verifica novos commits no GitHub e faz deploy automatico via Easypanel CLI
+# Recebe webhook do GitHub e faz deploy automatico
 #
-# Uso: Adicionar ao cron para rodar a cada X minutos
-# Exemplo: */5 * * * * /path/to/auto-deploy.sh >> /var/log/geek-deploy.log 2>&1
+# Instalacao:
+#   1. Copie este script para /opt/scripts/deploy-geek.sh na VPS
+#   2. Siga o passo a passo em docs/DEPLOY.md secao "Deploy Automatico"
 # =============================================================================
 
 set -e
 
 # Configuracoes
-REPO_URL="https://api.github.com/repos/SEU_USUARIO/geek.bidu.guru/commits/main"
-GITHUB_TOKEN="SEU_GITHUB_TOKEN"  # Token com permissao de leitura
-PROJECT_NAME="geek-bidu-guru"
-SERVICE_NAME="app"
-STATE_FILE="/tmp/geek-last-commit.txt"
+PROJECT_DIR="/opt/sites/geek-bidu-guru"
+LOG_FILE="/var/log/geek-deploy.log"
+DOCKER_IMAGE="geek-bidu-app:latest"
+CONTAINER_NAME="geek_bidu_app"
 
 # Funcao de log
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# Buscar ultimo commit do GitHub
-get_remote_commit() {
-    curl -s -H "Authorization: token $GITHUB_TOKEN" \
-         -H "Accept: application/vnd.github.v3+json" \
-         "$REPO_URL" | grep -o '"sha": "[^"]*"' | head -1 | cut -d'"' -f4
-}
+# Verificar se diretorio existe
+if [ ! -d "$PROJECT_DIR" ]; then
+    log "ERRO: Diretorio $PROJECT_DIR nao encontrado"
+    exit 1
+fi
 
-# Buscar commit atual (ultimo deploy)
-get_local_commit() {
-    if [ -f "$STATE_FILE" ]; then
-        cat "$STATE_FILE"
-    else
-        echo ""
+log "=========================================="
+log "Iniciando deploy automatico"
+log "=========================================="
+
+cd "$PROJECT_DIR"
+
+# 1. Baixar alteracoes do repositorio
+log "1/5 Baixando alteracoes do GitHub..."
+git fetch origin main
+git reset --hard origin/main
+log "    Commit: $(git rev-parse --short HEAD)"
+
+# 2. Rebuild da imagem Docker
+log "2/5 Rebuild da imagem Docker..."
+docker build -t "$DOCKER_IMAGE" -f docker/Dockerfile . 2>&1 | tee -a "$LOG_FILE"
+
+# 3. Restart do container
+log "3/5 Reiniciando container..."
+docker restart "$CONTAINER_NAME" 2>&1 | tee -a "$LOG_FILE"
+
+# 4. Aguardar health check
+log "4/5 Aguardando health check..."
+sleep 10
+
+MAX_ATTEMPTS=6
+ATTEMPT=1
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+        log "    Health check OK!"
+        break
     fi
-}
+    log "    Tentativa $ATTEMPT/$MAX_ATTEMPTS - aguardando..."
+    sleep 5
+    ATTEMPT=$((ATTEMPT + 1))
+done
 
-# Salvar commit atual
-save_commit() {
-    echo "$1" > "$STATE_FILE"
-}
+if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
+    log "ERRO: Health check falhou apos $MAX_ATTEMPTS tentativas"
+    exit 1
+fi
 
-# Fazer deploy via Easypanel CLI
-do_deploy() {
-    log "Iniciando deploy..."
+# 5. Limpeza
+log "5/5 Limpando imagens antigas..."
+docker image prune -f > /dev/null 2>&1
 
-    # Opcao 1: Via Easypanel CLI (se instalado)
-    if command -v easypanel &> /dev/null; then
-        easypanel deploy --project "$PROJECT_NAME" --service "$SERVICE_NAME"
-        return $?
-    fi
-
-    # Opcao 2: Via Docker Compose (rebuild do container)
-    # Descomentar se preferir este metodo
-    # cd /path/to/easypanel/projects/$PROJECT_NAME
-    # docker compose pull
-    # docker compose up -d --build
-
-    # Opcao 3: Via API do Easypanel (HTTP request)
-    # Descomentar e configurar se Easypanel expor API
-    # curl -X POST "http://localhost:3000/api/projects/$PROJECT_NAME/services/$SERVICE_NAME/deploy" \
-    #      -H "Authorization: Bearer $EASYPANEL_TOKEN"
-
-    log "AVISO: Nenhum metodo de deploy configurado. Configure uma das opcoes acima."
-    return 1
-}
-
-# Main
-main() {
-    log "Verificando atualizacoes..."
-
-    REMOTE_COMMIT=$(get_remote_commit)
-    LOCAL_COMMIT=$(get_local_commit)
-
-    if [ -z "$REMOTE_COMMIT" ]; then
-        log "ERRO: Nao foi possivel obter commit remoto"
-        exit 1
-    fi
-
-    log "Commit remoto: ${REMOTE_COMMIT:0:7}"
-    log "Commit local:  ${LOCAL_COMMIT:0:7:-"(nenhum)"}"
-
-    if [ "$REMOTE_COMMIT" != "$LOCAL_COMMIT" ]; then
-        log "Novo commit detectado! Iniciando deploy..."
-
-        if do_deploy; then
-            save_commit "$REMOTE_COMMIT"
-            log "Deploy concluido com sucesso!"
-        else
-            log "ERRO: Falha no deploy"
-            exit 1
-        fi
-    else
-        log "Nenhuma atualizacao necessaria"
-    fi
-}
-
-main "$@"
+log "=========================================="
+log "Deploy concluido com sucesso!"
+log "=========================================="

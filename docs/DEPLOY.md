@@ -262,4 +262,116 @@ docker logs geek_bidu_app --tail 50
 
 ---
 
+## Deploy Automático (Webhook)
+
+Configure deploy automático a cada push na branch `main`.
+
+### 1. Copiar Scripts para a VPS
+
+```bash
+# Criar diretório
+mkdir -p /opt/scripts
+
+# Copiar script de deploy
+cp /opt/sites/geek-bidu-guru/scripts/auto-deploy.sh /opt/scripts/deploy-geek.sh
+chmod +x /opt/scripts/deploy-geek.sh
+
+# Copiar servidor webhook
+cp /opt/sites/geek-bidu-guru/scripts/webhook-server.py /opt/scripts/webhook-server.py
+chmod +x /opt/scripts/webhook-server.py
+```
+
+### 2. Criar Serviço Systemd
+
+```bash
+# Gerar secret seguro
+WEBHOOK_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+echo "============================================"
+echo "WEBHOOK_SECRET: $WEBHOOK_SECRET"
+echo "============================================"
+echo "GUARDE ESTE VALOR para configurar no GitHub!"
+
+# Criar serviço
+cat > /etc/systemd/system/geek-webhook.service << EOF
+[Unit]
+Description=Webhook Deploy geek.bidu.guru
+After=network.target docker.service
+
+[Service]
+Type=simple
+Environment=WEBHOOK_SECRET=$WEBHOOK_SECRET
+ExecStart=/usr/bin/python3 /opt/scripts/webhook-server.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Ativar e iniciar
+systemctl daemon-reload
+systemctl enable geek-webhook
+systemctl start geek-webhook
+
+# Verificar status
+systemctl status geek-webhook
+```
+
+### 3. Abrir Porta no Firewall
+
+```bash
+ufw allow 9000/tcp
+```
+
+### 4. Configurar Webhook no GitHub
+
+1. Acesse: `https://github.com/victorbvieira/geek.bidu.guru/settings/hooks`
+2. Clique **Add webhook**
+3. Configure:
+   - **Payload URL**: `http://167.88.32.240:9000/webhook/geek-bidu`
+   - **Content type**: `application/json`
+   - **Secret**: Cole o `WEBHOOK_SECRET` gerado no passo 2
+   - **Which events?**: Just the push event
+   - **Active**: Marcado
+4. Clique **Add webhook**
+
+### 5. Testar
+
+```bash
+# Ver logs do webhook server
+journalctl -u geek-webhook -f
+```
+
+Em outro terminal, faça um push:
+
+```bash
+git commit --allow-empty -m "test: webhook deploy"
+git push origin main
+```
+
+Verifique os logs:
+
+```bash
+# Logs do deploy
+tail -f /var/log/geek-deploy.log
+```
+
+### Comandos do Webhook
+
+```bash
+# Status do serviço
+systemctl status geek-webhook
+
+# Reiniciar serviço
+systemctl restart geek-webhook
+
+# Ver logs
+journalctl -u geek-webhook -n 50
+
+# Executar deploy manual
+/opt/scripts/deploy-geek.sh
+```
+
+---
+
 **Última atualização**: 2025-12-12
