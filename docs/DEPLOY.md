@@ -50,8 +50,8 @@ GRANT ALL ON SCHEMA public TO geek_app_prod;
 ## 2. Clonar Repositório
 
 ```bash
-mkdir -p /opt/sites/geek-bidu-guru
-cd /opt/sites/geek-bidu-guru
+mkdir -p /opt/geek-bidu-guru
+cd /opt/geek-bidu-guru
 git clone https://github.com/victorbvieira/geek.bidu.guru.git .
 ```
 
@@ -60,7 +60,7 @@ git clone https://github.com/victorbvieira/geek.bidu.guru.git .
 ## 3. Build da Imagem Docker
 
 ```bash
-cd /opt/sites/geek-bidu-guru
+cd /opt/geek-bidu-guru
 docker build -t geek-bidu-app:latest -f docker/Dockerfile .
 
 # Verificar
@@ -198,7 +198,7 @@ Acesse: `https://geek.bidu.guru/health`
 ## Atualização (Deploy Manual)
 
 ```bash
-cd /opt/sites/geek-bidu-guru
+cd /opt/geek-bidu-guru
 
 # Atualizar código
 git pull origin main
@@ -262,114 +262,38 @@ docker logs geek_bidu_app --tail 50
 
 ---
 
-## Deploy Automático (Webhook)
+## Deploy Automático (Cron)
 
-Configure deploy automático a cada push na branch `main`.
+Configure deploy automático via cron que verifica novos commits periodicamente.
 
-### 1. Copiar Scripts para a VPS
+### 1. Copiar Script para a VPS
 
 ```bash
-# Criar diretório
 mkdir -p /opt/scripts
-
-# Copiar script de deploy
-cp /opt/sites/geek-bidu-guru/scripts/auto-deploy.sh /opt/scripts/deploy-geek.sh
-chmod +x /opt/scripts/deploy-geek.sh
-
-# Copiar servidor webhook
-cp /opt/sites/geek-bidu-guru/scripts/webhook-server.py /opt/scripts/webhook-server.py
-chmod +x /opt/scripts/webhook-server.py
+cp /opt/geek-bidu-guru/scripts/update-geek-bidu.sh /opt/scripts/update-geek-bidu.sh
+chmod +x /opt/scripts/update-geek-bidu.sh
 ```
 
-### 2. Criar Serviço Systemd
+### 2. Configurar Cron
 
 ```bash
-# Gerar secret seguro
-WEBHOOK_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
-echo "============================================"
-echo "WEBHOOK_SECRET: $WEBHOOK_SECRET"
-echo "============================================"
-echo "GUARDE ESTE VALOR para configurar no GitHub!"
+crontab -e
 
-# Criar serviço
-cat > /etc/systemd/system/geek-webhook.service << EOF
-[Unit]
-Description=Webhook Deploy geek.bidu.guru
-After=network.target docker.service
-
-[Service]
-Type=simple
-Environment=WEBHOOK_SECRET=$WEBHOOK_SECRET
-ExecStart=/usr/bin/python3 /opt/scripts/webhook-server.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Ativar e iniciar
-systemctl daemon-reload
-systemctl enable geek-webhook
-systemctl start geek-webhook
-
-# Verificar status
-systemctl status geek-webhook
+# Adicionar linha para verificar a cada 10 minutos:
+*/10 * * * * /opt/scripts/update-geek-bidu.sh >> /var/log/geek-deploy.log 2>&1
 ```
 
-### 3. Abrir Porta no Firewall
+### 3. Testar
 
 ```bash
-ufw allow 9000/tcp
-```
+# Verificar atualizacoes (deploy apenas se houver commits novos)
+/opt/scripts/update-geek-bidu.sh
 
-### 4. Configurar Webhook no GitHub
-
-1. Acesse: `https://github.com/victorbvieira/geek.bidu.guru/settings/hooks`
-2. Clique **Add webhook**
-3. Configure:
-   - **Payload URL**: `http://167.88.32.240:9000/webhook/geek-bidu`
-   - **Content type**: `application/json`
-   - **Secret**: Cole o `WEBHOOK_SECRET` gerado no passo 2
-   - **Which events?**: Just the push event
-   - **Active**: Marcado
-4. Clique **Add webhook**
-
-### 5. Testar
-
-```bash
-# Ver logs do webhook server
-journalctl -u geek-webhook -f
-```
-
-Em outro terminal, faça um push:
-
-```bash
-git commit --allow-empty -m "test: webhook deploy"
-git push origin main
-```
-
-Verifique os logs:
-
-```bash
-# Logs do deploy
-tail -f /var/log/geek-deploy.log
-```
-
-### Comandos do Webhook
-
-```bash
-# Status do serviço
-systemctl status geek-webhook
-
-# Reiniciar serviço
-systemctl restart geek-webhook
+# Forcar deploy (ignora verificacao de commits)
+/opt/scripts/update-geek-bidu.sh --force
 
 # Ver logs
-journalctl -u geek-webhook -n 50
-
-# Executar deploy manual
-/opt/scripts/deploy-geek.sh
+tail -f /var/log/geek-deploy.log
 ```
 
 ---
