@@ -230,36 +230,6 @@
                 </div>
             </div>
 
-            <!-- Produtos Vinculados -->
-            <div class="admin-card">
-                <div class="admin-card-header">
-                    <h3 class="admin-card-title">Produtos Vinculados</h3>
-                </div>
-                <input type="hidden" name="products" id="products-input" value="{{ selected_product_ids | map('string') | join(',') }}">
-
-                <div class="product-selector">
-                    <div class="selected-products" id="selected-products">
-                        {% if products and selected_product_ids %}
-                        {% for product in products if product.id in selected_product_ids %}
-                        <div class="selected-product" data-id="{{ product.id }}">
-                            <span class="product-name">{{ product.name[:30] }}{% if product.name|length > 30 %}...{% endif %}</span>
-                            <button type="button" class="remove-product" onclick="removeProduct('{{ product.id }}')">&times;</button>
-                        </div>
-                        {% endfor %}
-                        {% endif %}
-                    </div>
-
-                    <select id="product-select" class="admin-form-select" onchange="addProduct(this)">
-                        <option value="">+ Adicionar produto</option>
-                        {% for product in products %}
-                        <option value="{{ product.id }}" {% if product.id in selected_product_ids %}disabled{% endif %}>
-                            {{ product.name[:40] }}{% if product.name|length > 40 %}...{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                    <div class="admin-form-hint">Selecione produtos para exibir no post</div>
-                </div>
-            </div>
         </div>
     </div>
 </form>
@@ -520,58 +490,6 @@
         }
     });
 })();
-
-// Product Selector
-const productsInput = document.getElementById('products-input');
-const selectedProductsDiv = document.getElementById('selected-products');
-const productSelect = document.getElementById('product-select');
-
-function updateProductsInput() {
-    const selectedIds = [];
-    selectedProductsDiv.querySelectorAll('.selected-product').forEach(el => {
-        selectedIds.push(el.dataset.id);
-    });
-    productsInput.value = selectedIds.join(',');
-}
-
-function addProduct(selectEl) {
-    const productId = selectEl.value;
-    if (!productId) return;
-
-    const option = selectEl.options[selectEl.selectedIndex];
-    const productName = option.text.trim();
-
-    // Create selected product element
-    const div = document.createElement('div');
-    div.className = 'selected-product';
-    div.dataset.id = productId;
-    div.innerHTML = `
-        <span class="product-name">${productName}</span>
-        <button type="button" class="remove-product" onclick="removeProduct('${productId}')">&times;</button>
-    `;
-
-    selectedProductsDiv.appendChild(div);
-
-    // Disable option
-    option.disabled = true;
-
-    // Reset select
-    selectEl.value = '';
-
-    updateProductsInput();
-}
-
-function removeProduct(productId) {
-    // Remove from selected
-    const el = selectedProductsDiv.querySelector(`[data-id="${productId}"]`);
-    if (el) el.remove();
-
-    // Enable option
-    const option = productSelect.querySelector(`option[value="${productId}"]`);
-    if (option) option.disabled = false;
-
-    updateProductsInput();
-}
 
 // =============================================================================
 // Modal de Selecao de Produto para Shortcode

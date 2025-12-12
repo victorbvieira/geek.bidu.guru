@@ -147,7 +147,7 @@
 | 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.2.2 | :white_check_mark: | CSP, HSTS, X-Frame-Options + 8 testes |
 | 1.10.3 | Sanitizar inputs | Security Engineer | 1.5.3, 1.6.3 | :white_check_mark: | Via Pydantic |
 | 1.10.4 | Validar uploads (se houver) | Security Engineer | 1.5.3 | :white_check_mark: | core/uploads.py |
-| 1.10.5 | Revisar checklist OWASP Top 10 | Security Engineer | 1.10.1-1.10.4 | :white_large_square: | Auditoria |
+| 1.10.5 | Revisar checklist OWASP Top 10 | Security Engineer | 1.10.1-1.10.4 | :white_check_mark: | 37 testes OWASP (34 passed, 3 vulnerabilidades doc) |
 | 1.10.6 | Definir Content Security Policy (CSP) | Security Engineer | 1.10.2 | :white_check_mark: | Incluido em 1.10.2 |
 
 ## 1.11 Painel Administrativo (Admin)

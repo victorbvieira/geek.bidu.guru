@@ -80,19 +80,36 @@ def parse_datetime(dt_str: str) -> datetime | None:
 # -----------------------------------------------------------------------------
 
 
-def parse_product_ids(products_str: str) -> list[UUID]:
-    """Converte string de IDs de produtos separados por virgula em lista de UUIDs."""
-    if not products_str:
+def extract_product_slugs_from_content(content: str) -> list[str]:
+    """
+    Extrai slugs de produtos do conteudo do post.
+
+    Busca por padroes [product:slug-do-produto] no conteudo.
+
+    Args:
+        content: Conteudo do post em markdown
+
+    Returns:
+        Lista de slugs unicos encontrados
+    """
+    import re
+
+    if not content:
         return []
-    ids = []
-    for id_str in products_str.split(","):
-        id_str = id_str.strip()
-        if id_str:
-            try:
-                ids.append(UUID(id_str))
-            except ValueError:
-                pass
-    return ids
+
+    # Pattern para [product:slug-do-produto]
+    pattern = r'\[product:([a-zA-Z0-9_-]+)\]'
+    matches = re.findall(pattern, content)
+
+    # Remove duplicados mantendo ordem
+    seen = set()
+    unique_slugs = []
+    for slug in matches:
+        if slug not in seen:
+            seen.add(slug)
+            unique_slugs.append(slug)
+
+    return unique_slugs
 
 
 @router.post("/posts", response_class=RedirectResponse)
@@ -100,6 +117,7 @@ async def create_post(
     request: Request,
     current_user: AdminUser,
     repo: PostRepo,
+    product_repo: ProductRepo,
     title: str = Form(...),
     content: str = Form(...),
     type: str = Form("listicle"),
@@ -113,7 +131,6 @@ async def create_post(
     tags: str = Form(""),
     status: str = Form("draft"),
     publish_at: str = Form(""),
-    products: str = Form(""),
 ):
     """Cria novo post."""
     # Gera slug se nao fornecido
@@ -148,10 +165,12 @@ async def create_post(
 
     post = await repo.create(post_data)
 
-    # Vincula produtos ao post
-    product_ids = parse_product_ids(products)
-    if product_ids:
-        await repo.set_post_products(post.id, product_ids)
+    # Extrai e vincula produtos do conteudo automaticamente
+    product_slugs = extract_product_slugs_from_content(content)
+    if product_slugs:
+        product_ids = await product_repo.get_ids_by_slugs(product_slugs)
+        if product_ids:
+            await repo.set_post_products(post.id, product_ids)
 
     return RedirectResponse(
         url="/admin/posts",
@@ -165,6 +184,7 @@ async def update_post(
     post_id: UUID,
     current_user: AdminUser,
     repo: PostRepo,
+    product_repo: ProductRepo,
     title: str = Form(...),
     content: str = Form(...),
     type: str = Form("listicle"),
@@ -178,7 +198,6 @@ async def update_post(
     tags: str = Form(""),
     post_status: str = Form("draft", alias="status"),
     publish_at: str = Form(""),
-    products: str = Form(""),
 ):
     """Atualiza post existente."""
     post = await repo.get(post_id)
@@ -215,8 +234,11 @@ async def update_post(
 
     await repo.update(post, update_data)
 
-    # Atualiza produtos vinculados
-    product_ids = parse_product_ids(products)
+    # Extrai e atualiza produtos vinculados do conteudo automaticamente
+    product_slugs = extract_product_slugs_from_content(content)
+    product_ids = []
+    if product_slugs:
+        product_ids = await product_repo.get_ids_by_slugs(product_slugs)
     await repo.set_post_products(post_id, product_ids)
 
     return RedirectResponse(

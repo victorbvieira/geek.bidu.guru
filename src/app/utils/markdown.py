@@ -188,7 +188,7 @@ def extract_product_refs(content: str) -> list[str]:
 
 def render_product_card(product: dict) -> str:
     """
-    Renderiza HTML de um card de produto.
+    Renderiza HTML de um card de produto (layout compacto).
 
     Args:
         product: Dict com dados do produto (name, slug, price, etc)
@@ -223,13 +223,15 @@ def render_product_card(product: dict) -> str:
         <h4 class="product-embed-name">
             <a href="/produto/{product['slug']}">{product['name']}</a>
         </h4>
-        {price_html}
-        <a href="/goto/{product.get('affiliate_redirect_slug', product['slug'])}"
-           class="product-embed-cta"
-           target="_blank"
-           rel="noopener sponsored">
-            Ver oferta
-        </a>
+        <div class="product-embed-meta">
+            {price_html}
+            <a href="/goto/{product.get('affiliate_redirect_slug', product['slug'])}"
+               class="product-embed-cta"
+               target="_blank"
+               rel="noopener sponsored">
+                Ver Oferta
+            </a>
+        </div>
     </div>
 </div>
 '''

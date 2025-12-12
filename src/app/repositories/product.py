@@ -160,3 +160,27 @@ class ProductRepository(BaseRepository[Product]):
         )
         result = await self.db.execute(stmt)
         return result.scalar_one()
+
+    async def get_ids_by_slugs(self, slugs: list[str]) -> list[UUID]:
+        """
+        Busca IDs de produtos por lista de slugs.
+
+        Args:
+            slugs: Lista de slugs de produtos
+
+        Returns:
+            Lista de UUIDs dos produtos encontrados (na ordem dos slugs)
+        """
+        if not slugs:
+            return []
+
+        result = await self.db.execute(
+            select(Product.id, Product.slug).where(Product.slug.in_(slugs))
+        )
+        rows = result.all()
+
+        # Cria mapa slug -> id
+        slug_to_id = {row.slug: row.id for row in rows}
+
+        # Retorna IDs na ordem dos slugs originais
+        return [slug_to_id[slug] for slug in slugs if slug in slug_to_id]
