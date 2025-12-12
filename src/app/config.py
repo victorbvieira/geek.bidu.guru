@@ -62,14 +62,20 @@ class Settings(BaseSettings):
     ga4_measurement_id: str | None = None  # Ex: G-XXXXXXXXXX
 
     # -------------------------------------------------------------------------
-    # LLM / IA (LiteLLM - suporta OpenAI, Anthropic, etc.)
+    # LLM / IA (LiteLLM - suporta multiplos providers)
     # -------------------------------------------------------------------------
     # Chaves de API (configure apenas as que for usar)
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    gemini_api_key: str | None = None       # Google Gemini (gemini/gemini-pro, gemini/gemini-1.5-flash)
+    openrouter_api_key: str | None = None   # Para modelos gratuitos/baratos
 
-    # Modelo padrao (ex: gpt-4o-mini, claude-3-haiku-20240307, groq/llama-3.1-8b)
+    # Modelo padrao (ex: gpt-4o-mini, claude-3-haiku-20240307, openrouter/mistralai/mistral-7b-instruct)
     llm_default_model: str = "gpt-4o-mini"
+
+    # Modelos por funcionalidade (permite otimizar custo vs qualidade)
+    llm_model_content: str | None = None  # Para geracao de conteudo (posts, listicles)
+    llm_model_simple: str | None = None   # Para tarefas simples (slugs, tags, SEO)
 
     # Configuracoes de geracao
     llm_max_tokens: int = 2000

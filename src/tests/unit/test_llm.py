@@ -21,7 +21,9 @@ from app.services.llm import (
     LLMError,
     LLMResponse,
     LLMService,
+    get_api_key_for_model,
     get_llm_service,
+    get_model_for_task,
 )
 from app.services.prompts import (
     PERSONA_MODIFIERS,
@@ -396,3 +398,121 @@ class TestLLMError:
             raise LLMError("Wrapped") from original
         except LLMError as error:
             assert error.__cause__ == original
+
+
+# =============================================================================
+# Testes de Multi-Provider
+# =============================================================================
+
+
+class TestMultiProvider:
+    """Testes para suporte a multiplos providers."""
+
+    def test_get_model_for_task_default(self):
+        """Deve retornar modelo padrao quando nao ha modelo especifico."""
+        # Sem configuracao especifica, usa o default
+        model = get_model_for_task("default")
+        assert model is not None
+        assert len(model) > 0
+
+    def test_get_model_for_task_content(self):
+        """Deve retornar modelo de conteudo se configurado."""
+        with patch("app.services.llm.settings") as mock_settings:
+            mock_settings.llm_model_content = "gpt-4-turbo"
+            mock_settings.llm_model_simple = None
+            mock_settings.llm_default_model = "gpt-4o-mini"
+
+            model = get_model_for_task("content")
+            assert model == "gpt-4-turbo"
+
+    def test_get_model_for_task_simple(self):
+        """Deve retornar modelo simples se configurado."""
+        with patch("app.services.llm.settings") as mock_settings:
+            mock_settings.llm_model_content = None
+            mock_settings.llm_model_simple = "openrouter/mistralai/mistral-7b-instruct"
+            mock_settings.llm_default_model = "gpt-4o-mini"
+
+            model = get_model_for_task("simple")
+            assert model == "openrouter/mistralai/mistral-7b-instruct"
+
+    def test_get_model_for_task_falls_back_to_default(self):
+        """Deve usar modelo padrao se especifico nao configurado."""
+        with patch("app.services.llm.settings") as mock_settings:
+            mock_settings.llm_model_content = None
+            mock_settings.llm_model_simple = None
+            mock_settings.llm_default_model = "gpt-4o-mini"
+
+            model = get_model_for_task("content")
+            assert model == "gpt-4o-mini"
+
+    def test_get_api_key_for_openrouter_model(self):
+        """Deve retornar API key do OpenRouter para modelos openrouter/*."""
+        with patch("app.services.llm.settings") as mock_settings:
+            mock_settings.openrouter_api_key = "sk-or-test-key"
+
+            key = get_api_key_for_model("openrouter/mistralai/mistral-7b-instruct")
+            assert key == "sk-or-test-key"
+
+    def test_get_api_key_for_openai_model(self):
+        """Deve retornar None para modelos OpenAI (usa config global)."""
+        key = get_api_key_for_model("gpt-4o-mini")
+        assert key is None
+
+    def test_get_api_key_for_anthropic_model(self):
+        """Deve retornar None para modelos Anthropic (usa config global)."""
+        key = get_api_key_for_model("claude-3-haiku-20240307")
+        assert key is None
+
+    @pytest.mark.asyncio
+    async def test_generate_with_openrouter_passes_api_key(self):
+        """generate() deve passar api_key para modelos OpenRouter."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Resposta"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "openrouter/mistralai/mistral-7b-instruct"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 20
+        mock_response.usage.total_tokens = 30
+
+        with patch("app.services.llm.acompletion", new_callable=AsyncMock) as mock_completion:
+            mock_completion.return_value = mock_response
+
+            with patch("app.services.llm.settings") as mock_settings:
+                mock_settings.openrouter_api_key = "sk-or-test-key"
+                mock_settings.llm_default_model = "gpt-4o-mini"
+                mock_settings.llm_temperature = 0.7
+                mock_settings.llm_max_tokens = 2000
+                mock_settings.llm_timeout = 60
+
+                service = LLMService(model="openrouter/mistralai/mistral-7b-instruct")
+                await service.generate("Teste")
+
+                # Verifica que api_key foi passado
+                call_kwargs = mock_completion.call_args.kwargs
+                assert "api_key" in call_kwargs
+                assert call_kwargs["api_key"] == "sk-or-test-key"
+
+    @pytest.mark.asyncio
+    async def test_generate_with_openai_no_api_key_param(self):
+        """generate() nao deve passar api_key para modelos OpenAI."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Resposta"
+        mock_response.choices[0].finish_reason = "stop"
+        mock_response.model = "gpt-4o-mini"
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 10
+        mock_response.usage.completion_tokens = 20
+        mock_response.usage.total_tokens = 30
+
+        with patch("app.services.llm.acompletion", new_callable=AsyncMock) as mock_completion:
+            mock_completion.return_value = mock_response
+
+            service = LLMService()
+            await service.generate("Teste")
+
+            # Verifica que api_key NAO foi passado
+            call_kwargs = mock_completion.call_args.kwargs
+            assert "api_key" not in call_kwargs

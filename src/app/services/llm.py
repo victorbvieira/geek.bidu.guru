@@ -17,7 +17,7 @@ Funcionalidades:
 
 import json
 import logging
-from typing import Any, AsyncIterator, Literal
+from typing import AsyncIterator, Literal
 
 import litellm
 from litellm import acompletion
@@ -32,12 +32,24 @@ logger = logging.getLogger(__name__)
 # Configuracao do LiteLLM
 # =============================================================================
 
-# Configura chaves de API
+# Configura chaves de API para cada provider
+# LiteLLM detecta automaticamente qual provider usar pelo prefixo do modelo
 if settings.openai_api_key:
     litellm.openai_key = settings.openai_api_key
 
 if settings.anthropic_api_key:
     litellm.anthropic_key = settings.anthropic_api_key
+
+if settings.gemini_api_key:
+    # Gemini usa variavel de ambiente GEMINI_API_KEY
+    # Modelos: gemini/gemini-pro, gemini/gemini-1.5-flash, gemini/gemini-1.5-pro
+    import os
+    os.environ["GEMINI_API_KEY"] = settings.gemini_api_key
+
+if settings.openrouter_api_key:
+    # OpenRouter usa header especial, configurado via api_key no call
+    # Modelos: openrouter/mistralai/mistral-7b-instruct, openrouter/meta-llama/llama-3-8b-instruct
+    pass
 
 # Desabilita telemetria
 litellm.telemetry = False
@@ -45,6 +57,50 @@ litellm.telemetry = False
 # Habilita logging em desenvolvimento
 if settings.is_development:
     litellm.set_verbose = True
+
+
+# =============================================================================
+# Mapeamento de Modelos por Provider
+# =============================================================================
+
+# Prefixos de modelo por provider (LiteLLM usa isso para rotear)
+# OpenAI: gpt-4, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
+# Anthropic: claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+# Gemini: gemini/gemini-pro, gemini/gemini-1.5-flash, gemini/gemini-1.5-pro
+# OpenRouter: openrouter/<provider>/<model> (ex: openrouter/mistralai/mistral-7b-instruct)
+# Groq: groq/llama-3.1-8b-instant, groq/mixtral-8x7b-32768
+
+def get_model_for_task(task: Literal["content", "simple", "default"]) -> str:
+    """
+    Retorna o modelo apropriado para o tipo de tarefa.
+
+    Args:
+        task: Tipo de tarefa (content=posts/listicles, simple=slugs/tags, default=padrao)
+
+    Returns:
+        Nome do modelo no formato LiteLLM
+    """
+    if task == "content" and settings.llm_model_content:
+        return settings.llm_model_content
+    elif task == "simple" and settings.llm_model_simple:
+        return settings.llm_model_simple
+    return settings.llm_default_model
+
+
+def get_api_key_for_model(model: str) -> str | None:
+    """
+    Retorna a API key apropriada para o modelo.
+
+    Args:
+        model: Nome do modelo no formato LiteLLM
+
+    Returns:
+        API key ou None se usar a configuracao global
+    """
+    if model.startswith("openrouter/"):
+        return settings.openrouter_api_key
+    # Outros providers usam a configuracao global do litellm
+    return None
 
 
 # =============================================================================
@@ -160,13 +216,24 @@ class LLMService:
         messages.append({"role": "user", "content": prompt})
 
         try:
-            response = await acompletion(
-                model=model or self.model,
-                messages=messages,
-                temperature=temperature if temperature is not None else self.temperature,
-                max_tokens=max_tokens or self.max_tokens,
-                timeout=self.timeout,
-            )
+            # Determina modelo e API key
+            use_model = model or self.model
+            api_key = get_api_key_for_model(use_model)
+
+            # Monta kwargs da chamada
+            call_kwargs = {
+                "model": use_model,
+                "messages": messages,
+                "temperature": temperature if temperature is not None else self.temperature,
+                "max_tokens": max_tokens or self.max_tokens,
+                "timeout": self.timeout,
+            }
+
+            # Adiciona API key se necessario (ex: OpenRouter)
+            if api_key:
+                call_kwargs["api_key"] = api_key
+
+            response = await acompletion(**call_kwargs)
 
             return LLMResponse(
                 content=response.choices[0].message.content,
@@ -284,14 +351,25 @@ Responda apenas com o JSON, sem ```json ou qualquer outro texto."""
         messages.append({"role": "user", "content": prompt})
 
         try:
-            response = await acompletion(
-                model=model or self.model,
-                messages=messages,
-                temperature=temperature if temperature is not None else self.temperature,
-                max_tokens=max_tokens or self.max_tokens,
-                timeout=self.timeout,
-                stream=True,
-            )
+            # Determina modelo e API key
+            use_model = model or self.model
+            api_key = get_api_key_for_model(use_model)
+
+            # Monta kwargs da chamada
+            call_kwargs = {
+                "model": use_model,
+                "messages": messages,
+                "temperature": temperature if temperature is not None else self.temperature,
+                "max_tokens": max_tokens or self.max_tokens,
+                "timeout": self.timeout,
+                "stream": True,
+            }
+
+            # Adiciona API key se necessario (ex: OpenRouter)
+            if api_key:
+                call_kwargs["api_key"] = api_key
+
+            response = await acompletion(**call_kwargs)
 
             async for chunk in response:
                 if chunk.choices[0].delta.content:
