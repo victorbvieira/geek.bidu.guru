@@ -155,16 +155,58 @@
 
             <!-- Image -->
             <div class="admin-card">
-                <div class="admin-form-group" style="margin-bottom: 0;">
-                    <label for="main_image_url" class="admin-form-label">Imagem Principal</label>
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Imagem Principal</h3>
+                </div>
+
+                <div class="image-upload-section">
+                    <!-- Preview da imagem -->
+                    <div class="image-preview" id="image-preview">
+                        {% if product and product.main_image_url %}
+                        <img src="{{ product.main_image_url }}" alt="Preview" id="preview-img">
+                        {% else %}
+                        <div class="image-placeholder" id="preview-placeholder">
+                            <span>Nenhuma imagem</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Upload -->
+                    <div class="image-upload-controls">
+                        <input
+                            type="file"
+                            id="image-file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            style="display: none;"
+                        >
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="document.getElementById('image-file').click()">
+                            Fazer Upload
+                        </button>
+                        <span class="upload-status" id="upload-status"></span>
+                    </div>
+
+                    <!-- URL manual (hidden input para o form) -->
                     <input
-                        type="url"
+                        type="hidden"
                         id="main_image_url"
                         name="main_image_url"
-                        class="admin-form-input"
                         value="{{ product.main_image_url if product else '' }}"
-                        placeholder="https://..."
                     >
+
+                    <!-- URL manual opcional -->
+                    <div class="admin-form-group" style="margin-top: 1rem;">
+                        <label for="image_url_manual" class="admin-form-label">Ou cole uma URL</label>
+                        <input
+                            type="url"
+                            id="image_url_manual"
+                            class="admin-form-input"
+                            value="{{ product.main_image_url if product else '' }}"
+                            placeholder="https://..."
+                            onchange="setImageUrl(this.value)"
+                        >
+                    </div>
+
+                    <div class="admin-form-hint">Formatos: JPG, PNG, WebP, GIF. Max: 5MB</div>
                 </div>
             </div>
 
@@ -215,4 +257,89 @@
         </div>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image Upload Handler
+const imageFileInput = document.getElementById('image-file');
+const mainImageUrlInput = document.getElementById('main_image_url');
+const imageUrlManualInput = document.getElementById('image_url_manual');
+const imagePreview = document.getElementById('image-preview');
+const uploadStatus = document.getElementById('upload-status');
+
+// Upload de arquivo
+imageFileInput.addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Valida tipo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        uploadStatus.textContent = 'Tipo de arquivo nao permitido';
+        uploadStatus.style.color = 'var(--admin-danger)';
+        return;
+    }
+
+    // Valida tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        uploadStatus.textContent = 'Arquivo muito grande (max 5MB)';
+        uploadStatus.style.color = 'var(--admin-danger)';
+        return;
+    }
+
+    // Mostra loading
+    uploadStatus.textContent = 'Enviando...';
+    uploadStatus.style.color = 'var(--admin-text-muted)';
+
+    // Prepara form data
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/admin/upload/image', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Sucesso
+            setImageUrl(data.url);
+            uploadStatus.textContent = 'Enviado!';
+            uploadStatus.style.color = 'var(--admin-success)';
+
+            // Limpa status apos 3s
+            setTimeout(() => {
+                uploadStatus.textContent = '';
+            }, 3000);
+        } else {
+            // Erro
+            uploadStatus.textContent = data.detail || 'Erro no upload';
+            uploadStatus.style.color = 'var(--admin-danger)';
+        }
+    } catch (error) {
+        uploadStatus.textContent = 'Erro de conexao';
+        uploadStatus.style.color = 'var(--admin-danger)';
+        console.error('Upload error:', error);
+    }
+
+    // Limpa input
+    imageFileInput.value = '';
+});
+
+// Define URL da imagem e atualiza preview
+function setImageUrl(url) {
+    mainImageUrlInput.value = url;
+    imageUrlManualInput.value = url;
+
+    // Atualiza preview
+    if (url) {
+        imagePreview.innerHTML = `<img src="${url}" alt="Preview" id="preview-img">`;
+    } else {
+        imagePreview.innerHTML = `<div class="image-placeholder" id="preview-placeholder"><span>Nenhuma imagem</span></div>`;
+    }
+}
+</script>
 {% endblock %}

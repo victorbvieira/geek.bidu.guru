@@ -14,7 +14,6 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from app.config import settings
 from app.core.logging import setup_logging, get_logger
@@ -100,8 +99,9 @@ BASE_DIR = Path(__file__).resolve().parent
 # Montar arquivos estaticos (caminho absoluto para funcionar em qualquer contexto)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-# Templates Jinja2 (caminho absoluto)
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
+# Templates Jinja2 com filtros customizados (markdown, format_price)
+from app.core.templates import setup_templates
+templates = setup_templates(BASE_DIR / "templates")
 
 
 # -----------------------------------------------------------------------------
@@ -222,7 +222,25 @@ async def home(request: Request):
     Homepage do blog.
     Renderiza o template home.html com SSR.
     """
+    from app.api.deps import get_db
+    from app.repositories.product import ProductRepository
+    from app.repositories.post import PostRepository
+
     base_url = settings.app_url.rstrip("/")
+
+    # Busca produtos e posts em destaque
+    featured_products = []
+    featured_posts = []
+
+    async for db in get_db():
+        product_repo = ProductRepository(db)
+        post_repo = PostRepository(db)
+
+        # Busca até 6 produtos disponíveis (ordenados por score)
+        featured_products = await product_repo.get_available(limit=6)
+
+        # Busca até 3 posts publicados recentes
+        featured_posts = await post_repo.get_published(limit=3)
 
     return templates.TemplateResponse(
         request=request,
@@ -230,6 +248,8 @@ async def home(request: Request):
         context={
             "title": "geek.bidu.guru - Presentes Geek",
             "description": "Encontre o presente geek perfeito para quem voce ama",
+            "featured_products": featured_products,
+            "featured_posts": featured_posts,
             # SEO
             "base_url": base_url,
             "canonical_url": base_url,

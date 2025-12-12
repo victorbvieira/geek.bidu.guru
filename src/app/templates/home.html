@@ -17,14 +17,72 @@
 <section class="featured">
     <div class="container">
         <h2>Destaques</h2>
+        {% if featured_products %}
+        <p class="section-description">Os melhores presentes geek selecionados para voce</p>
+        <div class="products-grid-home">
+            {% for product in featured_products %}
+            <article class="product-card-home">
+                {% if product.main_image_url %}
+                <a href="/produto/{{ product.slug }}" class="product-image-home">
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                </a>
+                {% else %}
+                <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
+                    <span>Sem imagem</span>
+                </a>
+                {% endif %}
+                <div class="product-content-home">
+                    <span class="product-platform platform-{{ product.platform.value }}">
+                        {{ product.platform.value | title }}
+                    </span>
+                    <h3 class="product-name-home">
+                        <a href="/produto/{{ product.slug }}">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</a>
+                    </h3>
+                    {% if product.price %}
+                    <span class="product-price-home">{{ product.price | format_price }}</span>
+                    {% endif %}
+                    <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-cta-home" target="_blank" rel="noopener sponsored">
+                        Ver oferta
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="see-all">
+            <a href="/produtos" class="btn btn-secondary">Ver todos os produtos</a>
+        </div>
+        {% elif featured_posts %}
+        <p class="section-description">Os melhores artigos sobre presentes geek</p>
+        <div class="posts-grid">
+            {% for post in featured_posts %}
+            <article class="post-card">
+                {% if post.featured_image_url %}
+                <a href="/blog/{{ post.slug }}" class="post-image">
+                    <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
+                </a>
+                {% endif %}
+                <div class="post-content">
+                    <h3 class="post-title">
+                        <a href="/blog/{{ post.slug }}">{{ post.title }}</a>
+                    </h3>
+                    {% if post.subtitle %}
+                    <p class="post-excerpt">{{ post.subtitle[:100] }}{% if post.subtitle|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        <div class="see-all">
+            <a href="/blog" class="btn btn-secondary">Ver todos os artigos</a>
+        </div>
+        {% else %}
         <p class="section-description">Em breve: os melhores presentes geek selecionados para voce!</p>
-
-        <!-- Posts em destaque serao carregados aqui -->
         <div class="posts-grid">
             <div class="placeholder-card">
                 <p>Conteudo em construcao...</p>
             </div>
         </div>
+        {% endif %}
     </div>
 </section>
 

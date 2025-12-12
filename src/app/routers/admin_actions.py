@@ -9,8 +9,8 @@ from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, File
+from fastapi.responses import RedirectResponse, JSONResponse
 from starlette import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -638,4 +638,33 @@ async def delete_user(
     return RedirectResponse(
         url="/admin/users",
         status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+# -----------------------------------------------------------------------------
+# Upload de Imagens
+# -----------------------------------------------------------------------------
+
+
+@router.post("/upload/image")
+async def upload_image(
+    current_user: AdminUser,
+    file: UploadFile = File(...),
+):
+    """
+    Upload de imagem para produtos.
+
+    Aceita: JPEG, PNG, WebP, GIF
+    Tamanho maximo: 5MB
+
+    Returns:
+        JSON com URL da imagem salva
+    """
+    from app.services.upload import save_product_image
+
+    image_url = await save_product_image(file)
+
+    return JSONResponse(
+        content={"url": image_url, "message": "Imagem enviada com sucesso"},
+        status_code=http_status.HTTP_201_CREATED,
     )
