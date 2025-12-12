@@ -467,14 +467,23 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ---
 
-**Versao**: 2.8
+**Versao**: 2.9
 **Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 270 passando (incluindo 34 testes admin)
+**Testes**: 294 passando (incluindo 34 admin + 24 SEO)
 
 ---
 
 # CHANGELOG
+
+## v2.9 (2025-12-12)
+- :white_check_mark: Criados 24 testes para funcionalidades SEO (test_seo.py)
+  - TestCanonicalURLs (5 testes)
+  - TestMetaRobots (4 testes)
+  - TestSchemaOrg (5 testes)
+  - TestOpenGraph (5 testes)
+  - TestTwitterCards (3 testes)
+  - TestSEOIntegration (2 testes)
 
 ## v2.8 (2025-12-12)
 - :white_check_mark: 2.1.3 - Canonical URLs implementadas em todas as rotas SSR

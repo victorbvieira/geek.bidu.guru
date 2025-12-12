@@ -99,15 +99,11 @@ async def require_admin_user(
     """
     Requer usuario autenticado no admin.
 
-    Levanta HTTPException 303 para redirect ao login.
+    Levanta AdminRedirectException para redirect ao login.
     """
     user = await get_admin_user_from_cookie(request, db)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_303_SEE_OTHER,
-            detail="Redirect to login",
-            headers={"Location": "/admin/login"},
-        )
+        raise AdminRedirectException()
     return user
 
 

@@ -72,6 +72,27 @@ class TestAdminDashboard:
 
         # Deve retornar 303 See Other para redirecionar ao login
         assert response.status_code == 303
+        assert response.headers.get("location") == "/admin/login"
+
+    @pytest.mark.asyncio
+    async def test_protected_routes_redirect_to_login(self, client: AsyncClient):
+        """Rotas protegidas do admin redirecionam para login quando nao autenticado."""
+        protected_routes = [
+            "/admin",
+            "/admin/posts",
+            "/admin/posts/new",
+            "/admin/products",
+            "/admin/products/new",
+            "/admin/categories",
+            "/admin/categories/new",
+            "/admin/users",
+            "/admin/users/new",
+        ]
+
+        for route in protected_routes:
+            response = await client.get(route, follow_redirects=False)
+            assert response.status_code == 303, f"Route {route} should redirect"
+            assert response.headers.get("location") == "/admin/login", f"Route {route} should redirect to login"
 
     @pytest.mark.asyncio
     async def test_dashboard_accessible_when_authenticated(

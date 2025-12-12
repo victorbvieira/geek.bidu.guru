@@ -278,8 +278,15 @@ app.include_router(seo_router)
 # Admin Routes (painel administrativo)
 # -----------------------------------------------------------------------------
 
-from app.routers.admin import router as admin_router
+from app.routers.admin import router as admin_router, AdminRedirectException
 from app.routers.admin_actions import router as admin_actions_router
+from fastapi.responses import RedirectResponse
 
 app.include_router(admin_router)
 app.include_router(admin_actions_router)
+
+
+@app.exception_handler(AdminRedirectException)
+async def admin_redirect_exception_handler(request: Request, exc: AdminRedirectException):
+    """Handler para redirecionar usuarios nao autenticados no admin para o login."""
+    return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)

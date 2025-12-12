@@ -14,10 +14,10 @@
     <h1 class="admin-page-title">{{ 'Editar Produto' if product else 'Novo Produto' }}</h1>
 </div>
 
-<form method="POST" action="{{ '/admin/products/' ~ product.id if product else '/admin/products' }}">
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem;">
+<form method="POST" action="{{ '/admin/products/' ~ product.id if product else '/admin/products' }}" class="admin-form">
+    <div class="admin-form-grid">
         <!-- Main Content -->
-        <div>
+        <div class="admin-form-main">
             <div class="admin-card">
                 <div class="admin-form-group">
                     <label for="name" class="admin-form-label">Nome do Produto *</label>
@@ -65,8 +65,10 @@
             </div>
 
             <!-- Affiliate Link -->
-            <div class="admin-card" style="margin-top: 1.5rem;">
-                <h3 class="admin-card-title" style="margin-bottom: 1rem;">Link de Afiliado</h3>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Link de Afiliado</h3>
+                </div>
 
                 <div class="admin-form-group">
                     <label for="affiliate_url_raw" class="admin-form-label">URL do Afiliado *</label>
@@ -98,7 +100,7 @@
         </div>
 
         <!-- Sidebar -->
-        <div>
+        <div class="admin-form-sidebar">
             <!-- Platform & Price -->
             <div class="admin-card">
                 <div class="admin-form-group">
@@ -144,13 +146,15 @@
                     </select>
                 </div>
 
-                <button type="submit" class="admin-btn admin-btn-primary" style="width: 100%;">
-                    {{ 'Salvar' if product else 'Criar Produto' }}
-                </button>
+                <div class="admin-form-actions">
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
+                        {{ 'Salvar' if product else 'Criar Produto' }}
+                    </button>
+                </div>
             </div>
 
             <!-- Image -->
-            <div class="admin-card" style="margin-top: 1rem;">
+            <div class="admin-card">
                 <div class="admin-form-group" style="margin-bottom: 0;">
                     <label for="main_image_url" class="admin-form-label">Imagem Principal</label>
                     <input
@@ -165,7 +169,7 @@
             </div>
 
             <!-- Rating -->
-            <div class="admin-card" style="margin-top: 1rem;">
+            <div class="admin-card">
                 <div class="admin-form-group">
                     <label for="rating" class="admin-form-label">Avaliacao (0-5)</label>
                     <input
@@ -194,7 +198,7 @@
             </div>
 
             <!-- Tags -->
-            <div class="admin-card" style="margin-top: 1rem;">
+            <div class="admin-card">
                 <div class="admin-form-group" style="margin-bottom: 0;">
                     <label for="tags" class="admin-form-label">Tags</label>
                     <input
