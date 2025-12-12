@@ -230,7 +230,7 @@
                         </div>
                     </div>
 
-                    <div class="admin-form-hint">Formatos: JPG, PNG, WebP, GIF. Max: 5MB. A primeira imagem sera a principal.</div>
+                    <div class="admin-form-hint">Redimensionadas para 800x800 px (1:1). Formatos: JPG, PNG, WebP, GIF. Max: 5MB.</div>
                 </div>
             </div>
 
@@ -375,6 +375,7 @@
                         <span class="upload-status" id="category-upload-status"></span>
                     </div>
                     <input type="hidden" id="new_category_image_url" value="">
+                    <div class="admin-form-hint">Redimensionada automaticamente para 400x400 px</div>
                 </div>
             </div>
         </div>
@@ -400,8 +401,15 @@ const uploadStatusText = document.getElementById('upload-status-text');
 const uploadProgressBar = document.getElementById('upload-progress-bar');
 const imageUrlManualInput = document.getElementById('image_url_manual');
 
-// Lista de imagens atual
-let images = JSON.parse(imagesInput.value || '[]');
+// Lista de imagens atual - trata string vazia como array vazio
+let images = [];
+try {
+    const imagesValue = imagesInput.value.trim();
+    images = imagesValue ? JSON.parse(imagesValue) : [];
+} catch (e) {
+    console.warn('Erro ao parsear imagens:', e);
+    images = [];
+}
 
 // Upload de multiplos arquivos
 imageFileInput.addEventListener('change', async function(e) {
@@ -560,29 +568,70 @@ function renderGallery() {
 // Modal de Categoria
 // =============================================================================
 
-const categoryModal = document.getElementById('category-modal');
-const categoryImageFile = document.getElementById('category-image-file');
-const categoryImagePreview = document.getElementById('category-image-preview');
-const categoryUploadStatus = document.getElementById('category-upload-status');
-const categoryImageUrlInput = document.getElementById('new_category_image_url');
+// Elementos do modal - usando var para evitar TDZ (Temporal Dead Zone)
+var categoryModal = document.getElementById('category-modal');
+var categoryImageFile = document.getElementById('category-image-file');
+var categoryImagePreview = document.getElementById('category-image-preview');
+var categoryUploadStatus = document.getElementById('category-upload-status');
+var categoryImageUrlInput = document.getElementById('new_category_image_url');
+var categoryNameInput = document.getElementById('new_category_name');
+var categorySlugInput = document.getElementById('new_category_slug');
+var categorySlugManuallyEdited = false;
+
+// Funcao para gerar slug a partir de texto
+function generateSlug(text) {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
+        .replace(/\s+/g, '-') // Substitui espacos por hifens
+        .replace(/-+/g, '-') // Remove hifens duplicados
+        .trim();
+}
+
+// Auto-gerar slug quando o nome muda (se nao foi editado manualmente)
+if (categoryNameInput) {
+    categoryNameInput.addEventListener('input', function() {
+        if (!categorySlugManuallyEdited && categorySlugInput) {
+            categorySlugInput.value = generateSlug(this.value);
+        }
+    });
+}
+
+// Marcar slug como editado manualmente quando o usuario digitar
+if (categorySlugInput) {
+    categorySlugInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            categorySlugManuallyEdited = true;
+        }
+    });
+}
 
 function openCategoryModal() {
-    categoryModal.style.display = 'flex';
-    document.getElementById('new_category_name').focus();
+    if (categoryModal) {
+        categoryModal.style.display = 'flex';
+        document.getElementById('new_category_name').focus();
+    }
 }
 
 function closeCategoryModal() {
+    if (!categoryModal) return;
     categoryModal.style.display = 'none';
     // Limpa campos
     document.getElementById('new_category_name').value = '';
     document.getElementById('new_category_slug').value = '';
     document.getElementById('new_category_description').value = '';
-    categoryImageUrlInput.value = '';
-    categoryImagePreview.innerHTML = '<div class="image-placeholder"><span>Sem imagem</span></div>';
-    categoryUploadStatus.textContent = '';
+    if (categoryImageUrlInput) categoryImageUrlInput.value = '';
+    if (categoryImagePreview) categoryImagePreview.innerHTML = '<div class="image-placeholder"><span>Sem imagem</span></div>';
+    if (categoryUploadStatus) categoryUploadStatus.textContent = '';
+    // Reseta flag de edicao manual do slug
+    categorySlugManuallyEdited = false;
 }
 
-// Upload de imagem da categoria
+// Upload de imagem da categoria (redimensiona automaticamente para 400x400)
+if (categoryImageFile) {
 categoryImageFile.addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -607,7 +656,8 @@ categoryImageFile.addEventListener('change', async function(e) {
     formData.append('file', file);
 
     try {
-        const response = await fetch('/admin/upload/image', {
+        // Usa endpoint especifico para categorias (redimensiona para 400x400)
+        const response = await fetch('/admin/upload/category-image', {
             method: 'POST',
             body: formData,
         });
@@ -617,7 +667,7 @@ categoryImageFile.addEventListener('change', async function(e) {
         if (response.ok) {
             categoryImageUrlInput.value = data.url;
             categoryImagePreview.innerHTML = `<img src="${data.url}" alt="Preview">`;
-            categoryUploadStatus.textContent = 'OK!';
+            categoryUploadStatus.textContent = '400x400 OK!';
             categoryUploadStatus.style.color = 'var(--admin-success)';
         } else {
             categoryUploadStatus.textContent = data.detail || 'Erro';
@@ -630,6 +680,7 @@ categoryImageFile.addEventListener('change', async function(e) {
 
     categoryImageFile.value = '';
 });
+} // fecha if (categoryImageFile)
 
 // Criar categoria via AJAX
 async function createCategory() {

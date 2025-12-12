@@ -675,6 +675,7 @@ async def upload_image(
     """
     Upload de imagem para produtos.
 
+    A imagem e automaticamente redimensionada para 800x800 px (1:1).
     Aceita: JPEG, PNG, WebP, GIF
     Tamanho maximo: 5MB
 
@@ -683,7 +684,33 @@ async def upload_image(
     """
     from app.services.upload import save_product_image
 
-    image_url = await save_product_image(file)
+    # Usa resize=True para padronizar em 800x800
+    image_url = await save_product_image(file, resize=True)
+
+    return JSONResponse(
+        content={"url": image_url, "message": "Imagem enviada com sucesso"},
+        status_code=http_status.HTTP_201_CREATED,
+    )
+
+
+@router.post("/upload/category-image")
+async def upload_category_image(
+    current_user: AdminUser,
+    file: UploadFile = File(...),
+):
+    """
+    Upload de imagem para categorias.
+
+    A imagem e automaticamente redimensionada para 400x400 px.
+    Aceita: JPEG, PNG, WebP, GIF
+    Tamanho maximo: 5MB
+
+    Returns:
+        JSON com URL da imagem salva
+    """
+    from app.services.upload import save_category_image
+
+    image_url = await save_category_image(file)
 
     return JSONResponse(
         content={"url": image_url, "message": "Imagem enviada com sucesso"},

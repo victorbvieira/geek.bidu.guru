@@ -13,10 +13,15 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from urllib.parse import unquote_plus
 
-from app.api.deps import CategoryRepo, PostRepo
+from app.api.deps import CategoryRepo, PostRepo, ProductRepo
 from app.config import settings
 from app.models.post import PostStatus
 from app.core.templates import setup_templates
+from app.utils.markdown import (
+    extract_product_refs,
+    markdown_to_html,
+    replace_product_shortcodes,
+)
 
 # Router para rotas publicas do blog
 router = APIRouter(tags=["blog"])
@@ -96,12 +101,16 @@ async def get_post(
     request: Request,
     slug: str,
     repo: PostRepo,
+    product_repo: ProductRepo,
 ):
     """
     Pagina de post individual.
 
     Exibe o conteudo completo do post com produtos relacionados.
     Incrementa o contador de views.
+
+    Suporta shortcodes de produto: [product:slug]
+    Os shortcodes sao substituidos por cards de produto renderizados.
     """
     # Busca post por slug
     post = await repo.get_by_slug(slug)
@@ -121,6 +130,34 @@ async def get_post(
 
     # Incrementa views (fire and forget - nao espera)
     await repo.increment_view_count(post.id)
+
+    # Processa shortcodes de produtos no conteudo
+    # Fluxo: Markdown -> HTML -> Substitui shortcodes por cards HTML
+    content_html = ""
+    embedded_products = []
+
+    if post.content:
+        # Primeiro converte Markdown para HTML
+        content_html = markdown_to_html(post.content, sanitize=True)
+
+        # Depois extrai e substitui shortcodes de produtos
+        product_refs = extract_product_refs(post.content)
+        if product_refs:
+            products_dict = {}
+            for ref in product_refs:
+                product = await product_repo.get_by_slug(ref)
+                if product:
+                    embedded_products.append(product)
+                    products_dict[ref] = {
+                        "name": product.name,
+                        "slug": product.slug,
+                        "price": float(product.price) if product.price else None,
+                        "main_image_url": product.main_image_url,
+                        "platform": product.platform.value if product.platform else "amazon",
+                        "affiliate_redirect_slug": product.affiliate_redirect_slug or product.slug,
+                    }
+            # Substitui shortcodes no HTML (os shortcodes ficam como texto apos conversao)
+            content_html = replace_product_shortcodes(content_html, products_dict)
 
     # SEO: usa seo_title/seo_description se definidos, senao usa title/subtitle
     seo_title = post.seo_title or post.title
@@ -148,6 +185,8 @@ async def get_post(
             "title": f"{seo_title} - geek.bidu.guru",
             "description": seo_description,
             "post": post,
+            "content_html": content_html,  # HTML completo com produtos renderizados
+            "embedded_products": embedded_products,  # Lista de produtos embedados para Schema.org
             "seo_title": seo_title,
             "seo_description": seo_description,
             # SEO

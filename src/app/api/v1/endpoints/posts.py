@@ -56,7 +56,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
-from app.api.deps import Pagination, PostRepo
+from app.api.deps import Pagination, PostRepo, ProductRepo
 from app.models.post import PostStatus, PostType
 from app.schemas import (
     MessageResponse,
@@ -66,7 +66,11 @@ from app.schemas import (
     PostUpdate,
     PostUpdateStatus,
 )
-from app.utils.markdown import markdown_to_html
+from app.utils.markdown import (
+    extract_product_refs,
+    markdown_to_html,
+    replace_product_shortcodes,
+)
 
 
 class MarkdownPreviewRequest(BaseModel):
@@ -459,18 +463,45 @@ async def delete_post(post_id: UUID, repo: PostRepo):
 
 
 @router.post("/preview", response_model=MarkdownPreviewResponse)
-async def preview_markdown(data: MarkdownPreviewRequest):
+async def preview_markdown(data: MarkdownPreviewRequest, product_repo: ProductRepo):
     """
     Converte Markdown para HTML para preview no editor.
 
     Usado pelo editor de posts no admin para mostrar
     preview em tempo real do conteudo formatado.
 
+    Suporta shortcodes de produto: [product:slug]
+    Os shortcodes sao substituidos por cards de produto renderizados.
+
     Args:
         data: Conteudo Markdown a ser convertido
+        product_repo: Repositorio de produtos (injetado)
 
     Returns:
-        MarkdownPreviewResponse com HTML sanitizado
+        MarkdownPreviewResponse com HTML sanitizado e produtos renderizados
     """
+    # Converte Markdown para HTML
     html = markdown_to_html(data.content, sanitize=True)
+
+    # Extrai referencias de produtos do conteudo
+    product_refs = extract_product_refs(data.content)
+
+    if product_refs:
+        # Busca produtos por slug
+        products_dict = {}
+        for ref in product_refs:
+            product = await product_repo.get_by_slug(ref)
+            if product:
+                products_dict[ref] = {
+                    "name": product.name,
+                    "slug": product.slug,
+                    "price": float(product.price) if product.price else None,
+                    "main_image_url": product.main_image_url,
+                    "platform": product.platform.value if product.platform else "amazon",
+                    "affiliate_redirect_slug": product.affiliate_redirect_slug or product.slug,
+                }
+
+        # Substitui shortcodes por cards HTML
+        html = replace_product_shortcodes(html, products_dict)
+
     return MarkdownPreviewResponse(html=html)

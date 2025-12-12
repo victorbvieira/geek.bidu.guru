@@ -4,12 +4,14 @@ Servico de upload de arquivos.
 Gerencia upload, validacao e armazenamento de imagens.
 """
 
+import io
 import os
 import uuid
 from pathlib import Path
-from typing import BinaryIO
+from typing import BinaryIO, Optional, Tuple
 
 from fastapi import HTTPException, UploadFile, status
+from PIL import Image
 
 # Tipos de arquivo permitidos
 ALLOWED_IMAGE_TYPES = {
@@ -21,6 +23,22 @@ ALLOWED_IMAGE_TYPES = {
 
 # Tamanho maximo: 5MB
 MAX_FILE_SIZE = 5 * 1024 * 1024
+
+# =============================================================================
+# Padroes de tamanho de imagens
+# =============================================================================
+
+# Categorias: 400x400 px (1:1) - Usado em cards e listagens
+CATEGORY_IMAGE_SIZE = (400, 400)
+
+# Produtos: diferentes tamanhos para diferentes usos
+PRODUCT_IMAGE_SIZES = {
+    "main": (800, 800),    # Imagem principal na pagina do produto
+    "thumb": (200, 200),   # Thumbnail para listagens
+}
+
+# Qualidade JPEG (0-100)
+IMAGE_QUALITY = 85
 
 # Diretorio base de uploads
 UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
@@ -50,12 +68,13 @@ def validate_image(file: UploadFile) -> str:
     return ALLOWED_IMAGE_TYPES[file.content_type]
 
 
-async def save_product_image(file: UploadFile) -> str:
+async def save_product_image(file: UploadFile, resize: bool = False) -> str:
     """
     Salva imagem de produto.
 
     Args:
         file: Arquivo de imagem
+        resize: Se True, redimensiona para 800x800 (padrao do projeto)
 
     Returns:
         URL relativa da imagem salva (ex: /static/uploads/products/xxx.jpg)
@@ -66,8 +85,11 @@ async def save_product_image(file: UploadFile) -> str:
     # Valida arquivo
     extension = validate_image(file)
 
-    # Gera nome unico
-    filename = f"{uuid.uuid4().hex}{extension}"
+    # Se vai redimensionar, sempre salva como .jpg
+    if resize:
+        filename = f"{uuid.uuid4().hex}.jpg"
+    else:
+        filename = f"{uuid.uuid4().hex}{extension}"
 
     # Caminho completo
     upload_path = UPLOAD_DIR / "products" / filename
@@ -83,6 +105,10 @@ async def save_product_image(file: UploadFile) -> str:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Arquivo muito grande. Tamanho maximo: {MAX_FILE_SIZE // (1024 * 1024)}MB",
         )
+
+    # Redimensiona se solicitado
+    if resize:
+        content = resize_image(content, PRODUCT_IMAGE_SIZES["main"], "JPEG")
 
     # Salva arquivo
     with open(upload_path, "wb") as f:
@@ -103,6 +129,126 @@ def delete_product_image(image_url: str) -> bool:
         True se removida, False se nao encontrada
     """
     if not image_url or not image_url.startswith("/static/uploads/"):
+        return False
+
+    # Converte URL para caminho
+    relative_path = image_url.replace("/static/uploads/", "")
+    file_path = UPLOAD_DIR / relative_path
+
+    if file_path.exists():
+        os.remove(file_path)
+        return True
+
+    return False
+
+
+def resize_image(
+    content: bytes,
+    target_size: Tuple[int, int],
+    output_format: str = "JPEG",
+) -> bytes:
+    """
+    Redimensiona imagem mantendo proporcao e preenchendo com fundo branco.
+
+    Args:
+        content: Bytes da imagem original
+        target_size: Tupla (largura, altura) do tamanho final
+        output_format: Formato de saida (JPEG, PNG, WEBP)
+
+    Returns:
+        Bytes da imagem redimensionada
+    """
+    # Abre imagem
+    img = Image.open(io.BytesIO(content))
+
+    # Converte para RGB se necessario (para JPEG)
+    if img.mode in ("RGBA", "P") and output_format == "JPEG":
+        # Cria fundo branco
+        background = Image.new("RGB", img.size, (255, 255, 255))
+        if img.mode == "P":
+            img = img.convert("RGBA")
+        background.paste(img, mask=img.split()[3] if img.mode == "RGBA" else None)
+        img = background
+    elif img.mode != "RGB" and output_format == "JPEG":
+        img = img.convert("RGB")
+
+    # Calcula proporcao mantendo aspect ratio
+    img.thumbnail(target_size, Image.Resampling.LANCZOS)
+
+    # Cria imagem final com tamanho exato e fundo branco
+    final_img = Image.new("RGB", target_size, (255, 255, 255))
+
+    # Centraliza a imagem redimensionada
+    offset = ((target_size[0] - img.size[0]) // 2, (target_size[1] - img.size[1]) // 2)
+    final_img.paste(img, offset)
+
+    # Salva em bytes
+    output = io.BytesIO()
+    final_img.save(output, format=output_format, quality=IMAGE_QUALITY, optimize=True)
+    output.seek(0)
+
+    return output.read()
+
+
+async def save_category_image(file: UploadFile) -> str:
+    """
+    Salva imagem de categoria com redimensionamento padronizado.
+
+    A imagem e redimensionada para 400x400 px mantendo proporcao
+    e preenchendo com fundo branco se necessario.
+
+    Args:
+        file: Arquivo de imagem
+
+    Returns:
+        URL relativa da imagem salva (ex: /static/uploads/categories/xxx.jpg)
+
+    Raises:
+        HTTPException: Se erro no upload
+    """
+    # Valida arquivo (extensao ignorada pois sempre salvamos como .jpg)
+    validate_image(file)
+
+    # Gera nome unico - sempre salva como .jpg apos processamento
+    filename = f"{uuid.uuid4().hex}.jpg"
+
+    # Caminho completo
+    upload_path = UPLOAD_DIR / "categories" / filename
+
+    # Garante que diretorio existe
+    upload_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Le conteudo e valida tamanho
+    content = await file.read()
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Arquivo muito grande. Tamanho maximo: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        )
+
+    # Redimensiona imagem para tamanho padrao
+    resized_content = resize_image(content, CATEGORY_IMAGE_SIZE, "JPEG")
+
+    # Salva arquivo
+    with open(upload_path, "wb") as f:
+        f.write(resized_content)
+
+    # Retorna URL relativa
+    return f"/static/uploads/categories/{filename}"
+
+
+def delete_category_image(image_url: str) -> bool:
+    """
+    Remove imagem de categoria.
+
+    Args:
+        image_url: URL relativa da imagem
+
+    Returns:
+        True se removida, False se nao encontrada
+    """
+    if not image_url or not image_url.startswith("/static/uploads/categories/"):
         return False
 
     # Converte URL para caminho

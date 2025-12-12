@@ -228,6 +228,150 @@
     background: var(--color-cta-hover);
 }
 
+/* Product Embed (shortcode cards) */
+.product-embed {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    margin: 2rem 0;
+    background: var(--color-bg-card, #fff);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.product-embed:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 16px rgba(138, 43, 226, 0.15);
+}
+
+.product-embed-image {
+    width: 140px;
+    height: 140px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--color-bg-muted);
+}
+
+.product-embed-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-embed-image a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.product-embed-no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.product-embed-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.product-embed-platform {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+.product-embed-platform.platform-amazon {
+    background: #ff9900;
+    color: #000;
+}
+
+.product-embed-platform.platform-mercadolivre {
+    background: #ffe600;
+    color: #000;
+}
+
+.product-embed-platform.platform-shopee {
+    background: #ee4d2d;
+    color: #fff;
+}
+
+.product-embed-name {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.product-embed-name a {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.product-embed-name a:hover {
+    color: var(--color-primary);
+}
+
+.product-embed-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-success, #10b981);
+}
+
+.product-embed-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-cta, #8b5cf6);
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    margin-top: auto;
+    width: fit-content;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.product-embed-cta:hover {
+    background: var(--color-cta-hover, #7c3aed);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.product-embed-cta::after {
+    content: '→';
+    font-size: 1.125rem;
+}
+
+.product-embed-not-found {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.product-embed-not-found code {
+    background: rgba(239, 68, 68, 0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
 @media (max-width: 768px) {
     .post-header h1 {
         font-size: 1.75rem;
@@ -247,6 +391,27 @@
 
     .product-image {
         width: 100%;
+    }
+
+    .product-embed {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .product-embed-image {
+        width: 100%;
+        max-width: 200px;
+        height: 160px;
+    }
+
+    .product-embed-content {
+        align-items: center;
+    }
+
+    .product-embed-cta {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>
@@ -292,7 +457,17 @@
         {% endif %}
 
         <div class="post-content">
-            {{ post.content | markdown }}
+            {#
+              content_html: HTML completo ja processado:
+              1. Markdown convertido para HTML
+              2. Shortcodes [product:slug] substituidos por cards HTML
+              Usa | safe porque o HTML ja esta sanitizado no backend.
+            #}
+            {% if content_html %}
+                {{ content_html | safe }}
+            {% else %}
+                {{ post.content | markdown }}
+            {% endif %}
         </div>
 
         {% if post.tags %}

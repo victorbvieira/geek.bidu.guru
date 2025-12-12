@@ -69,6 +69,8 @@
                             <button type="button" class="md-btn" data-action="quote" title="Citacao">"</button>
                             <button type="button" class="md-btn" data-action="code" title="Codigo">&lt;/&gt;</button>
                             <span class="md-toolbar-separator"></span>
+                            <button type="button" class="md-btn md-btn-product" data-action="product" title="Inserir Produto">🛒 Produto</button>
+                            <span class="md-toolbar-separator"></span>
                             <button type="button" class="md-btn md-btn-preview" data-action="preview" title="Preview">Preview</button>
                         </div>
                         <div class="markdown-panels">
@@ -83,7 +85,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="admin-form-hint">Suporta Markdown: **negrito**, *italico*, # titulo, [link](url), ![imagem](url)</div>
+                    <div class="admin-form-hint">
+                        Suporta Markdown: **negrito**, *italico*, # titulo, [link](url), ![imagem](url)<br>
+                        <strong>Produtos:</strong> Use <code>[product:slug-do-produto]</code> para inserir um card de produto no conteudo
+                    </div>
                 </div>
             </div>
 
@@ -258,6 +263,57 @@
         </div>
     </div>
 </form>
+
+<!-- Modal de Selecao de Produto -->
+<div id="product-modal" class="product-modal" style="display: none;">
+    <div class="product-modal-backdrop" onclick="closeProductModal()"></div>
+    <div class="product-modal-content">
+        <div class="product-modal-header">
+            <h3>Inserir Produto no Conteudo</h3>
+            <button type="button" class="product-modal-close" onclick="closeProductModal()">&times;</button>
+        </div>
+        <div class="product-modal-search">
+            <input
+                type="text"
+                id="product-search"
+                class="admin-form-input"
+                placeholder="Buscar produto por nome..."
+                oninput="filterProducts(this.value)"
+            >
+        </div>
+        <div class="product-modal-list" id="product-modal-list">
+            {% for product in products %}
+            <div class="product-modal-item" data-slug="{{ product.slug }}" data-name="{{ product.name|lower }}" onclick="insertProduct('{{ product.slug }}', '{{ product.name|e }}')">
+                <div class="product-modal-item-image">
+                    {% if product.main_image_url %}
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                    {% else %}
+                    <span class="no-image">📦</span>
+                    {% endif %}
+                </div>
+                <div class="product-modal-item-info">
+                    <span class="product-modal-item-name">{{ product.name }}</span>
+                    <span class="product-modal-item-meta">
+                        <span class="platform platform-{{ product.platform.value }}">{{ product.platform.value|title }}</span>
+                        {% if product.price %}
+                        <span class="price">R$ {{ "%.2f"|format(product.price) }}</span>
+                        {% endif %}
+                    </span>
+                    <code class="product-modal-item-slug">[product:{{ product.slug }}]</code>
+                </div>
+            </div>
+            {% else %}
+            <div class="product-modal-empty">
+                <p>Nenhum produto cadastrado.</p>
+                <a href="/admin/products/new" class="admin-btn admin-btn-primary">Criar Produto</a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="product-modal-footer">
+            <span class="product-modal-hint">Clique em um produto para inserir o shortcode na posicao do cursor</span>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -299,6 +355,7 @@
                 wrapText('`', '`');
             }
         },
+        product: () => openProductModal(),
         preview: () => togglePreview()
     };
 
@@ -515,5 +572,127 @@ function removeProduct(productId) {
 
     updateProductsInput();
 }
+
+// =============================================================================
+// Modal de Selecao de Produto para Shortcode
+// =============================================================================
+
+const productModal = document.getElementById('product-modal');
+const productSearchInput = document.getElementById('product-search');
+const productModalList = document.getElementById('product-modal-list');
+const contentTextarea = document.getElementById('content');
+
+// Guarda a posicao do cursor antes de abrir o modal
+let cursorPosition = 0;
+
+function openProductModal() {
+    // Salva a posicao atual do cursor
+    cursorPosition = contentTextarea.selectionStart;
+
+    // Mostra o modal
+    productModal.style.display = 'flex';
+
+    // Limpa a busca
+    productSearchInput.value = '';
+    filterProducts('');
+
+    // Foca no campo de busca
+    setTimeout(() => productSearchInput.focus(), 100);
+}
+
+function closeProductModal() {
+    productModal.style.display = 'none';
+
+    // Retorna o foco para o textarea
+    contentTextarea.focus();
+    contentTextarea.setSelectionRange(cursorPosition, cursorPosition);
+}
+
+function filterProducts(query) {
+    const items = productModalList.querySelectorAll('.product-modal-item');
+    const lowerQuery = query.toLowerCase().trim();
+
+    items.forEach(item => {
+        const name = item.dataset.name || '';
+        const slug = item.dataset.slug || '';
+
+        if (!lowerQuery || name.includes(lowerQuery) || slug.includes(lowerQuery)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function insertProduct(slug, name) {
+    const shortcode = `[product:${slug}]`;
+
+    // Pega o conteudo atual
+    const content = contentTextarea.value;
+
+    // Verifica se estamos no inicio de uma linha ou precisamos de quebra
+    let prefix = '';
+    let suffix = '\n';
+
+    // Se nao estamos no inicio do conteudo
+    if (cursorPosition > 0) {
+        const charBefore = content[cursorPosition - 1];
+        // Se o caractere anterior nao e uma quebra de linha, adiciona duas
+        if (charBefore !== '\n') {
+            prefix = '\n\n';
+        } else if (cursorPosition > 1 && content[cursorPosition - 2] !== '\n') {
+            // Se tem apenas uma quebra, adiciona mais uma
+            prefix = '\n';
+        }
+    }
+
+    // Verifica se precisamos de quebra depois
+    if (cursorPosition < content.length) {
+        const charAfter = content[cursorPosition];
+        if (charAfter !== '\n') {
+            suffix = '\n\n';
+        }
+    }
+
+    // Insere o shortcode
+    const insertion = prefix + shortcode + suffix;
+    const newContent = content.slice(0, cursorPosition) + insertion + content.slice(cursorPosition);
+
+    contentTextarea.value = newContent;
+
+    // Atualiza posicao do cursor para depois do shortcode
+    const newPosition = cursorPosition + insertion.length;
+    contentTextarea.setSelectionRange(newPosition, newPosition);
+
+    // Fecha o modal
+    closeProductModal();
+
+    // Dispara evento de input para atualizar preview
+    contentTextarea.dispatchEvent(new Event('input'));
+
+    // Feedback visual
+    showInsertFeedback(name);
+}
+
+function showInsertFeedback(productName) {
+    // Cria elemento de feedback
+    const feedback = document.createElement('div');
+    feedback.className = 'insert-feedback';
+    feedback.textContent = `Produto "${productName}" inserido!`;
+    document.body.appendChild(feedback);
+
+    // Remove apos animacao
+    setTimeout(() => {
+        feedback.classList.add('fade-out');
+        setTimeout(() => feedback.remove(), 300);
+    }, 2000);
+}
+
+// Fecha modal com ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && productModal.style.display === 'flex') {
+        closeProductModal();
+    }
+});
 </script>
 {% endblock %}
