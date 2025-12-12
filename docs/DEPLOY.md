@@ -390,6 +390,116 @@ www.geek.bidu.guru    CNAME    geek.bidu.guru
 
 ## Troubleshooting
 
+### Erro: "Name or service not known" (DNS/Rede Docker)
+
+Este erro ocorre quando o container da aplicação não consegue resolver o hostname do PostgreSQL. Isso acontece porque os serviços estão em **redes Docker diferentes**.
+
+**Causa**: O Easypanel cria cada serviço em sua própria rede. Para que a aplicação acesse o PostgreSQL pelo nome `postgres`, ambos precisam estar na mesma rede.
+
+**Solução**: Conectar o container da aplicação à rede `interna` (mesma rede do PostgreSQL).
+
+#### Passo 1: Identificar os containers
+
+```bash
+# Ver todos os containers rodando
+docker ps
+
+# Anotar o nome do container da aplicação (ex: geek-bidu-guru-app-1)
+```
+
+#### Passo 2: Verificar a rede do PostgreSQL
+
+```bash
+# Ver containers na rede "interna"
+docker network inspect interna --format='{{range .Containers}}{{.Name}} {{end}}'
+
+# Deve mostrar o container do PostgreSQL (ex: postgres, postgresql)
+```
+
+#### Passo 3: Conectar a aplicação à rede interna
+
+```bash
+# Conectar o container da aplicação à rede interna
+docker network connect interna <nome_container_app>
+
+# Exemplo:
+docker network connect interna geek-bidu-guru-app-1
+```
+
+#### Passo 4: Verificar a conexão
+
+```bash
+# Confirmar que o container agora está na rede interna
+docker inspect <nome_container_app> --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+
+# Deve mostrar: easypanel interna (ou similar)
+```
+
+#### Passo 5: Testar conectividade
+
+```bash
+# Entrar no container da aplicação
+docker exec -it <nome_container_app> bash
+
+# Testar ping para o PostgreSQL
+ping postgres
+
+# Ou testar conexão direta
+python -c "import asyncio; import asyncpg; asyncio.run(asyncpg.connect('postgresql://geek_app_prod:senha@postgres:5432/geek_bidu_prod'))"
+```
+
+> ⚠️ **IMPORTANTE**: Este comando precisa ser executado **toda vez que o container for recriado** (após cada deploy). Veja a seção "Script de Pós-Deploy" abaixo para automatizar.
+
+#### Script de Pós-Deploy (Automatizar conexão de rede)
+
+Crie um script na VPS para executar após cada deploy:
+
+```bash
+# Criar script
+cat > /opt/scripts/post-deploy-geek.sh << 'EOF'
+#!/bin/bash
+# Script de pós-deploy para conectar o container à rede interna
+
+CONTAINER_NAME=$(docker ps --filter "name=geek-bidu-guru" --format "{{.Names}}" | head -1)
+
+if [ -z "$CONTAINER_NAME" ]; then
+    echo "Container não encontrado!"
+    exit 1
+fi
+
+echo "Conectando $CONTAINER_NAME à rede interna..."
+docker network connect interna "$CONTAINER_NAME" 2>/dev/null || echo "Já conectado ou erro"
+
+echo "Verificando conexão..."
+docker inspect "$CONTAINER_NAME" --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+
+echo "Testando conectividade com PostgreSQL..."
+docker exec "$CONTAINER_NAME" python -c "
+import asyncio
+import asyncpg
+
+async def test():
+    try:
+        conn = await asyncpg.connect('postgresql://geek_app_prod:senha@postgres:5432/geek_bidu_prod')
+        await conn.close()
+        print('✓ Conexão com PostgreSQL OK!')
+    except Exception as e:
+        print(f'✗ Erro: {e}')
+
+asyncio.run(test())
+"
+EOF
+
+chmod +x /opt/scripts/post-deploy-geek.sh
+```
+
+Execute após cada deploy:
+```bash
+/opt/scripts/post-deploy-geek.sh
+```
+
+---
+
 ### Erro: "Database connection failed"
 
 1. Verificar se PostgreSQL está rodando:
@@ -399,7 +509,9 @@ docker ps | grep postgres
 
 2. Verificar DATABASE_URL no Easypanel
 
-3. Testar conexão manualmente:
+3. Verificar se o container está na rede correta (veja seção acima)
+
+4. Testar conexão manualmente:
 ```bash
 docker exec -it <container-app> python -c "
 from app.database import check_database_connection
@@ -481,12 +593,13 @@ SELECT * FROM pg_stat_activity WHERE state = 'active';
 [ ] 4. Configurar domínio no Easypanel
 [ ] 5. Configurar DNS no provedor
 [ ] 6. Fazer deploy (push para main)
-[ ] 7. Executar migrations
-[ ] 8. Verificar health check
-[ ] 9. Testar login no admin
-[ ] 10. Alterar senha do admin
-[ ] 11. Verificar SSL/HTTPS
-[ ] 12. Testar endpoints principais
+[ ] 7. Conectar container à rede "interna" (ver Troubleshooting)
+[ ] 8. Executar migrations
+[ ] 9. Verificar health check
+[ ] 10. Testar login no admin
+[ ] 11. Alterar senha do admin
+[ ] 12. Verificar SSL/HTTPS
+[ ] 13. Testar endpoints principais
 ```
 
 ---

@@ -54,6 +54,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - geek_network
+      - interna  # Rede compartilhada para acessar PostgreSQL
 
 # -----------------------------------------------------------------------------
 # Volumes persistentes
@@ -63,9 +64,14 @@ volumes:
     name: geek_redis_data
 
 # -----------------------------------------------------------------------------
-# Rede interna
+# Redes
 # -----------------------------------------------------------------------------
 networks:
+  # Rede interna do projeto (para comunicação app <-> redis)
   geek_network:
     name: geek_network
     driver: bridge
+  # Rede compartilhada com PostgreSQL e outros serviços da VPS
+  interna:
+    name: interna
+    external: true

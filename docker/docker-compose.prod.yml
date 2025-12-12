@@ -1,0 +1,98 @@
+# =============================================================================
+# Docker Compose - geek.bidu.guru - PRODUÇÃO (VPS)
+# =============================================================================
+#
+# Este arquivo é usado para deploy na VPS via docker-compose.
+# Conecta à rede "interna" onde o PostgreSQL está rodando.
+#
+# Deploy:
+#   1. Clone o repositório na VPS
+#   2. Copie .env.prod para .env e configure
+#   3. Execute: docker compose -f docker/docker-compose.prod.yml up -d --build
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # App FastAPI - Aplicação principal
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: geek_bidu_app
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      # Conexão com PostgreSQL via rede interna (alias configurado)
+      - DATABASE_URL=postgresql+asyncpg://geek_app_prod:${DB_PASSWORD}@postgres:5432/geek_bidu_prod
+      # Redis local deste compose
+      - REDIS_URL=redis://redis:6379/0
+      # Produção
+      - ENVIRONMENT=production
+      - DEBUG=false
+    volumes:
+      # Volume para uploads persistentes
+      - uploads_data:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    networks:
+      - geek_network
+      - interna  # Rede compartilhada com PostgreSQL
+    labels:
+      # Labels para Traefik (se usar proxy reverso)
+      - "traefik.enable=true"
+      - "traefik.http.routers.geek-bidu.rule=Host(`geek.bidu.guru`)"
+      - "traefik.http.routers.geek-bidu.entrypoints=websecure"
+      - "traefik.http.routers.geek-bidu.tls.certresolver=letsencrypt"
+      - "traefik.http.services.geek-bidu.loadbalancer.server.port=8000"
+
+  # ---------------------------------------------------------------------------
+  # Redis - Cache de sessões e queries
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: geek_bidu_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - geek_network
+
+# -----------------------------------------------------------------------------
+# Volumes persistentes
+# -----------------------------------------------------------------------------
+volumes:
+  redis_data:
+    name: geek_bidu_redis_data
+  uploads_data:
+    name: geek_bidu_uploads_data
+
+# -----------------------------------------------------------------------------
+# Redes
+# -----------------------------------------------------------------------------
+networks:
+  # Rede interna do projeto (app <-> redis)
+  geek_network:
+    name: geek_bidu_network
+    driver: bridge
+  # Rede compartilhada com PostgreSQL (externa, já existe)
+  interna:
+    name: interna
+    external: true
