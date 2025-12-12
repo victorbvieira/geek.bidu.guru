@@ -221,6 +221,7 @@ async def dashboard(
     total_posts = await post_repo.count()
     published_posts = await post_repo.count_published()
     total_products = await product_repo.count()
+    total_clicks = await product_repo.sum_clicks()
 
     # Posts recentes
     recent_posts = await post_repo.get_multi(skip=0, limit=5)
@@ -238,7 +239,7 @@ async def dashboard(
                 "total_posts": total_posts,
                 "published_posts": published_posts,
                 "total_products": total_products,
-                "total_clicks": 0,  # TODO: implementar contagem de clicks
+                "total_clicks": total_clicks,
             },
             "recent_posts": recent_posts,
             "top_products": top_products,

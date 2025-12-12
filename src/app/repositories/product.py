@@ -114,3 +114,10 @@ class ProductRepository(BaseRepository[Product]):
             query = query.where(Product.id != exclude_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def sum_clicks(self) -> int:
+        """Retorna a soma total de clicks de todos os produtos."""
+        result = await self.db.execute(
+            select(func.coalesce(func.sum(Product.click_count), 0))
+        )
+        return result.scalar() or 0

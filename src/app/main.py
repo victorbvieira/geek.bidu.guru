@@ -273,5 +273,7 @@ app.include_router(seo_router)
 # -----------------------------------------------------------------------------
 
 from app.routers.admin import router as admin_router
+from app.routers.admin_actions import router as admin_actions_router
 
 app.include_router(admin_router)
+app.include_router(admin_actions_router)

@@ -109,23 +109,25 @@
                     <td>
                         {% if product.availability.value == 'available' %}
                         <span class="admin-badge admin-badge-success">Disponivel</span>
-                        {% elif product.availability.value == 'out_of_stock' %}
-                        <span class="admin-badge admin-badge-warning">Sem estoque</span>
+                        {% elif product.availability.value == 'unavailable' %}
+                        <span class="admin-badge admin-badge-danger">Indisponivel</span>
                         {% else %}
-                        <span class="admin-badge admin-badge-danger">Descontinuado</span>
+                        <span class="admin-badge admin-badge-warning">Desconhecido</span>
                         {% endif %}
                     </td>
                     <td>{{ product.click_count or 0 }}</td>
                     <td class="actions">
-                        <a href="/admin/products/{{ product.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <a href="/admin/products/{{ product.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
                             ✏️
                         </a>
-                        <a href="/goto/{{ product.affiliate_redirect_slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <a href="/goto/{{ product.affiliate_redirect_slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary" title="Testar link">
                             🔗
                         </a>
-                        <button onclick="deleteItem('/api/v1/products/{{ product.id }}', '{{ product.name }}')" class="admin-btn admin-btn-sm admin-btn-danger">
-                            🗑️
-                        </button>
+                        <form method="POST" action="/admin/products/{{ product.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir produto &quot;{{ product.name }}&quot;?')">
+                            <button type="submit" class="admin-btn admin-btn-sm admin-btn-danger" title="Excluir">
+                                🗑️
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}

@@ -90,15 +90,17 @@
                     <td>{{ post.view_count or 0 }}</td>
                     <td>{{ post.created_at.strftime('%d/%m/%Y') }}</td>
                     <td class="actions">
-                        <a href="/admin/posts/{{ post.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <a href="/admin/posts/{{ post.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
                             ✏️
                         </a>
-                        <a href="/blog/{{ post.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <a href="/blog/{{ post.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary" title="Visualizar">
                             👁️
                         </a>
-                        <button onclick="deleteItem('/api/v1/posts/{{ post.id }}', '{{ post.title }}')" class="admin-btn admin-btn-sm admin-btn-danger">
-                            🗑️
-                        </button>
+                        <form method="POST" action="/admin/posts/{{ post.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir post &quot;{{ post.title }}&quot;?')">
+                            <button type="submit" class="admin-btn admin-btn-sm admin-btn-danger" title="Excluir">
+                                🗑️
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}

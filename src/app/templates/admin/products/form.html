@@ -139,8 +139,8 @@
                     <label for="availability" class="admin-form-label">Disponibilidade</label>
                     <select id="availability" name="availability" class="admin-form-select">
                         <option value="available" {% if not product or product.availability.value == 'available' %}selected{% endif %}>Disponivel</option>
-                        <option value="out_of_stock" {% if product and product.availability.value == 'out_of_stock' %}selected{% endif %}>Sem estoque</option>
-                        <option value="discontinued" {% if product and product.availability.value == 'discontinued' %}selected{% endif %}>Descontinuado</option>
+                        <option value="unavailable" {% if product and product.availability.value == 'unavailable' %}selected{% endif %}>Indisponivel</option>
+                        <option value="unknown" {% if product and product.availability.value == 'unknown' %}selected{% endif %}>Desconhecido</option>
                     </select>
                 </div>
 

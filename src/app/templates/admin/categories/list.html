@@ -42,15 +42,17 @@
                     <td>{{ category.parent.name if category.parent else '-' }}</td>
                     <td>{{ category.posts | length if category.posts else 0 }}</td>
                     <td class="actions">
-                        <a href="/admin/categories/{{ category.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <a href="/admin/categories/{{ category.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
                             ✏️
                         </a>
-                        <a href="/categoria/{{ category.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <a href="/categoria/{{ category.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary" title="Visualizar">
                             👁️
                         </a>
-                        <button onclick="deleteItem('/api/v1/categories/{{ category.id }}', '{{ category.name }}')" class="admin-btn admin-btn-sm admin-btn-danger">
-                            🗑️
-                        </button>
+                        <form method="POST" action="/admin/categories/{{ category.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir categoria &quot;{{ category.name }}&quot;?')">
+                            <button type="submit" class="admin-btn admin-btn-sm admin-btn-danger" title="Excluir">
+                                🗑️
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}

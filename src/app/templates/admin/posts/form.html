@@ -152,11 +152,9 @@
                 <div class="admin-form-group">
                     <label for="type" class="admin-form-label">Tipo</label>
                     <select id="type" name="type" class="admin-form-select">
-                        <option value="review" {% if post and post.type.value == 'review' %}selected{% endif %}>Review</option>
-                        <option value="listicle" {% if not post or post.type.value == 'listicle' %}selected{% endif %}>Listicle</option>
-                        <option value="guide" {% if post and post.type.value == 'guide' %}selected{% endif %}>Guia</option>
-                        <option value="comparison" {% if post and post.type.value == 'comparison' %}selected{% endif %}>Comparativo</option>
-                        <option value="news" {% if post and post.type.value == 'news' %}selected{% endif %}>Novidade</option>
+                        <option value="product_single" {% if post and post.type.value == 'product_single' %}selected{% endif %}>Review de Produto</option>
+                        <option value="listicle" {% if not post or post.type.value == 'listicle' %}selected{% endif %}>Listicle (Top 10)</option>
+                        <option value="guide" {% if post and post.type.value == 'guide' %}selected{% endif %}>Guia de Compra</option>
                     </select>
                 </div>
 

@@ -94,13 +94,15 @@
                         {% endif %}
                     </td>
                     <td class="actions">
-                        <a href="/admin/users/{{ user.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
-                            Editar
+                        <a href="/admin/users/{{ user.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
+                            ✏️
                         </a>
                         {% if user.id != current_user.id %}
-                        <button onclick="deleteItem('/api/v1/users/{{ user.id }}', '{{ user.name }}')" class="admin-btn admin-btn-sm admin-btn-danger">
-                            Excluir
-                        </button>
+                        <form method="POST" action="/admin/users/{{ user.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir usuario &quot;{{ user.name }}&quot;?')">
+                            <button type="submit" class="admin-btn admin-btn-sm admin-btn-danger" title="Excluir">
+                                🗑️
+                            </button>
+                        </form>
                         {% endif %}
                     </td>
                 </tr>
