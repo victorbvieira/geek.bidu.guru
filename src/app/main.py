@@ -7,10 +7,11 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -100,20 +101,80 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 # -----------------------------------------------------------------------------
 
 
+def _is_api_request(request: Request) -> bool:
+    """Verifica se e uma requisicao de API (retorna JSON)."""
+    accept = request.headers.get("accept", "")
+    return (
+        request.url.path.startswith("/api/")
+        or "application/json" in accept
+        or request.url.path == "/health"
+    )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    """Handler para HTTPException (404, 403, etc)."""
+    # API requests retornam JSON
+    if _is_api_request(request):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
+    # SSR requests retornam HTML
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
+        return templates.TemplateResponse(
+            request=request,
+            name="errors/404.html",
+            context={
+                "title": "Pagina nao encontrada - geek.bidu.guru",
+                "description": "A pagina que voce procura nao existe",
+            },
+            status_code=404,
+        )
+
+    # Outros erros HTTP retornam JSON por enquanto
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handler para erros de validacao Pydantic."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handler global para excecoes nao tratadas."""
     logger.exception(f"Erro nao tratado: {exc}")
 
-    if settings.debug:
+    # API requests retornam JSON
+    if _is_api_request(request):
+        if settings.debug:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(exc), "type": type(exc).__name__},
+            )
         return JSONResponse(
             status_code=500,
-            content={"detail": str(exc), "type": type(exc).__name__},
+            content={"detail": "Erro interno do servidor"},
         )
 
-    return JSONResponse(
+    # SSR requests retornam HTML
+    return templates.TemplateResponse(
+        request=request,
+        name="errors/500.html",
+        context={
+            "title": "Erro interno - geek.bidu.guru",
+            "description": "Ocorreu um erro interno",
+        },
         status_code=500,
-        content={"detail": "Erro interno do servidor"},
     )
 
 

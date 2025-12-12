@@ -466,3 +466,271 @@ section {
         max-width: 300px;
     }
 }
+
+/* -----------------------------------------------------------------------------
+   Product Card Component
+   ----------------------------------------------------------------------------- */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
+}
+
+.product-card:hover {
+    border-color: var(--color-primary-500);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.product-card.unavailable {
+    opacity: 0.6;
+}
+
+.product-card .product-image {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    background: var(--bg-tertiary);
+}
+
+.product-card .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: var(--space-4);
+}
+
+.product-card .product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+}
+
+.platform-badge {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    text-transform: uppercase;
+}
+
+.platform-amazon { background: #FF9900; color: #000; }
+.platform-mercadolivre { background: #FFE600; color: #000; }
+.platform-shopee { background: #EE4D2D; color: #fff; }
+.platform-unknown { background: var(--bg-tertiary); color: var(--text-primary); }
+
+.product-card .product-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    flex: 1;
+}
+
+.product-card .product-name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.product-card .product-name a {
+    color: var(--text-primary);
+}
+
+.product-card .product-name a:hover {
+    color: var(--color-primary-400);
+}
+
+.product-card .product-description {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-card .product-rating {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.product-card .star { color: var(--text-muted); }
+.product-card .star.filled { color: var(--color-accent-500); }
+.product-card .rating-value {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-left: var(--space-1);
+}
+
+.product-card .product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: auto;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-color);
+}
+
+.product-card .product-price {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1);
+}
+
+.product-card .product-price .currency {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.product-card .product-price .amount {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-success);
+}
+
+.btn-cta {
+    background: var(--color-accent-500);
+    color: var(--bg-primary);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    transition: background var(--transition-fast);
+}
+
+.btn-cta:hover {
+    background: var(--color-accent-600);
+    color: var(--bg-primary);
+}
+
+/* -----------------------------------------------------------------------------
+   Post Card Component
+   ----------------------------------------------------------------------------- */
+.post-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-base);
+}
+
+.post-card:hover {
+    border-color: var(--color-primary-500);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.post-card .post-image {
+    position: relative;
+    display: block;
+    aspect-ratio: 16/9;
+    background: var(--bg-tertiary);
+}
+
+.post-card .post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.post-type-badge {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    border-radius: var(--border-radius);
+    background: var(--color-primary-500);
+    color: var(--text-primary);
+}
+
+.post-type-review { background: var(--color-secondary-500); }
+.post-type-listicle { background: var(--color-primary-500); }
+.post-type-guide { background: var(--color-success); }
+.post-type-comparison { background: var(--color-warning); }
+.post-type-news { background: var(--color-accent-500); color: var(--bg-primary); }
+
+.post-card .post-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    flex: 1;
+}
+
+.post-card .post-category {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-primary-400);
+    letter-spacing: 0.5px;
+}
+
+.post-card .post-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.post-card .post-title a {
+    color: var(--text-primary);
+}
+
+.post-card .post-title a:hover {
+    color: var(--color-primary-400);
+}
+
+.post-card .post-excerpt {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.post-card .post-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: auto;
+    padding-top: var(--space-3);
+}
+
+/* -----------------------------------------------------------------------------
+   CSS Variables Aliases (for legacy templates)
+   ----------------------------------------------------------------------------- */
+:root {
+    --color-primary: var(--color-primary-500);
+    --color-primary-dark: var(--color-primary-700);
+    --color-bg-card: var(--bg-card);
+    --color-text: var(--text-primary);
+    --color-text-muted: var(--text-secondary);
+    --color-border: var(--border-color);
+    --color-danger: var(--color-error);
+}

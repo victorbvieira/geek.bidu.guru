@@ -1,0 +1,80 @@
+{#
+  Component: Post Card
+
+  Exibe um card de post do blog.
+
+  Parametros:
+    - post: Objeto Post com:
+      - title: Titulo do post
+      - slug: Slug para URL
+      - subtitle: Subtitulo/resumo
+      - featured_image_url: URL da imagem destacada
+      - publish_at: Data de publicacao
+      - type: Tipo (review, listicle, guide, comparison, news)
+      - category: Categoria do post
+      - view_count: Numero de visualizacoes
+
+  Uso:
+    {% include "components/post_card.html" with post=post %}
+#}
+
+<article class="post-card">
+    <!-- Imagem -->
+    {% if post.featured_image_url %}
+    <a href="/blog/{{ post.slug }}" class="post-image">
+        <img src="{{ post.featured_image_url }}"
+             alt="{{ post.title }}"
+             loading="lazy"
+             width="400"
+             height="225">
+
+        <!-- Badge de tipo -->
+        {% if post.type %}
+        <span class="post-type-badge post-type-{{ post.type.value }}">
+            {% if post.type.value == 'review' %}Review
+            {% elif post.type.value == 'listicle' %}Lista
+            {% elif post.type.value == 'guide' %}Guia
+            {% elif post.type.value == 'comparison' %}Comparativo
+            {% elif post.type.value == 'news' %}Novidade
+            {% else %}Artigo
+            {% endif %}
+        </span>
+        {% endif %}
+    </a>
+    {% endif %}
+
+    <!-- Conteudo -->
+    <div class="post-content">
+        <!-- Categoria -->
+        {% if post.category %}
+        <a href="/categoria/{{ post.category.slug }}" class="post-category">
+            {{ post.category.name }}
+        </a>
+        {% endif %}
+
+        <!-- Titulo -->
+        <h2 class="post-title">
+            <a href="/blog/{{ post.slug }}">{{ post.title }}</a>
+        </h2>
+
+        <!-- Subtitulo/Resumo -->
+        {% if post.subtitle %}
+        <p class="post-excerpt">{{ post.subtitle }}</p>
+        {% endif %}
+
+        <!-- Meta -->
+        <div class="post-meta">
+            {% if post.publish_at %}
+            <time class="post-date" datetime="{{ post.publish_at.isoformat() }}">
+                {{ post.publish_at.strftime('%d/%m/%Y') }}
+            </time>
+            {% endif %}
+
+            {% if post.view_count %}
+            <span class="post-views">
+                {{ post.view_count }} views
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</article>

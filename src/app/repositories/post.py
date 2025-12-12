@@ -116,3 +116,55 @@ class PostRepository(BaseRepository[Post]):
             query = query.where(Post.id != exclude_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def search(
+        self,
+        query: str,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[Post]:
+        """
+        Busca posts publicados por termo.
+
+        Busca em: title, subtitle, content, seo_focus_keyword.
+        Retorna apenas posts publicados.
+        """
+        search_term = f"%{query.lower()}%"
+        stmt = (
+            select(Post)
+            .where(
+                Post.status == PostStatus.PUBLISHED,
+                Post.publish_at <= datetime.now(UTC),
+            )
+            .where(
+                func.lower(Post.title).like(search_term)
+                | func.lower(Post.subtitle).like(search_term)
+                | func.lower(Post.content).like(search_term)
+                | func.lower(Post.seo_focus_keyword).like(search_term)
+            )
+            .order_by(Post.publish_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_search(self, query: str) -> int:
+        """Conta resultados de busca."""
+        search_term = f"%{query.lower()}%"
+        stmt = (
+            select(func.count())
+            .select_from(Post)
+            .where(
+                Post.status == PostStatus.PUBLISHED,
+                Post.publish_at <= datetime.now(UTC),
+            )
+            .where(
+                func.lower(Post.title).like(search_term)
+                | func.lower(Post.subtitle).like(search_term)
+                | func.lower(Post.content).like(search_term)
+                | func.lower(Post.seo_focus_keyword).like(search_term)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()

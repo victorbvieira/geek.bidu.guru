@@ -1,0 +1,99 @@
+{#
+  Component: Product Card
+
+  Exibe um card de produto de afiliado.
+
+  Parametros:
+    - product: Objeto Product com:
+      - name: Nome do produto
+      - slug: Slug para URL
+      - short_description: Descricao curta
+      - main_image_url: URL da imagem principal
+      - price: Preco atual
+      - currency: Moeda (BRL)
+      - platform: Plataforma (amazon, mercadolivre, shopee)
+      - affiliate_redirect_slug: Slug para /goto/
+      - rating: Avaliacao (0-5)
+      - availability: Disponibilidade
+    - post_id: UUID do post de origem (opcional, para tracking)
+
+  Uso:
+    {% include "components/product_card.html" with product=product %}
+#}
+
+<article class="product-card {{ 'unavailable' if product.availability != 'available' else '' }}">
+    <!-- Imagem -->
+    <a href="/goto/{{ product.affiliate_redirect_slug }}{% if post_id %}?post_id={{ post_id }}{% endif %}"
+       class="product-image"
+       target="_blank"
+       rel="noopener sponsored">
+        {% if product.main_image_url %}
+        <img src="{{ product.main_image_url }}"
+             alt="{{ product.name }}"
+             loading="lazy"
+             width="280"
+             height="280">
+        {% else %}
+        <div class="product-image-placeholder">
+            <span>🎁</span>
+        </div>
+        {% endif %}
+
+        <!-- Badge de plataforma -->
+        <span class="platform-badge platform-{{ product.platform.value if product.platform else 'unknown' }}">
+            {% if product.platform.value == 'amazon' %}Amazon
+            {% elif product.platform.value == 'mercadolivre' %}Mercado Livre
+            {% elif product.platform.value == 'shopee' %}Shopee
+            {% else %}Loja
+            {% endif %}
+        </span>
+    </a>
+
+    <!-- Conteudo -->
+    <div class="product-content">
+        <h3 class="product-name">
+            <a href="/goto/{{ product.affiliate_redirect_slug }}{% if post_id %}?post_id={{ post_id }}{% endif %}"
+               target="_blank"
+               rel="noopener sponsored">
+                {{ product.name }}
+            </a>
+        </h3>
+
+        {% if product.short_description %}
+        <p class="product-description">{{ product.short_description }}</p>
+        {% endif %}
+
+        <!-- Rating -->
+        {% if product.rating %}
+        <div class="product-rating" aria-label="Avaliacao: {{ product.rating }} de 5">
+            {% for i in range(5) %}
+                {% if i < product.rating|int %}
+                <span class="star filled">★</span>
+                {% elif i < product.rating %}
+                <span class="star half">★</span>
+                {% else %}
+                <span class="star empty">☆</span>
+                {% endif %}
+            {% endfor %}
+            <span class="rating-value">{{ "%.1f"|format(product.rating) }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Preco e CTA -->
+        <div class="product-footer">
+            {% if product.price %}
+            <div class="product-price">
+                <span class="currency">{{ product.currency or 'R$' }}</span>
+                <span class="amount">{{ "%.2f"|format(product.price) }}</span>
+            </div>
+            {% endif %}
+
+            <a href="/goto/{{ product.affiliate_redirect_slug }}{% if post_id %}?post_id={{ post_id }}{% endif %}"
+               class="btn btn-cta"
+               target="_blank"
+               rel="noopener sponsored">
+                Ver Oferta
+            </a>
+        </div>
+    </div>
+</article>
