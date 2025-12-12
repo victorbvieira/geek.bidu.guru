@@ -2,14 +2,16 @@
 Schemas para Product (produtos de afiliados).
 """
 
+import re
 from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import Field, HttpUrl, field_validator
+from pydantic import Field, field_validator
 
 from app.models.product import PriceRange, ProductAvailability, ProductPlatform
 from app.schemas.base import BaseSchema, ResponseSchema
+from app.utils.sanitize import sanitize_text, sanitize_slug
 
 
 # -----------------------------------------------------------------------------
@@ -29,6 +31,36 @@ class ProductBase(BaseSchema):
     price_range: PriceRange | None = Field(None, description="Faixa de preco")
     main_image_url: str | None = Field(None, max_length=500, description="URL imagem principal")
     images: list[str] = Field(default_factory=list, description="URLs imagens adicionais")
+
+    @field_validator("name")
+    @classmethod
+    def sanitize_name(cls, v: str) -> str:
+        """Sanitiza nome removendo scripts/HTML malicioso."""
+        sanitized = sanitize_text(v)
+        if not sanitized or len(sanitized) < 5:
+            raise ValueError("Nome invalido apos sanitizacao")
+        return sanitized
+
+    @field_validator("slug")
+    @classmethod
+    def validate_and_sanitize_slug(cls, v: str) -> str:
+        """Valida e sanitiza slug."""
+        sanitized = sanitize_slug(v)
+        if not sanitized or len(sanitized) < 5:
+            raise ValueError("Slug invalido - deve conter apenas letras minusculas, numeros e hifens")
+
+        if not re.match(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", sanitized):
+            raise ValueError("Slug deve conter apenas letras minusculas, numeros e hifens")
+
+        return sanitized
+
+    @field_validator("short_description")
+    @classmethod
+    def sanitize_short_description(cls, v: str | None) -> str | None:
+        """Sanitiza descricao curta removendo scripts/HTML malicioso."""
+        if v is None:
+            return None
+        return sanitize_text(v)
 
 
 # -----------------------------------------------------------------------------
@@ -96,6 +128,40 @@ class ProductUpdate(BaseSchema):
     availability: ProductAvailability | None = None
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2)
     review_count: int | None = Field(None, ge=0)
+
+    @field_validator("name")
+    @classmethod
+    def sanitize_name(cls, v: str | None) -> str | None:
+        """Sanitiza nome removendo scripts/HTML malicioso."""
+        if v is None:
+            return None
+        sanitized = sanitize_text(v)
+        if not sanitized or len(sanitized) < 5:
+            raise ValueError("Nome invalido apos sanitizacao")
+        return sanitized
+
+    @field_validator("slug")
+    @classmethod
+    def validate_and_sanitize_slug(cls, v: str | None) -> str | None:
+        """Valida e sanitiza slug."""
+        if v is None:
+            return None
+        sanitized = sanitize_slug(v)
+        if not sanitized or len(sanitized) < 5:
+            raise ValueError("Slug invalido - deve conter apenas letras minusculas, numeros e hifens")
+
+        if not re.match(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", sanitized):
+            raise ValueError("Slug deve conter apenas letras minusculas, numeros e hifens")
+
+        return sanitized
+
+    @field_validator("short_description")
+    @classmethod
+    def sanitize_short_description(cls, v: str | None) -> str | None:
+        """Sanitiza descricao curta removendo scripts/HTML malicioso."""
+        if v is None:
+            return None
+        return sanitize_text(v)
 
 
 class ProductUpdatePrice(BaseSchema):

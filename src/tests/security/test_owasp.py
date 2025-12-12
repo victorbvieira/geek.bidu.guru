@@ -91,16 +91,13 @@ class TestOWASP01BrokenAccessControl:
             )
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="VULNERABILIDADE: Endpoint DELETE /users nao exige autenticacao - corrigir!")
     async def test_idor_user_cannot_access_other_user_data(self, client):
         """
         Deve impedir IDOR - acesso a dados de outros usuarios.
 
         CWE-639: Authorization Bypass Through User-Controlled Key
 
-        VULNERABILIDADE ENCONTRADA:
-        - DELETE /api/v1/users/{id} permite deletar qualquer usuario sem autenticacao
-        - Correcao necessaria: Adicionar Depends(require_role(UserRole.ADMIN))
+        CORRIGIDO: DELETE /api/v1/users/{id} agora exige autenticacao com role ADMIN.
         """
         # Cria dois usuarios
         password = "senha123456"
@@ -397,20 +394,14 @@ class TestOWASP03Injection:
             )
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="VULNERABILIDADE: API armazena XSS sem sanitizar - deve sanitizar na renderizacao")
     async def test_xss_in_user_input(self, client):
         """
         Deve sanitizar XSS em inputs de usuario.
 
         CWE-79: Cross-site Scripting (XSS)
 
-        NOTA: O armazenamento de dados "brutos" pode ser aceitavel SE:
-        - A sanitizacao ocorre na RENDERIZACAO (template)
-        - O conteudo nunca e retornado em contexto HTML executavel
-
-        VULNERABILIDADE POTENCIAL:
-        - API retorna dados brutos com scripts
-        - Verificar se templates sanitizam na renderizacao
+        CORRIGIDO: Campos de texto (name, description) agora sao sanitizados
+        via Pydantic validators usando bleach para remover tags HTML/scripts.
         """
         xss_payloads = [
             "<script>alert('XSS')</script>",
@@ -423,23 +414,39 @@ class TestOWASP03Injection:
             "<a href='javascript:alert(1)'>click</a>",
         ]
 
-        for payload in xss_payloads:
+        import uuid
+        for i, payload in enumerate(xss_payloads):
             # Tenta criar categoria com nome malicioso
+            # O nome precisa ter pelo menos 2 caracteres apos sanitizacao
+            # Usa UUID para garantir unicidade do nome
+            unique_id = str(uuid.uuid4())[:8]
+            test_name = f"Test XSS {unique_id} {payload}"
             response = await client.post(
                 "/api/v1/categories",
                 json={
-                    "name": payload,
-                    "slug": f"test-xss-{hash(payload) % 10000}",
+                    "name": test_name,
+                    "slug": f"test-xss-{unique_id}",
                     "description": payload,
                 },
             )
 
-            # Se criou, verifica que o script nao esta no response
+            # Deve criar com sucesso (status 201) com dados sanitizados
+            # ou rejeitar (422) se o nome ficar muito curto apos sanitizacao
+            assert response.status_code in [201, 422], (
+                f"Status inesperado {response.status_code} para payload: {payload}"
+            )
+
             if response.status_code == 201:
                 data = response.json()
-                # Script nao deve ser executavel no retorno
+                # Script nao deve estar presente no retorno
                 assert "<script>" not in data.get("name", ""), (
-                    f"XSS nao sanitizado: {payload}"
+                    f"XSS nao sanitizado no name: {payload}"
+                )
+                assert "<script>" not in data.get("description", ""), (
+                    f"XSS nao sanitizado no description: {payload}"
+                )
+                assert "onerror" not in data.get("name", ""), (
+                    f"XSS event handler nao sanitizado: {payload}"
                 )
 
     @pytest.mark.asyncio
@@ -563,48 +570,54 @@ class TestOWASP04InsecureDesign:
         assert response.status_code in [200, 400, 422]
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="VULNERABILIDADE: Slugs nao sao validados - adicionar validacao de formato")
     async def test_slug_format_validation(self, client):
         """
         Deve validar formato de slug.
 
         CWE-20: Improper Input Validation
 
-        VULNERABILIDADE ENCONTRADA:
-        - Slugs com path traversal (../) sao aceitos
-        - Slugs com espacos sao aceitos
-        - Slugs com caracteres especiais sao aceitos
-
-        Correcao necessaria: Adicionar validacao de slug no schema Pydantic
-        - Apenas letras minusculas, numeros e hifens
-        - Sem caracteres especiais ou path traversal
+        CORRIGIDO: Slugs agora sao validados e sanitizados via Pydantic validators.
+        - Apenas letras minusculas, numeros e hifens sao aceitos
+        - Path traversal (../) e removido
+        - Caracteres especiais sao convertidos em hifens
         """
         invalid_slugs = [
-            "../../../etc/passwd",
-            "slug with spaces",
-            "UPPERCASE",
-            "slug<script>",
-            "slug;drop table",
-            "",
-            "a" * 500,  # Muito longo
+            ("../../../etc/passwd", "path-traversal"),
+            ("slug with spaces", "espacos"),
+            ("UPPERCASE", "maiusculas"),
+            ("slug<script>", "script-tag"),
+            ("slug;drop table", "sql-injection"),
+            ("", "vazio"),
+            ("a" * 500, "muito-longo"),
         ]
 
-        for slug in invalid_slugs:
+        for slug, descricao in invalid_slugs:
             response = await client.post(
                 "/api/v1/categories",
                 json={
-                    "name": "Test",
+                    "name": f"Test {descricao}",
                     "slug": slug,
                 },
             )
 
-            # Deve rejeitar ou sanitizar slugs invalidos
-            # Status 400/422 = rejeitado, 201 = aceito (deve ser sanitizado)
+            # Slugs invalidos devem ser rejeitados (422) ou sanitizados (201)
+            assert response.status_code in [201, 400, 422], (
+                f"Status inesperado {response.status_code} para slug: {slug}"
+            )
+
             if response.status_code == 201:
                 data = response.json()
-                # Se aceitou, deve ter sanitizado
-                assert ".." not in data.get("slug", "")
-                assert "<" not in data.get("slug", "")
+                stored_slug = data.get("slug", "")
+                # Se aceitou, deve ter sanitizado - verificar que nao tem caracteres perigosos
+                assert ".." not in stored_slug, f"Path traversal nao sanitizado: {slug}"
+                assert "<" not in stored_slug, f"Script tag nao sanitizada: {slug}"
+                assert ";" not in stored_slug, f"SQL injection char nao sanitizado: {slug}"
+                assert " " not in stored_slug, f"Espacos nao sanitizados: {slug}"
+                # Slug sanitizado deve conter apenas letras minusculas, numeros e hifens
+                import re
+                assert re.match(r"^[a-z0-9-]+$", stored_slug), (
+                    f"Slug contem caracteres invalidos: {stored_slug}"
+                )
 
     @pytest.mark.asyncio
     async def test_email_format_validation(self, client):
