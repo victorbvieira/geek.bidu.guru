@@ -230,10 +230,10 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 2.4.1 | Adicionar n8n ao docker-compose | DevOps Engineer | 1.1.6 | :white_large_square: | Servico separado |
-| 2.4.2 | Configurar credenciais n8n | Automation Engineer | 2.4.1 | :white_large_square: | API keys seguras |
-| 2.4.3 | Configurar webhook do backend | Automation Engineer | 2.4.2 | :white_large_square: | Endpoint /webhooks/n8n |
-| 2.4.4 | Criar usuario automation no sistema | Backend Developer | 1.4.3, 2.4.3 | :white_large_square: | JWT para n8n |
+| 2.4.1 | Adicionar n8n ao docker-compose | DevOps Engineer | 1.1.6 | :white_check_mark: | Usando n8n existente na VPS |
+| 2.4.2 | Configurar credenciais n8n | Automation Engineer | 2.4.1 | :white_check_mark: | N8N_API_KEY no config.py |
+| 2.4.3 | Configurar webhook do backend | Automation Engineer | 2.4.2 | :white_check_mark: | routers/webhooks.py (4 endpoints) |
+| 2.4.4 | Criar usuario automation no sistema | Backend Developer | 1.4.3, 2.4.3 | :white_check_mark: | Migration 004 (automation user) |
 
 ## 2.5 n8n - Workflow A (Post Diario)
 
@@ -273,7 +273,7 @@
 | 2.8.1 | Configurar conta GA4 | Data Analyst | 1.8.1 | :white_check_mark: | config.py: ga4_measurement_id |
 | 2.8.2 | Implementar gtag.js no base.html | Data Analyst | 2.8.1 | :white_check_mark: | Condicional se GA4 configurado |
 | 2.8.3 | Implementar eventos customizados | Data Analyst | 2.8.2 | :white_check_mark: | affiliate_click, share, scroll, newsletter |
-| 2.8.4 | Configurar Google Search Console | SEO Specialist | 2.8.1 | :white_large_square: | Verificacao |
+| 2.8.4 | Configurar Google Search Console | SEO Specialist | 2.8.1 | :white_check_mark: | Verificado via CNAME DNS |
 | 2.8.5 | Criar static/js/analytics.js | Data Analyst | 2.8.3 | :white_check_mark: | GeekAnalytics namespace completo |
 | 2.8.6 | Implementar tracking de scroll | Data Analyst | 2.8.5 | :white_check_mark: | 25%, 50%, 75%, 90%, 100% |
 
@@ -464,6 +464,20 @@
 | Fase 4 | 45 | 4 | 41 | 9% |
 | **TOTAL** | **230** | **140** | **90** | **61%** |
 
+## Avaliacao do Projeto (2025-12-12)
+
+### O que foi concluido
+- **Fase 1 (100%)**: Base tecnica completa - FastAPI, PostgreSQL, autenticacao JWT, CRUD, SSR, admin panel, testes OWASP
+- **Fase 2 (44%)**: SEO tecnico (sitemap, robots, canonical, breadcrumbs, redirects, Schema.org, OG images, share buttons, GA4)
+- **Fase 3 (48%)**: LiteLLM multi-provider, cache Redis, sistema de prompts/personas
+
+### Bloqueios Atuais
+- **APIs de Afiliados (2.7.2-2.7.3)**: Integracao Amazon/MercadoLivre requer credenciais de API
+
+### Concluidos nesta sessao
+- **n8n Base (2.4.1-2.4.4)**: Webhooks + usuario automation configurados
+- **Google Search Console (2.8.4)**: Meta tag de verificacao suportada
+
 ---
 
 # RESUMO POR AGENTE
@@ -488,41 +502,75 @@
 
 Com base no progresso atual, as proximas tarefas prioritarias sao:
 
-## Fase 1 (Base Tecnica - 100% concluido) :white_check_mark:
-1. ~~**1.0.1** - Criar projeto no Easypanel (VPS)~~ :white_check_mark:
-2. ~~**1.0.4** - Configurar dominio no Traefik (VPS)~~ :white_check_mark:
-3. ~~**1.0.5** - Configurar variaveis de ambiente (VPS)~~ :white_check_mark:
-4. ~~**1.10.5** - Revisar checklist OWASP Top 10~~ :white_check_mark:
+## Opcao A: Tarefas que podem ser feitas AGORA (sem dependencias externas)
 
-## Fase 2 (SEO & Automacao - 33% concluido)
-1. ~~**2.1.3** - Canonical URLs~~ :white_check_mark:
-2. ~~**2.2.x** - Schema.org / Structured Data~~ :white_check_mark: (todos os 6 schemas)
-3. ~~**2.1.6** - Redirects 301 (old URLs)~~ :white_check_mark:
-4. ~~**2.3.3** - Gerador de imagens OG dinamicas~~ :white_check_mark:
-5. ~~**2.3.4** - Botoes de share (social)~~ :white_check_mark:
-6. **2.4.x** - Configuracao n8n
-7. **2.7.2** - Integracao API Amazon
+### Prioridade Alta - Completar Fase 2
+1. **3.2.x** - Prompts e Templates otimizados (5 tarefas)
+   - Prompts para diferentes tipos de post (review, listicle, guia)
+   - Sistema de variacao de tom por persona
+   - Templates reutilizaveis
+
+### Prioridade Media - Iniciar Fase 4
+2. **4.4.3** - Double opt-in newsletter (email de confirmacao)
+3. **4.4.5** - Unsubscribe (LGPD compliance)
+4. **4.7.2** - Pagina de politica de privacidade
+5. **4.7.3** - Cookie consent banner (LGPD)
+
+### Prioridade Baixa - Otimizacoes
+6. **4.6.1** - Core Web Vitals (LCP < 2.5s)
+7. **4.6.2** - Lazy loading de imagens
+
+## Opcao B: Tarefas que REQUEREM acao do usuario
+
+### APIs de Afiliados
+- **2.7.2** - Amazon Product Advertising API (requer credenciais)
+- **2.7.3** - Mercado Livre API (requer CLIENT_ID/SECRET)
+
+## Fase 1 (Base Tecnica - 100% concluido) :white_check_mark:
+
+## Fase 2 (SEO & Automacao - 48% concluido)
+- :white_check_mark: SEO Tecnico completo (sitemap, robots, canonical, breadcrumbs, redirects)
+- :white_check_mark: Schema.org completo (6 schemas JSON-LD)
+- :white_check_mark: Open Graph & Social (OG images, share buttons)
+- :white_check_mark: GA4 configurado (gtag.js, eventos customizados, analytics.js)
+- :white_check_mark: n8n Base (webhooks + usuario automation)
+- :white_large_square: n8n Workflows A-D (prontos para implementar)
+- :white_large_square: APIs de Afiliados (dependem de credenciais)
 
 ## Fase 3 (IA & Internacionalizacao - 48% concluido)
-> :white_check_mark: **CONCLUIDO**: Integracao LiteLLM e Cache Redis
-
-1. ~~**3.1.x** - Integracao LiteLLM~~ :white_check_mark: (14 tarefas)
-2. ~~**3.5.x** - Cache Redis~~ :white_check_mark: (6 tarefas)
-3. **3.2.x** - Prompts e Templates (parcialmente em services/prompts.py)
-4. **3.3.x** - Workflow E (Pesquisa de Produtos)
-5. **3.4.x** - Workflow F (Monitor de Deals)
-6. **3.6.x** - Internacionalizacao (i18n)
+- :white_check_mark: LiteLLM multi-provider (14 tarefas)
+- :white_check_mark: Cache Redis (6 tarefas)
+- :white_large_square: Prompts otimizados (5 tarefas) - **PODE FAZER AGORA**
+- :white_large_square: Workflows E/F (dependem de n8n base - PRONTO)
+- :white_large_square: i18n (5 tarefas)
 
 ---
 
-**Versao**: 3.4
+**Versao**: 3.6
 **Ultima atualizacao**: 2025-12-12
+**Testes**: 498 passando
 **Projeto**: geek.bidu.guru
-**Testes**: 477 passando
 
 ---
 
 # CHANGELOG
+
+## v3.6 (2025-12-12)
+- :white_check_mark: n8n Base completo (2.4.1-2.4.4)
+  - Webhooks: 4 endpoints em `routers/webhooks.py`
+  - Usuario automation criado via migration 004
+  - Documentacao: `docs/N8N-INTEGRATION.md`
+- :white_check_mark: Google Search Console (2.8.4)
+  - Verificado via CNAME DNS
+  - Meta tag opcional adicionada em base.html
+- :test_tube: 498 testes passando (+12 novos de webhooks)
+
+## v3.5 (2025-12-12)
+- :wrench: Corrigido conflito de dependencias: `httpx==0.27.2` (litellm requer <0.28.0)
+- :wrench: Criada rede Docker `interna` para comunicacao entre containers
+- :white_check_mark: Containers healthy (app + redis)
+- :memo: Atualizada avaliacao do projeto com bloqueios e proximos passos
+- :test_tube: 486 testes passando (+9)
 
 ## v3.4 (2025-12-12)
 - :white_check_mark: **2.8.1** - Configurar conta GA4 (config.py: ga4_measurement_id)

@@ -57,9 +57,16 @@ class Settings(BaseSettings):
     log_format: Literal["json", "text"] = "json"
 
     # -------------------------------------------------------------------------
-    # Google Analytics 4
+    # Google Analytics 4 & Search Console
     # -------------------------------------------------------------------------
     ga4_measurement_id: str | None = None  # Ex: G-XXXXXXXXXX
+    google_site_verification: str | None = None  # Meta tag para verificacao GSC
+
+    # -------------------------------------------------------------------------
+    # n8n (Automacao)
+    # -------------------------------------------------------------------------
+    n8n_webhook_url: str | None = None  # URL base do n8n na VPS
+    n8n_api_key: str | None = None  # API Key para autenticacao dos webhooks
 
     # -------------------------------------------------------------------------
     # LLM / IA (LiteLLM - suporta multiplos providers)

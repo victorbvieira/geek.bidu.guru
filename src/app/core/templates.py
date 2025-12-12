@@ -30,6 +30,7 @@ def setup_templates(directory: Path) -> Jinja2Templates:
 
     # Adiciona variaveis globais disponiveis em todos os templates
     templates.env.globals["ga4_measurement_id"] = settings.ga4_measurement_id
+    templates.env.globals["google_site_verification"] = settings.google_site_verification
     templates.env.globals["is_production"] = settings.is_production
     templates.env.globals["app_name"] = settings.app_name
 

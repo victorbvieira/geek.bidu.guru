@@ -345,3 +345,12 @@ app.include_router(redirects_router)
 from app.routers.og_images import router as og_images_router
 
 app.include_router(og_images_router)
+
+
+# -----------------------------------------------------------------------------
+# Webhooks n8n (Automacao)
+# -----------------------------------------------------------------------------
+
+from app.routers.webhooks import router as webhooks_router
+
+app.include_router(webhooks_router)
