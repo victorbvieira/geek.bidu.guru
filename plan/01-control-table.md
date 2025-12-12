@@ -49,102 +49,145 @@
 | 1.2.3 | Implementar config.py (Settings) | Backend Developer | 1.2.1 | :white_check_mark: | Pydantic Settings |
 | 1.2.4 | Implementar database.py (conexao) | Backend Developer | 1.2.3 | :white_check_mark: | SQLAlchemy async |
 | 1.2.5 | Configurar requirements.txt | Backend Developer | - | :white_check_mark: | 30+ dependencias |
-| 1.2.6 | Configurar Alembic | Database Architect | 1.2.4 | :white_large_square: | alembic.ini, env.py |
-| 1.2.7 | Implementar exception handlers globais | Backend Developer | 1.2.2 | :white_large_square: | **[NOVO]** HTTPException, ValidationError |
-| 1.2.8 | Configurar logging estruturado (JSON) | Backend Developer | 1.2.2 | :white_large_square: | **[NOVO]** pythonjsonlogger |
+| 1.2.6 | Configurar Alembic | Database Architect | 1.2.4 | :white_check_mark: | alembic.ini, env.py configurados |
+| 1.2.7 | Implementar exception handlers globais | Backend Developer | 1.2.2 | :white_large_square: | HTTPException, ValidationError |
+| 1.2.8 | Configurar logging estruturado (JSON) | Backend Developer | 1.2.2 | :white_large_square: | pythonjsonlogger |
 | 1.2.9 | Implementar health check completo | Backend Developer | 1.2.4 | :white_check_mark: | Verifica DB |
 
 ## 1.3 Banco de Dados - Schema
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.3.1 | Criar modelo User | Database Architect | 1.2.6 | :white_large_square: | Roles: admin, editor, author, automation |
-| 1.3.2 | Criar modelo Post | Database Architect | 1.2.6 | :white_large_square: | UUID, slug, SEO fields |
-| 1.3.3 | Criar modelo Product | Database Architect | 1.2.6 | :white_large_square: | Affiliate links, prices |
-| 1.3.4 | Criar modelo PostProducts (N:N) | Database Architect | 1.3.2, 1.3.3 | :white_large_square: | Relationship table |
-| 1.3.5 | Criar modelo Category | Database Architect | 1.2.6 | :white_large_square: | Slug, parent_id |
-| 1.3.6 | Criar modelo AffiliateClick | Database Architect | 1.3.3 | :white_large_square: | Tracking de cliques |
+| 1.3.1 | Criar modelo User | Database Architect | 1.2.6 | :white_check_mark: | Roles: admin, editor, author, automation |
+| 1.3.2 | Criar modelo Post | Database Architect | 1.2.6 | :white_check_mark: | UUID, slug, SEO fields, status workflow |
+| 1.3.3 | Criar modelo Product | Database Architect | 1.2.6 | :white_check_mark: | Affiliate links, prices, platforms |
+| 1.3.4 | Criar modelo PostProducts (N:N) | Database Architect | 1.3.2, 1.3.3 | :white_check_mark: | Relationship table |
+| 1.3.5 | Criar modelo Category | Database Architect | 1.2.6 | :white_check_mark: | Slug, parent_id, hierarquia |
+| 1.3.6 | Criar modelo AffiliateClick | Database Architect | 1.3.3 | :white_check_mark: | Tracking de cliques |
 | 1.3.7 | Criar modelo Session | Database Architect | 1.2.6 | :white_large_square: | Analytics interno |
-| 1.3.8 | Criar modelo NewsletterSignup | Database Architect | 1.2.6 | :white_large_square: | Email marketing |
-| 1.3.9 | Criar indices otimizados | Database Architect | 1.3.1-1.3.8 | :white_large_square: | Conforme PRD |
-| 1.3.10 | Criar migration inicial | Database Architect | 1.3.9 | :white_large_square: | alembic revision |
-| 1.3.11 | Criar trigger para updated_at automatico | Database Architect | 1.3.10 | :white_large_square: | **[NOVO]** Funcao PL/pgSQL |
-| 1.3.12 | Implementar indice GIN para busca full-text | Database Architect | 1.3.10 | :white_large_square: | **[NOVO]** Posts search |
+| 1.3.8 | Criar modelo NewsletterSignup | Database Architect | 1.2.6 | :white_check_mark: | Email marketing |
+| 1.3.9 | Criar indices otimizados | Database Architect | 1.3.1-1.3.8 | :white_check_mark: | Conforme PRD |
+| 1.3.10 | Criar migration inicial | Database Architect | 1.3.9 | :white_check_mark: | alembic revision aplicada |
+| 1.3.11 | Criar trigger para updated_at automatico | Database Architect | 1.3.10 | :white_large_square: | Funcao PL/pgSQL |
+| 1.3.12 | Implementar indice GIN para busca full-text | Database Architect | 1.3.10 | :white_large_square: | Posts search |
 
 ## 1.4 Backend - Autenticacao
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.4.1 | Implementar utils/security.py | Security Engineer | 1.2.1 | :white_large_square: | bcrypt, JWT |
-| 1.4.2 | Criar Pydantic schemas auth | Backend Developer | 1.4.1 | :white_large_square: | Login, Token, User |
-| 1.4.3 | Implementar api/v1/auth.py | Backend Developer | 1.4.2 | :white_large_square: | /login, /me, /refresh |
-| 1.4.4 | Implementar dependencia get_current_user | Backend Developer | 1.4.3 | :white_large_square: | Decorator/dependency |
-| 1.4.5 | Implementar controle de roles | Security Engineer | 1.4.4 | :white_large_square: | RBAC |
+| 1.4.1 | Implementar core/security.py | Security Engineer | 1.2.1 | :white_check_mark: | bcrypt + JWT (access/refresh tokens) |
+| 1.4.2 | Criar Pydantic schemas auth | Backend Developer | 1.4.1 | :white_check_mark: | TokenResponse, RefreshTokenRequest |
+| 1.4.3 | Implementar api/v1/auth.py | Backend Developer | 1.4.2 | :white_check_mark: | /login, /me, /refresh |
+| 1.4.4 | Implementar dependencia get_current_user | Backend Developer | 1.4.3 | :white_check_mark: | core/deps.py |
+| 1.4.5 | Implementar controle de roles | Security Engineer | 1.4.4 | :white_check_mark: | require_role(), ActiveUser |
 | 1.4.6 | Criar middleware de rate limiting | Security Engineer | 1.2.2 | :white_large_square: | SlowAPI ou custom |
 
 ## 1.5 Backend - CRUD Posts
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.5.1 | Criar Pydantic schemas Post | Backend Developer | 1.3.2 | :white_large_square: | Create, Update, Response |
-| 1.5.2 | Implementar services/post_service.py | Backend Developer | 1.5.1 | :white_large_square: | Business logic |
-| 1.5.3 | Implementar api/v1/posts.py | Backend Developer | 1.5.2 | :white_large_square: | REST CRUD completo |
-| 1.5.4 | Implementar geracao de slug | Backend Developer | 1.5.2 | :white_large_square: | Unique, SEO friendly |
-| 1.5.5 | Implementar paginacao | Backend Developer | 1.5.3 | :white_large_square: | Cursor ou offset |
-| 1.5.6 | Implementar filtros (categoria, status) | Backend Developer | 1.5.3 | :white_large_square: | Query params |
+| 1.5.1 | Criar Pydantic schemas Post | Backend Developer | 1.3.2 | :white_check_mark: | Create, Update, Response, StatusUpdate |
+| 1.5.2 | Implementar repositories/post.py | Backend Developer | 1.5.1 | :white_check_mark: | Business logic no repositorio |
+| 1.5.3 | Implementar api/v1/posts.py | Backend Developer | 1.5.2 | :white_check_mark: | REST CRUD completo |
+| 1.5.4 | Implementar geracao de slug | Backend Developer | 1.5.2 | :white_check_mark: | Unique, SEO friendly |
+| 1.5.5 | Implementar paginacao | Backend Developer | 1.5.3 | :white_check_mark: | Offset-based com PaginatedResponse |
+| 1.5.6 | Implementar filtros (categoria, status) | Backend Developer | 1.5.3 | :white_check_mark: | Query params |
 
 ## 1.6 Backend - CRUD Products
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.6.1 | Criar Pydantic schemas Product | Backend Developer | 1.3.3 | :white_large_square: | Create, Update, Response |
-| 1.6.2 | Implementar services/product_service.py | Backend Developer | 1.6.1 | :white_large_square: | Business logic |
-| 1.6.3 | Implementar api/v1/products.py | Backend Developer | 1.6.2 | :white_large_square: | REST CRUD completo |
-| 1.6.4 | Implementar vinculacao post-product | Backend Developer | 1.5.3, 1.6.3 | :white_large_square: | N:N relationship |
+| 1.6.1 | Criar Pydantic schemas Product | Backend Developer | 1.3.3 | :white_check_mark: | Create, Update, Response, PriceUpdate |
+| 1.6.2 | Implementar repositories/product.py | Backend Developer | 1.6.1 | :white_check_mark: | Business logic |
+| 1.6.3 | Implementar api/v1/products.py | Backend Developer | 1.6.2 | :white_check_mark: | REST CRUD completo |
+| 1.6.4 | Implementar vinculacao post-product | Backend Developer | 1.5.3, 1.6.3 | :white_check_mark: | N:N via post_products |
 
 ## 1.7 Backend - Sistema de Afiliados
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.7.1 | Implementar services/affiliate_service.py | Affiliate Marketing | 1.6.2 | :white_large_square: | Logica de redirect |
-| 1.7.2 | Implementar api/v1/affiliates.py | Backend Developer | 1.7.1 | :white_large_square: | /goto/{slug} |
-| 1.7.3 | Implementar tracking de cliques | Data Analyst | 1.7.2 | :white_large_square: | Salvar em affiliate_clicks |
-| 1.7.4 | Criar endpoint de estatisticas | Data Analyst | 1.7.3 | :white_large_square: | Cliques por produto/post |
+| 1.7.1 | Implementar api/v1/clicks.py | Backend Developer | 1.6.2 | :white_check_mark: | Registro de cliques |
+| 1.7.2 | Implementar rota /goto/{slug} | Backend Developer | 1.7.1 | :white_check_mark: | routers/affiliates.py + 11 testes |
+| 1.7.3 | Implementar tracking de cliques | Data Analyst | 1.7.2 | :white_check_mark: | Salvar em affiliate_clicks |
+| 1.7.4 | Criar endpoint de estatisticas | Data Analyst | 1.7.3 | :white_check_mark: | /api/v1/clicks/analytics |
 
 ## 1.8 Frontend - Templates Base
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.8.1 | Criar templates/base.html | Frontend Developer | 1.2.2 | :white_large_square: | Layout master |
-| 1.8.2 | Criar static/css/main.css | UX/UI Designer | 1.8.1 | :white_large_square: | Design system CSS |
-| 1.8.3 | Criar components/header.html | Frontend Developer | 1.8.1 | :white_large_square: | Navegacao, logo |
-| 1.8.4 | Criar components/footer.html | Frontend Developer | 1.8.1 | :white_large_square: | Links, copyright |
-| 1.8.5 | Criar templates/home.html | Frontend Developer | 1.8.1-1.8.4 | :white_large_square: | Homepage |
-| 1.8.6 | Criar templates/post.html | Frontend Developer | 1.8.1-1.8.4 | :white_large_square: | Pagina de post |
-| 1.8.7 | Criar templates/category.html | Frontend Developer | 1.8.1-1.8.4 | :white_large_square: | Listagem categoria |
+| 1.8.1 | Criar templates/base.html | Frontend Developer | 1.2.2 | :white_check_mark: | Layout master com SEO |
+| 1.8.2 | Criar static/css/main.css | UX/UI Designer | 1.8.1 | :white_check_mark: | Design system CSS |
+| 1.8.3 | Criar components/header.html | Frontend Developer | 1.8.1 | :white_check_mark: | Navegacao, logo |
+| 1.8.4 | Criar components/footer.html | Frontend Developer | 1.8.1 | :white_check_mark: | Links, copyright |
+| 1.8.5 | Criar templates/home.html | Frontend Developer | 1.8.1-1.8.4 | :white_check_mark: | Homepage |
+| 1.8.6 | Criar templates/blog/post.html | Frontend Developer | 1.8.1-1.8.4 | :white_check_mark: | Pagina de post |
+| 1.8.7 | Criar templates/blog/category.html | Frontend Developer | 1.8.1-1.8.4 | :white_check_mark: | Listagem categoria |
 | 1.8.8 | Criar components/product_card.html | Frontend Developer | 1.8.2 | :white_large_square: | Card de produto |
 | 1.8.9 | Criar components/post_card.html | Frontend Developer | 1.8.2 | :white_large_square: | Card de post |
+| 1.8.10 | Criar templates/blog/list.html | Frontend Developer | 1.8.1-1.8.4 | :white_check_mark: | **[NOVO]** Listagem de posts |
+| 1.8.11 | Criar templates/blog/categories.html | Frontend Developer | 1.8.1-1.8.4 | :white_check_mark: | **[NOVO]** Listagem de categorias |
 
 ## 1.9 Frontend - Rotas SSR
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.9.1 | Implementar routers/home.py | Frontend Developer | 1.8.5 | :white_large_square: | GET / |
-| 1.9.2 | Implementar routers/post.py | Frontend Developer | 1.8.6 | :white_large_square: | GET /post/{slug} |
-| 1.9.3 | Implementar routers/category.py | Frontend Developer | 1.8.7 | :white_large_square: | GET /categoria/{slug} |
+| 1.9.1 | Implementar rota / (home) | Frontend Developer | 1.8.5 | :white_check_mark: | GET / em main.py |
+| 1.9.2 | Implementar routers/blog.py | Frontend Developer | 1.8.6 | :white_check_mark: | GET /blog/{slug} |
+| 1.9.3 | Implementar rota /categoria/{slug} | Frontend Developer | 1.8.7 | :white_check_mark: | GET /categoria/{slug} |
 | 1.9.4 | Implementar routers/search.py | Frontend Developer | 1.8.5 | :white_large_square: | GET /busca |
 | 1.9.5 | Implementar paginas de erro | Frontend Developer | 1.8.1 | :white_large_square: | 404, 500 |
+| 1.9.6 | Implementar rota /blog | Frontend Developer | 1.8.10 | :white_check_mark: | **[NOVO]** Listagem de posts |
+| 1.9.7 | Implementar rota /categorias | Frontend Developer | 1.8.11 | :white_check_mark: | **[NOVO]** Listagem de categorias |
 
 ## 1.10 Seguranca Base
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.10.1 | Configurar CORS adequado | Security Engineer | 1.2.2 | :white_large_square: | Nao usar * em prod |
-| 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.2.2 | :white_large_square: | CSP, HSTS, etc (via FastAPI) |
-| 1.10.3 | Sanitizar inputs | Security Engineer | 1.5.3, 1.6.3 | :white_large_square: | XSS prevention |
+| 1.10.1 | Configurar CORS adequado | Security Engineer | 1.2.2 | :white_check_mark: | Configurado em main.py |
+| 1.10.2 | Implementar headers de seguranca | Security Engineer | 1.2.2 | :white_large_square: | CSP, HSTS, etc |
+| 1.10.3 | Sanitizar inputs | Security Engineer | 1.5.3, 1.6.3 | :white_check_mark: | Via Pydantic |
 | 1.10.4 | Validar uploads (se houver) | Security Engineer | 1.5.3 | :white_large_square: | Tipo, tamanho |
 | 1.10.5 | Revisar checklist OWASP Top 10 | Security Engineer | 1.10.1-1.10.4 | :white_large_square: | Auditoria |
-| 1.10.6 | Definir Content Security Policy (CSP) | Security Engineer | 1.10.2 | :white_large_square: | **[NOVO]** Politica detalhada |
+| 1.10.6 | Definir Content Security Policy (CSP) | Security Engineer | 1.10.2 | :white_large_square: | Politica detalhada |
+
+## 1.11 Painel Administrativo (Admin)
+
+> **NOVA SECAO**: Interface web para gerenciamento de conteudo com controle de acesso por roles.
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 1.11.1 | Criar templates/admin/base.html | Frontend Developer | 1.8.1, 1.4.5 | :white_large_square: | Layout admin com sidebar |
+| 1.11.2 | Criar templates/admin/login.html | Frontend Developer | 1.11.1 | :white_large_square: | Pagina de login admin |
+| 1.11.3 | Criar templates/admin/dashboard.html | Frontend Developer | 1.11.1 | :white_large_square: | Dashboard com metricas |
+| 1.11.4 | Criar templates/admin/posts/list.html | Frontend Developer | 1.11.1 | :white_large_square: | Listagem de posts com filtros |
+| 1.11.5 | Criar templates/admin/posts/form.html | Frontend Developer | 1.11.4 | :white_large_square: | Criar/editar post |
+| 1.11.6 | Criar templates/admin/products/list.html | Frontend Developer | 1.11.1 | :white_large_square: | Listagem de produtos |
+| 1.11.7 | Criar templates/admin/products/form.html | Frontend Developer | 1.11.6 | :white_large_square: | Criar/editar produto |
+| 1.11.8 | Criar templates/admin/categories/list.html | Frontend Developer | 1.11.1 | :white_large_square: | Listagem de categorias |
+| 1.11.9 | Criar templates/admin/users/list.html | Frontend Developer | 1.11.1 | :white_large_square: | Listagem de usuarios (admin only) |
+| 1.11.10 | Implementar routers/admin.py | Backend Developer | 1.11.1-1.11.9 | :white_large_square: | Rotas SSR protegidas |
+| 1.11.11 | Implementar middleware de autenticacao admin | Security Engineer | 1.11.10, 1.4.5 | :white_large_square: | Verificar JWT em cookies |
+| 1.11.12 | Implementar controle de acesso por role | Security Engineer | 1.11.11 | :white_large_square: | admin: tudo, editor: posts/products |
+| 1.11.13 | Criar static/css/admin.css | UX/UI Designer | 1.11.1 | :white_large_square: | Estilos do admin |
+| 1.11.14 | Criar static/js/admin.js | Frontend Developer | 1.11.1 | :white_large_square: | Interatividade admin |
+| 1.11.15 | Implementar dashboard com metricas | Data Analyst | 1.11.3 | :white_large_square: | Posts mais vistos, cliques |
+| 1.11.16 | Criar testes de integracao admin | Backend Developer | 1.11.10-1.11.12 | :white_large_square: | Testar controle de acesso |
+
+## 1.12 Testes Automatizados
+
+> **NOVA SECAO**: Cobertura de testes do projeto.
+
+| ID | Tarefa | Agente | Dependencia | Status | Notas |
+|----|--------|--------|-------------|--------|-------|
+| 1.12.1 | Configurar pytest e fixtures | Backend Developer | 1.2.4 | :white_check_mark: | conftest.py |
+| 1.12.2 | Criar testes unitarios security.py | Backend Developer | 1.4.1 | :white_check_mark: | 13 testes |
+| 1.12.3 | Criar testes integracao auth | Backend Developer | 1.4.3 | :white_check_mark: | 9 testes |
+| 1.12.4 | Criar testes integracao users | Backend Developer | 1.5.3 | :white_check_mark: | 14 testes |
+| 1.12.5 | Criar testes integracao posts | Backend Developer | 1.5.3 | :white_check_mark: | 25 testes |
+| 1.12.6 | Criar testes integracao products | Backend Developer | 1.6.3 | :white_check_mark: | 20 testes |
+| 1.12.7 | Criar testes integracao categories | Backend Developer | 1.5.3 | :white_check_mark: | 16 testes |
+| 1.12.8 | Criar testes SSR routes | Frontend Developer | 1.9.1-1.9.3 | :white_check_mark: | 12 testes |
+| 1.12.9 | Criar testes integracao newsletter | Backend Developer | 1.3.8 | :white_check_mark: | Existente |
 
 ---
 
@@ -157,8 +200,8 @@
 | 2.1.1 | Implementar geracao de sitemap.xml | SEO Specialist | 1.9.1-1.9.4 | :white_large_square: | Dinamico, atualizado |
 | 2.1.2 | Criar robots.txt otimizado | SEO Specialist | 1.2.2 | :white_large_square: | Sitemap reference |
 | 2.1.3 | Implementar canonical URLs | SEO Specialist | 1.9.1-1.9.4 | :white_large_square: | Evitar duplicacao |
-| 2.1.4 | Implementar breadcrumbs | SEO Specialist | 1.9.2 | :white_large_square: | Schema.org |
-| 2.1.5 | Otimizar URLs (slug structure) | SEO Specialist | 1.5.4 | :white_large_square: | Clean URLs |
+| 2.1.4 | Implementar breadcrumbs | SEO Specialist | 1.9.2 | :white_check_mark: | Em blog/post.html |
+| 2.1.5 | Otimizar URLs (slug structure) | SEO Specialist | 1.5.4 | :white_check_mark: | Clean URLs implementadas |
 | 2.1.6 | Implementar redirects 301 | SEO Specialist | 1.9.1 | :white_large_square: | Old URLs |
 
 ## 2.2 Schema.org / Structured Data
@@ -176,8 +219,8 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 2.3.1 | Implementar meta tags Open Graph | SEO Specialist | 1.8.1 | :white_large_square: | og:title, og:image, etc |
-| 2.3.2 | Implementar Twitter Cards | SEO Specialist | 1.8.1 | :white_large_square: | twitter:card, etc |
+| 2.3.1 | Implementar meta tags Open Graph | SEO Specialist | 1.8.1 | :white_check_mark: | Em base.html |
+| 2.3.2 | Implementar Twitter Cards | SEO Specialist | 1.8.1 | :white_check_mark: | Em base.html |
 | 2.3.3 | Criar gerador de imagens OG | Frontend Developer | 2.3.1 | :white_large_square: | Dinamico ou template |
 | 2.3.4 | Implementar botoes de share | Frontend Developer | 2.3.1 | :white_large_square: | WhatsApp, Telegram, X |
 
@@ -323,8 +366,8 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 4.4.1 | Implementar formulario de signup | Frontend Developer | 3.4.4 | :white_large_square: | Com validacao |
-| 4.4.2 | Implementar api/v1/newsletter.py | Backend Developer | 4.4.1 | :white_large_square: | POST /subscribe |
+| 4.4.1 | Implementar formulario de signup | Frontend Developer | 3.4.4 | :white_check_mark: | Em home.html |
+| 4.4.2 | Implementar api/v1/newsletter.py | Backend Developer | 4.4.1 | :white_check_mark: | POST /subscribe |
 | 4.4.3 | Implementar double opt-in | Backend Developer | 4.4.2 | :white_large_square: | Email de confirmacao |
 | 4.4.4 | Criar workflow de newsletter | Automation Engineer | 4.4.3 | :white_large_square: | n8n Flow G |
 | 4.4.5 | Implementar unsubscribe | Backend Developer | 4.4.3 | :white_large_square: | LGPD compliance |
@@ -366,7 +409,7 @@
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
 | 4.8.1 | Atualizar README.md | DevOps Engineer | 4.7.6 | :white_large_square: | Setup, deploy |
-| 4.8.2 | Documentar API (OpenAPI/Swagger) | Backend Developer | 4.7.6 | :white_large_square: | Auto-gerado FastAPI |
+| 4.8.2 | Documentar API (OpenAPI/Swagger) | Backend Developer | 4.7.6 | :white_check_mark: | Auto-gerado FastAPI |
 | 4.8.3 | Criar guia de operacoes | DevOps Engineer | 4.8.1 | :white_large_square: | Runbook |
 | 4.8.4 | Documentar workflows n8n | Automation Engineer | 4.8.1 | :white_large_square: | Cada flow |
 | 4.8.5 | Criar manual do editor | Content Strategist | 4.8.1 | :white_large_square: | Para usuarios |
@@ -375,34 +418,53 @@
 
 # RESUMO POR FASE
 
-| Fase | Total Tarefas | Agentes Principais |
-|------|---------------|-------------------|
-| Fase 1 | 68 | DevOps, Backend, Database, Frontend, Security |
-| Fase 2 | 48 | SEO, Automation, Data Analyst, DevOps |
-| Fase 3 | 26 | Automation, Content, Backend, SEO |
-| Fase 4 | 45 | Data Analyst, DevOps, Automation, Security |
-| **TOTAL** | **187** | - |
+| Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
+|------|---------------|------------|-----------|-----------|
+| Fase 1 | 93 | 64 | 29 | 69% |
+| Fase 2 | 48 | 4 | 44 | 8% |
+| Fase 3 | 26 | 0 | 26 | 0% |
+| Fase 4 | 45 | 4 | 41 | 9% |
+| **TOTAL** | **212** | **72** | **140** | **34%** |
 
 ---
 
 # RESUMO POR AGENTE
 
-| Agente | Total Tarefas | Fases |
-|--------|---------------|-------|
-| Backend Developer | 32 | 1, 2, 3, 4 |
-| DevOps Engineer | 24 | 1, 2, 4 |
-| Automation Engineer | 28 | 2, 3, 4 |
-| Database Architect | 14 | 1, 4 |
-| Frontend Developer | 20 | 1, 2, 4 |
-| Security Engineer | 14 | 1, 4 |
-| SEO Specialist | 18 | 2, 3, 4 |
-| Data Analyst | 18 | 1, 2, 4 |
-| UX/UI Designer | 4 | 1 |
-| Content Strategist | 6 | 3, 4 |
-| Affiliate Marketing | 2 | 1 |
+| Agente | Total Tarefas | Concluidas | Fases |
+|--------|---------------|------------|-------|
+| Backend Developer | 38 | 28 | 1, 2, 3, 4 |
+| DevOps Engineer | 24 | 8 | 1, 2, 4 |
+| Automation Engineer | 28 | 0 | 2, 3, 4 |
+| Database Architect | 16 | 10 | 1, 4 |
+| Frontend Developer | 28 | 14 | 1, 2, 4 |
+| Security Engineer | 16 | 3 | 1, 4 |
+| SEO Specialist | 18 | 4 | 2, 3, 4 |
+| Data Analyst | 18 | 0 | 1, 2, 4 |
+| UX/UI Designer | 5 | 2 | 1 |
+| Content Strategist | 6 | 0 | 3, 4 |
+| Affiliate Marketing | 2 | 1 | 1 |
 
 ---
 
-**Versao**: 1.0
-**Data**: 2025-12-10
+# PROXIMAS TAREFAS PRIORITARIAS
+
+Com base no progresso atual, as proximas tarefas prioritarias sao:
+
+## Fase 1 (Finalizar Base Tecnica)
+1. **1.9.4** - Implementar busca (/busca)
+2. **1.9.5** - Paginas de erro (404, 500)
+3. **1.8.8** - Criar components/product_card.html
+4. **1.8.9** - Criar components/post_card.html
+5. **1.11.x** - Painel Administrativo completo
+
+## Fase 2 (Iniciar SEO & Automacao)
+1. **2.1.1** - Sitemap.xml dinamico
+2. **2.1.2** - robots.txt
+3. **2.2.x** - Schema.org / Structured Data
+
+---
+
+**Versao**: 2.1
+**Ultima atualizacao**: 2025-12-11
 **Projeto**: geek.bidu.guru
+**Testes**: 193 passando

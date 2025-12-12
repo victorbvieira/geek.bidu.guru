@@ -170,3 +170,12 @@ app.include_router(api_router, prefix="/api/v1")
 from app.routers.blog import router as blog_router
 
 app.include_router(blog_router)
+
+
+# -----------------------------------------------------------------------------
+# Affiliate Redirect Routes (/goto/{slug})
+# -----------------------------------------------------------------------------
+
+from app.routers.affiliates import router as affiliates_router
+
+app.include_router(affiliates_router)
