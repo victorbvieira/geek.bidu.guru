@@ -14,6 +14,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.api.deps import CategoryRepo, PostRepo
+from app.config import settings
 from app.models.post import PostStatus
 from urllib.parse import unquote_plus
 
@@ -23,6 +24,11 @@ router = APIRouter(tags=["blog"])
 # Templates (caminho absoluto)
 BASE_DIR = Path(__file__).resolve().parent.parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+
+def get_base_url() -> str:
+    """Retorna a URL base do site."""
+    return settings.app_url.rstrip("/")
 
 
 # -----------------------------------------------------------------------------
@@ -52,6 +58,9 @@ async def list_posts(
     # Calcula total de paginas
     pages = (total + per_page - 1) // per_page if total > 0 else 1
 
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/blog" if page == 1 else f"{base_url}/blog?page={page}"
+
     return templates.TemplateResponse(
         request=request,
         name="blog/list.html",
@@ -65,6 +74,14 @@ async def list_posts(
             "pages": pages,
             "has_prev": page > 1,
             "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Blog", "url": f"{base_url}/blog"},
+            ],
         },
     )
 
@@ -109,6 +126,21 @@ async def get_post(
     seo_title = post.seo_title or post.title
     seo_description = post.seo_description or (post.subtitle or post.title)
 
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/blog/{post.slug}"
+
+    # Breadcrumbs para SEO
+    breadcrumbs = [
+        {"name": "Home", "url": base_url},
+        {"name": "Blog", "url": f"{base_url}/blog"},
+    ]
+    if post.category:
+        breadcrumbs.append({
+            "name": post.category.name,
+            "url": f"{base_url}/categoria/{post.category.slug}"
+        })
+    breadcrumbs.append({"name": post.title, "url": canonical_url})
+
     return templates.TemplateResponse(
         request=request,
         name="blog/post.html",
@@ -118,6 +150,19 @@ async def get_post(
             "post": post,
             "seo_title": seo_title,
             "seo_description": seo_description,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "article",
+            "og_image": post.featured_image_url,
+            "article_published": post.publish_at.isoformat() if post.publish_at else None,
+            "article_modified": post.updated_at.isoformat() if post.updated_at else None,
+            "article_author": post.author.name if post.author else None,
+            "article_section": post.category.name if post.category else None,
+            "article_tags": post.tags or [],
+            "schema_type": "BlogPosting",
+            "breadcrumbs": breadcrumbs,
+            "seo_keywords": post.seo_focus_keyword,
         },
     )
 
@@ -164,6 +209,11 @@ async def list_by_category(
     # Calcula total de paginas
     pages = (total + per_page - 1) // per_page if total > 0 else 1
 
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/categoria/{category.slug}"
+    if page > 1:
+        canonical_url = f"{canonical_url}?page={page}"
+
     return templates.TemplateResponse(
         request=request,
         name="blog/category.html",
@@ -178,6 +228,15 @@ async def list_by_category(
             "pages": pages,
             "has_prev": page > 1,
             "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Categorias", "url": f"{base_url}/categorias"},
+                {"name": category.name, "url": f"{base_url}/categoria/{category.slug}"},
+            ],
         },
     )
 
@@ -198,6 +257,8 @@ async def list_categories(
     # Busca categorias raiz (sem parent)
     categories = await repo.get_root_categories()
 
+    base_url = get_base_url()
+
     return templates.TemplateResponse(
         request=request,
         name="blog/categories.html",
@@ -205,6 +266,14 @@ async def list_categories(
             "title": "Categorias - geek.bidu.guru",
             "description": "Navegue por categoria e encontre o presente geek perfeito",
             "categories": categories,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": f"{base_url}/categorias",
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Categorias", "url": f"{base_url}/categorias"},
+            ],
         },
     )
 
@@ -230,6 +299,8 @@ async def search_posts(
     # Decode query string
     query = unquote_plus(q).strip()
 
+    base_url = get_base_url()
+
     # Se nao tem query, mostra pagina de busca vazia
     if not query:
         return templates.TemplateResponse(
@@ -245,6 +316,10 @@ async def search_posts(
                 "pages": 1,
                 "has_prev": False,
                 "has_next": False,
+                # SEO - noindex para paginas de busca
+                "base_url": base_url,
+                "canonical_url": f"{base_url}/busca",
+                "noindex": True,
             },
         )
 
@@ -272,5 +347,9 @@ async def search_posts(
             "pages": pages,
             "has_prev": page > 1,
             "has_next": page < pages,
+            # SEO - noindex para paginas de busca
+            "base_url": base_url,
+            "canonical_url": f"{base_url}/busca?q={query}",
+            "noindex": True,
         },
     )

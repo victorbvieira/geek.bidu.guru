@@ -2,7 +2,7 @@
 Repositorio para User.
 """
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User
@@ -39,3 +39,42 @@ class UserRepository(BaseRepository[User]):
         """Verifica se email ja esta cadastrado."""
         user = await self.get_by_email(email)
         return user is not None
+
+    async def search(
+        self,
+        query: str,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[User]:
+        """
+        Busca usuarios por termo.
+
+        Busca em: name, email.
+        """
+        search_term = f"%{query.lower()}%"
+        stmt = (
+            select(User)
+            .where(
+                func.lower(User.name).like(search_term)
+                | func.lower(User.email).like(search_term)
+            )
+            .order_by(User.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_search(self, query: str) -> int:
+        """Conta resultados de busca de usuarios."""
+        search_term = f"%{query.lower()}%"
+        stmt = (
+            select(func.count())
+            .select_from(User)
+            .where(
+                func.lower(User.name).like(search_term)
+                | func.lower(User.email).like(search_term)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()

@@ -222,12 +222,18 @@ async def home(request: Request):
     Homepage do blog.
     Renderiza o template home.html com SSR.
     """
+    base_url = settings.app_url.rstrip("/")
+
     return templates.TemplateResponse(
         request=request,
         name="home.html",
         context={
             "title": "geek.bidu.guru - Presentes Geek",
             "description": "Encontre o presente geek perfeito para quem voce ama",
+            # SEO
+            "base_url": base_url,
+            "canonical_url": base_url,
+            "og_type": "website",
         },
     )
 

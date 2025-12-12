@@ -121,3 +121,42 @@ class ProductRepository(BaseRepository[Product]):
             select(func.coalesce(func.sum(Product.click_count), 0))
         )
         return result.scalar() or 0
+
+    async def search(
+        self,
+        query: str,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[Product]:
+        """
+        Busca produtos por termo.
+
+        Busca em: name, short_description, tags.
+        """
+        search_term = f"%{query.lower()}%"
+        stmt = (
+            select(Product)
+            .where(
+                func.lower(Product.name).like(search_term)
+                | func.lower(Product.short_description).like(search_term)
+            )
+            .order_by(Product.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_search(self, query: str) -> int:
+        """Conta resultados de busca de produtos."""
+        search_term = f"%{query.lower()}%"
+        stmt = (
+            select(func.count())
+            .select_from(Product)
+            .where(
+                func.lower(Product.name).like(search_term)
+                | func.lower(Product.short_description).like(search_term)
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()

@@ -22,11 +22,11 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 1.0.1 | Criar projeto `geek-bidu-guru` no Easypanel | DevOps Engineer | - | :white_large_square: | Via interface web |
+| 1.0.1 | Criar projeto `geek-bidu-guru` no Easypanel | DevOps Engineer | - | :white_check_mark: | Via interface web |
 | 1.0.2 | Criar database `geek_bidu_dev` no PostgreSQL | Database Architect | - | :white_check_mark: | Usuario: `geek_app_dev` |
 | 1.0.3 | Criar database `geek_bidu_prod` no PostgreSQL | Database Architect | - | :white_check_mark: | Usuario: `geek_app_prod` |
-| 1.0.4 | Configurar dominio `geek.bidu.guru` no Traefik | DevOps Engineer | 1.0.1 | :white_large_square: | SSL automatico |
-| 1.0.5 | Configurar variaveis de ambiente no Easypanel | DevOps Engineer | 1.0.3 | :white_large_square: | DATABASE_URL, SECRET_KEY, etc |
+| 1.0.4 | Configurar dominio `geek.bidu.guru` no Traefik | DevOps Engineer | 1.0.1 | :white_check_mark: | SSL automatico |
+| 1.0.5 | Configurar variaveis de ambiente no Easypanel | DevOps Engineer | 1.0.3 | :white_check_mark: | DATABASE_URL, SECRET_KEY, etc |
 
 ## 1.1 Infraestrutura Docker (Desenvolvimento Local)
 
@@ -201,7 +201,7 @@
 |----|--------|--------|-------------|--------|-------|
 | 2.1.1 | Implementar geracao de sitemap.xml | SEO Specialist | 1.9.1-1.9.4 | :white_check_mark: | routers/seo.py + 11 testes |
 | 2.1.2 | Criar robots.txt otimizado | SEO Specialist | 1.2.2 | :white_check_mark: | Dinamico por ambiente + 3 testes |
-| 2.1.3 | Implementar canonical URLs | SEO Specialist | 1.9.1-1.9.4 | :white_large_square: | Evitar duplicacao |
+| 2.1.3 | Implementar canonical URLs | SEO Specialist | 1.9.1-1.9.4 | :white_check_mark: | Em todas as rotas SSR |
 | 2.1.4 | Implementar breadcrumbs | SEO Specialist | 1.9.2 | :white_check_mark: | Em blog/post.html |
 | 2.1.5 | Otimizar URLs (slug structure) | SEO Specialist | 1.5.4 | :white_check_mark: | Clean URLs implementadas |
 | 2.1.6 | Implementar redirects 301 | SEO Specialist | 1.9.1 | :white_large_square: | Old URLs |
@@ -210,12 +210,12 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 2.2.1 | Implementar Schema BlogPosting | SEO Specialist | 1.8.6 | :white_large_square: | JSON-LD |
-| 2.2.2 | Implementar Schema Product | SEO Specialist | 1.8.8 | :white_large_square: | AggregateRating |
-| 2.2.3 | Implementar Schema ItemList | SEO Specialist | 1.8.7 | :white_large_square: | Para listicles |
-| 2.2.4 | Implementar Schema Organization | SEO Specialist | 1.8.3 | :white_large_square: | Sobre a marca |
-| 2.2.5 | Implementar Schema BreadcrumbList | SEO Specialist | 2.1.4 | :white_large_square: | Navegacao |
-| 2.2.6 | Criar components/seo_meta.html | SEO Specialist | 2.2.1-2.2.5 | :white_large_square: | Template reutilizavel |
+| 2.2.1 | Implementar Schema BlogPosting | SEO Specialist | 1.8.6 | :white_check_mark: | JSON-LD em seo_meta.html |
+| 2.2.2 | Implementar Schema Product | SEO Specialist | 1.8.8 | :white_check_mark: | JSON-LD em seo_meta.html |
+| 2.2.3 | Implementar Schema ItemList | SEO Specialist | 1.8.7 | :white_check_mark: | JSON-LD em seo_meta.html |
+| 2.2.4 | Implementar Schema Organization | SEO Specialist | 1.8.3 | :white_check_mark: | JSON-LD em seo_meta.html |
+| 2.2.5 | Implementar Schema BreadcrumbList | SEO Specialist | 2.1.4 | :white_check_mark: | JSON-LD em seo_meta.html |
+| 2.2.6 | Criar components/seo_meta.html | SEO Specialist | 2.2.1-2.2.5 | :white_check_mark: | Componente SEO completo
 
 ## 2.3 Open Graph & Social
 
@@ -422,11 +422,11 @@
 
 | Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
 |------|---------------|------------|-----------|-----------|
-| Fase 1 | 95 | 93 | 2 | 98% |
-| Fase 2 | 48 | 6 | 42 | 13% |
+| Fase 1 | 95 | 94 | 1 | 99% |
+| Fase 2 | 48 | 13 | 35 | 27% |
 | Fase 3 | 26 | 0 | 26 | 0% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **214** | **103** | **111** | **48%** |
+| **TOTAL** | **214** | **111** | **103** | **52%** |
 
 ---
 
@@ -452,20 +452,43 @@
 
 Com base no progresso atual, as proximas tarefas prioritarias sao:
 
-## Fase 1 (Finalizar Base Tecnica - 98% concluido)
-1. **1.0.1** - Criar projeto no Easypanel (VPS)
-2. **1.0.4** - Configurar dominio no Traefik (VPS)
-3. **1.0.5** - Configurar variaveis de ambiente (VPS)
+## Fase 1 (Finalizar Base Tecnica - 99% concluido)
+1. ~~**1.0.1** - Criar projeto no Easypanel (VPS)~~ :white_check_mark:
+2. ~~**1.0.4** - Configurar dominio no Traefik (VPS)~~ :white_check_mark:
+3. ~~**1.0.5** - Configurar variaveis de ambiente (VPS)~~ :white_check_mark:
 4. **1.10.5** - Revisar checklist OWASP Top 10
 
-## Fase 2 (SEO & Automacao)
-1. **2.1.3** - Canonical URLs
-2. **2.2.x** - Schema.org / Structured Data
-3. **2.3.x** - Open Graph / Twitter Cards
+## Fase 2 (SEO & Automacao - 27% concluido)
+1. ~~**2.1.3** - Canonical URLs~~ :white_check_mark:
+2. ~~**2.2.x** - Schema.org / Structured Data~~ :white_check_mark: (todos os 6 schemas)
+3. **2.1.6** - Redirects 301 (old URLs)
+4. **2.4.x** - Configuracao n8n
+5. **2.7.2** - Integracao API Amazon
 
 ---
 
-**Versao**: 2.6
+**Versao**: 2.8
 **Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 286+ passando (incluindo 34 testes admin)
+**Testes**: 270 passando (incluindo 34 testes admin)
+
+---
+
+# CHANGELOG
+
+## v2.8 (2025-12-12)
+- :white_check_mark: 2.1.3 - Canonical URLs implementadas em todas as rotas SSR
+- :white_check_mark: 2.2.1 - Schema BlogPosting (JSON-LD)
+- :white_check_mark: 2.2.2 - Schema Product (JSON-LD)
+- :white_check_mark: 2.2.3 - Schema ItemList (JSON-LD)
+- :white_check_mark: 2.2.4 - Schema Organization (JSON-LD)
+- :white_check_mark: 2.2.5 - Schema BreadcrumbList (JSON-LD)
+- :white_check_mark: 2.2.6 - Criado components/seo_meta.html (componente SEO reutilizavel)
+- :sparkles: Adicionado meta robots (noindex para paginas de busca)
+- :sparkles: Adicionado Schema WebSite com SearchAction
+
+## v2.7 (2025-12-12)
+- :white_check_mark: 1.0.1 - Projeto criado no Easypanel
+- :white_check_mark: 1.0.4 - Dominio configurado no Traefik
+- :white_check_mark: 1.0.5 - Variaveis de ambiente configuradas
+- :wrench: Corrigido: Adicionados metodos `search` e `count_search` em ProductRepository e UserRepository (erros 500 no admin)
