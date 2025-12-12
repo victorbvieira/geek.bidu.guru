@@ -11,7 +11,8 @@
 5. [Executar Migrations](#executar-migrations)
 6. [Verificação Pós-Deploy](#verificação-pós-deploy)
 7. [Manutenção e Updates](#manutenção-e-updates)
-8. [Troubleshooting](#troubleshooting)
+8. [Deploy Automático com Webhook](#deploy-automático-com-webhook)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -345,6 +346,303 @@ docker exec kvm8_postgre-postgres-1 pg_dump -U geek_app_prod geek_bidu_prod > ba
 # Restaurar backup
 cat backup.sql | docker exec -i kvm8_postgre-postgres-1 psql -U geek_app_prod geek_bidu_prod
 ```
+
+---
+
+## Deploy Automático com Webhook
+
+Configure deploy automático a cada push na branch `main` usando GitHub Webhooks.
+
+### 1. Criar Script de Deploy na VPS
+
+```bash
+# Criar diretório para scripts
+mkdir -p /opt/scripts
+
+# Criar script de deploy
+cat > /opt/scripts/deploy-geek.sh << 'EOF'
+#!/bin/bash
+# =============================================================================
+# Script de Deploy Automático - geek.bidu.guru
+# =============================================================================
+
+set -e
+
+PROJECT_DIR="/opt/geek-bidu-guru"
+LOG_FILE="/var/log/geek-deploy.log"
+COMPOSE_FILE="docker/docker-compose.prod.yml"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+log "========== Iniciando deploy =========="
+
+cd "$PROJECT_DIR"
+
+# Pull das alterações
+log "Baixando alterações do repositório..."
+git fetch origin main
+git reset --hard origin/main
+
+# Build e restart
+log "Fazendo build e restart dos containers..."
+docker compose -f "$COMPOSE_FILE" up -d --build
+
+# Aguardar container subir
+log "Aguardando container iniciar..."
+sleep 10
+
+# Executar migrations
+log "Executando migrations..."
+docker exec geek_bidu_app sh -c "cd /app/src && alembic upgrade head" 2>&1 | tee -a "$LOG_FILE"
+
+# Health check
+log "Verificando health check..."
+if curl -sf http://localhost:8000/health > /dev/null; then
+    log "✓ Deploy concluído com sucesso!"
+else
+    log "✗ Health check falhou!"
+    exit 1
+fi
+
+# Limpar imagens antigas
+log "Limpando imagens antigas..."
+docker image prune -f
+
+log "========== Deploy finalizado =========="
+EOF
+
+# Dar permissão de execução
+chmod +x /opt/scripts/deploy-geek.sh
+```
+
+### 2. Criar Servidor de Webhook
+
+Vamos usar um pequeno servidor Python para receber webhooks do GitHub.
+
+```bash
+# Criar script do servidor webhook
+cat > /opt/scripts/webhook-server.py << 'EOF'
+#!/usr/bin/env python3
+"""
+Servidor de Webhook para Deploy Automático
+Escuta webhooks do GitHub e executa deploy quando há push na main
+"""
+
+import hashlib
+import hmac
+import json
+import os
+import subprocess
+import sys
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+# Configurações
+WEBHOOK_SECRET = os.environ.get('WEBHOOK_SECRET', 'seu-secret-aqui')
+DEPLOY_SCRIPT = '/opt/scripts/deploy-geek.sh'
+PORT = 9000
+
+class WebhookHandler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        # Verificar path
+        if self.path != '/webhook/deploy':
+            self.send_response(404)
+            self.end_headers()
+            return
+
+        # Ler payload
+        content_length = int(self.headers.get('Content-Length', 0))
+        payload = self.rfile.read(content_length)
+
+        # Verificar assinatura do GitHub
+        signature = self.headers.get('X-Hub-Signature-256', '')
+        if not self.verify_signature(payload, signature):
+            print(f"[ERRO] Assinatura inválida")
+            self.send_response(401)
+            self.end_headers()
+            self.wfile.write(b'Invalid signature')
+            return
+
+        # Parsear payload
+        try:
+            data = json.loads(payload.decode('utf-8'))
+        except json.JSONDecodeError:
+            self.send_response(400)
+            self.end_headers()
+            return
+
+        # Verificar se é push na main
+        ref = data.get('ref', '')
+        if ref != 'refs/heads/main':
+            print(f"[INFO] Ignorando push para {ref}")
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'Ignored (not main branch)')
+            return
+
+        # Executar deploy
+        print(f"[INFO] Recebido push na main, iniciando deploy...")
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'Deploy started')
+
+        # Executar script de deploy em background
+        subprocess.Popen(
+            [DEPLOY_SCRIPT],
+            stdout=open('/var/log/geek-deploy.log', 'a'),
+            stderr=subprocess.STDOUT,
+            start_new_session=True
+        )
+
+    def verify_signature(self, payload, signature):
+        if not signature:
+            return False
+
+        expected = 'sha256=' + hmac.new(
+            WEBHOOK_SECRET.encode('utf-8'),
+            payload,
+            hashlib.sha256
+        ).hexdigest()
+
+        return hmac.compare_digest(expected, signature)
+
+    def log_message(self, format, *args):
+        print(f"[{self.log_date_time_string()}] {args[0]}")
+
+def main():
+    server = HTTPServer(('0.0.0.0', PORT), WebhookHandler)
+    print(f"Webhook server rodando na porta {PORT}...")
+    print(f"Endpoint: http://0.0.0.0:{PORT}/webhook/deploy")
+    server.serve_forever()
+
+if __name__ == '__main__':
+    main()
+EOF
+
+chmod +x /opt/scripts/webhook-server.py
+```
+
+### 3. Criar Serviço Systemd
+
+```bash
+# Criar arquivo de serviço
+cat > /etc/systemd/system/geek-webhook.service << 'EOF'
+[Unit]
+Description=Webhook Server para Deploy do geek.bidu.guru
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+Environment=WEBHOOK_SECRET=SEU_SECRET_SEGURO_AQUI
+ExecStart=/usr/bin/python3 /opt/scripts/webhook-server.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Gerar um secret seguro
+WEBHOOK_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+echo "Seu WEBHOOK_SECRET: $WEBHOOK_SECRET"
+echo "GUARDE ESTE VALOR! Você vai precisar dele no GitHub."
+
+# Atualizar o serviço com o secret gerado
+sed -i "s/SEU_SECRET_SEGURO_AQUI/$WEBHOOK_SECRET/" /etc/systemd/system/geek-webhook.service
+
+# Habilitar e iniciar serviço
+systemctl daemon-reload
+systemctl enable geek-webhook
+systemctl start geek-webhook
+
+# Verificar status
+systemctl status geek-webhook
+```
+
+### 4. Configurar Traefik para Expor o Webhook
+
+Adicione labels no docker-compose.prod.yml ou crie um serviço separado. A forma mais simples é expor a porta diretamente:
+
+```bash
+# Verificar se a porta está acessível
+curl http://localhost:9000/webhook/deploy
+# Deve retornar 404 (método GET não permitido)
+
+# Se precisar expor via Traefik, adicione no seu traefik config:
+# - Host(`webhook.geek.bidu.guru`) com roteamento para porta 9000
+```
+
+**Alternativa**: Expor porta 9000 no firewall:
+
+```bash
+# Usando UFW
+ufw allow 9000/tcp
+
+# Ou usando iptables
+iptables -A INPUT -p tcp --dport 9000 -j ACCEPT
+```
+
+### 5. Configurar Webhook no GitHub
+
+1. Vá no repositório GitHub: `https://github.com/victorbvieira/geek.bidu.guru`
+2. Clique em **Settings** → **Webhooks** → **Add webhook**
+3. Configure:
+   - **Payload URL**: `http://167.88.32.240:9000/webhook/deploy`
+   - **Content type**: `application/json`
+   - **Secret**: Cole o `WEBHOOK_SECRET` gerado no passo 3
+   - **Which events?**: Selecione "Just the push event"
+   - **Active**: ✓ Marcado
+4. Clique em **Add webhook**
+
+### 6. Testar o Webhook
+
+```bash
+# Ver logs do servidor webhook
+journalctl -u geek-webhook -f
+
+# Em outra janela, faça um commit de teste
+git commit --allow-empty -m "test: trigger webhook deploy"
+git push origin main
+
+# Verificar logs de deploy
+tail -f /var/log/geek-deploy.log
+```
+
+### 7. Verificar Funcionamento
+
+No GitHub, vá em **Settings** → **Webhooks** → Clique no webhook criado → **Recent Deliveries**
+
+Você verá:
+- ✓ Verde: Webhook entregue com sucesso
+- ✗ Vermelho: Erro na entrega (verifique logs)
+
+### Troubleshooting do Webhook
+
+```bash
+# Ver status do serviço
+systemctl status geek-webhook
+
+# Ver logs do serviço
+journalctl -u geek-webhook -n 50
+
+# Ver logs de deploy
+tail -50 /var/log/geek-deploy.log
+
+# Reiniciar serviço
+systemctl restart geek-webhook
+
+# Testar script de deploy manualmente
+/opt/scripts/deploy-geek.sh
+```
+
+### Segurança do Webhook
+
+- O `WEBHOOK_SECRET` garante que apenas o GitHub pode disparar deploys
+- O servidor verifica a assinatura HMAC-SHA256 de cada request
+- Considere usar HTTPS (via Traefik) para o endpoint do webhook
+- Mantenha o secret seguro e não commite no repositório
 
 ---
 
