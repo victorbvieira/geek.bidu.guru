@@ -206,3 +206,70 @@ async def client(test_app) -> AsyncGenerator[Any, None]:
         base_url="http://test",
     ) as ac:
         yield ac
+
+
+# -----------------------------------------------------------------------------
+# Fixtures de autenticacao para admin
+# -----------------------------------------------------------------------------
+
+
+@pytest_asyncio.fixture(scope="function")
+async def admin_user(db_session: AsyncSession):
+    """Cria usuario admin para testes."""
+    from app.core.security import get_password_hash
+    from app.models.user import User, UserRole
+
+    user = User(
+        name="Admin Test",
+        email="admin@test.com",
+        password_hash=get_password_hash("adminpassword123"),
+        role=UserRole.ADMIN,
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture(scope="function")
+async def editor_user(db_session: AsyncSession):
+    """Cria usuario editor para testes."""
+    from app.core.security import get_password_hash
+    from app.models.user import User, UserRole
+
+    user = User(
+        name="Editor Test",
+        email="editor@test.com",
+        password_hash=get_password_hash("editorpassword123"),
+        role=UserRole.EDITOR,
+        is_active=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def admin_auth_cookie(admin_user) -> dict:
+    """Cookie de autenticacao para admin."""
+    from app.core.security import create_access_token
+
+    token = create_access_token(
+        subject=str(admin_user.id),
+        extra_claims={"role": admin_user.role.value},
+    )
+    return {"admin_token": token}
+
+
+@pytest.fixture
+def editor_auth_cookie(editor_user) -> dict:
+    """Cookie de autenticacao para editor."""
+    from app.core.security import create_access_token
+
+    token = create_access_token(
+        subject=str(editor_user.id),
+        extra_claims={"role": editor_user.role.value},
+    )
+    return {"admin_token": token}

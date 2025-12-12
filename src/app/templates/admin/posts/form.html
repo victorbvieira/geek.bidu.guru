@@ -1,0 +1,209 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ 'Editar' if post else 'Novo' }} Post{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/posts">Posts</a>
+<span>/</span>
+<span class="current">{{ 'Editar' if post else 'Novo' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">{{ 'Editar Post' if post else 'Novo Post' }}</h1>
+</div>
+
+<form method="POST" action="{{ '/admin/posts/' ~ post.id if post else '/admin/posts' }}">
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem;">
+        <!-- Main Content -->
+        <div>
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label for="title" class="admin-form-label">Titulo *</label>
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        class="admin-form-input"
+                        value="{{ post.title if post else '' }}"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="slug" class="admin-form-label">Slug</label>
+                    <input
+                        type="text"
+                        id="slug"
+                        name="slug"
+                        class="admin-form-input"
+                        value="{{ post.slug if post else '' }}"
+                        placeholder="gerado-automaticamente"
+                    >
+                    <div class="admin-form-hint">Deixe vazio para gerar automaticamente</div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="subtitle" class="admin-form-label">Subtitulo</label>
+                    <input
+                        type="text"
+                        id="subtitle"
+                        name="subtitle"
+                        class="admin-form-input"
+                        value="{{ post.subtitle if post else '' }}"
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="content" class="admin-form-label">Conteudo *</label>
+                    <textarea
+                        id="content"
+                        name="content"
+                        class="admin-form-textarea"
+                        style="min-height: 400px;"
+                        required
+                    >{{ post.content if post else '' }}</textarea>
+                    <div class="admin-form-hint">Suporta HTML</div>
+                </div>
+            </div>
+
+            <!-- SEO -->
+            <div class="admin-card" style="margin-top: 1.5rem;">
+                <h3 class="admin-card-title" style="margin-bottom: 1rem;">SEO</h3>
+
+                <div class="admin-form-group">
+                    <label for="seo_title" class="admin-form-label">Titulo SEO</label>
+                    <input
+                        type="text"
+                        id="seo_title"
+                        name="seo_title"
+                        class="admin-form-input"
+                        value="{{ post.seo_title if post else '' }}"
+                        maxlength="60"
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="seo_description" class="admin-form-label">Descricao SEO</label>
+                    <textarea
+                        id="seo_description"
+                        name="seo_description"
+                        class="admin-form-textarea"
+                        style="min-height: 80px;"
+                        maxlength="160"
+                    >{{ post.seo_description if post else '' }}</textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="seo_focus_keyword" class="admin-form-label">Palavra-chave foco</label>
+                    <input
+                        type="text"
+                        id="seo_focus_keyword"
+                        name="seo_focus_keyword"
+                        class="admin-form-input"
+                        value="{{ post.seo_focus_keyword if post else '' }}"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Publish -->
+            <div class="admin-card">
+                <h3 class="admin-card-title" style="margin-bottom: 1rem;">Publicar</h3>
+
+                <div class="admin-form-group">
+                    <label for="status" class="admin-form-label">Status</label>
+                    <select id="status" name="status" class="admin-form-select">
+                        <option value="draft" {% if not post or post.status.value == 'draft' %}selected{% endif %}>Rascunho</option>
+                        <option value="published" {% if post and post.status.value == 'published' %}selected{% endif %}>Publicado</option>
+                        <option value="scheduled" {% if post and post.status.value == 'scheduled' %}selected{% endif %}>Agendado</option>
+                        <option value="archived" {% if post and post.status.value == 'archived' %}selected{% endif %}>Arquivado</option>
+                    </select>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="publish_at" class="admin-form-label">Data de Publicacao</label>
+                    <input
+                        type="datetime-local"
+                        id="publish_at"
+                        name="publish_at"
+                        class="admin-form-input"
+                        value="{{ post.publish_at.strftime('%Y-%m-%dT%H:%M') if post and post.publish_at else '' }}"
+                    >
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="submit" class="admin-btn admin-btn-primary" style="flex: 1;">
+                        {{ 'Salvar' if post else 'Criar Post' }}
+                    </button>
+                    {% if post %}
+                    <a href="/blog/{{ post.slug }}" target="_blank" class="admin-btn admin-btn-secondary">
+                        👁️
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Type & Category -->
+            <div class="admin-card" style="margin-top: 1rem;">
+                <div class="admin-form-group">
+                    <label for="type" class="admin-form-label">Tipo</label>
+                    <select id="type" name="type" class="admin-form-select">
+                        <option value="review" {% if post and post.type.value == 'review' %}selected{% endif %}>Review</option>
+                        <option value="listicle" {% if not post or post.type.value == 'listicle' %}selected{% endif %}>Listicle</option>
+                        <option value="guide" {% if post and post.type.value == 'guide' %}selected{% endif %}>Guia</option>
+                        <option value="comparison" {% if post and post.type.value == 'comparison' %}selected{% endif %}>Comparativo</option>
+                        <option value="news" {% if post and post.type.value == 'news' %}selected{% endif %}>Novidade</option>
+                    </select>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="category_id" class="admin-form-label">Categoria</label>
+                    <select id="category_id" name="category_id" class="admin-form-select">
+                        <option value="">Sem categoria</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if post and post.category_id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Featured Image -->
+            <div class="admin-card" style="margin-top: 1rem;">
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                    <label for="featured_image_url" class="admin-form-label">Imagem Destacada</label>
+                    <input
+                        type="url"
+                        id="featured_image_url"
+                        name="featured_image_url"
+                        class="admin-form-input"
+                        value="{{ post.featured_image_url if post else '' }}"
+                        placeholder="https://..."
+                    >
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="admin-card" style="margin-top: 1rem;">
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                    <label for="tags" class="admin-form-label">Tags</label>
+                    <input
+                        type="text"
+                        id="tags"
+                        name="tags"
+                        class="admin-form-input"
+                        value="{{ post.tags | join(', ') if post and post.tags else '' }}"
+                        placeholder="tag1, tag2, tag3"
+                    >
+                    <div class="admin-form-hint">Separadas por virgula</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

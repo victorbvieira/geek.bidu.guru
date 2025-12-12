@@ -1,0 +1,152 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ 'Editar' if user else 'Novo' }} Usuario{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/users">Usuarios</a>
+<span>/</span>
+<span class="current">{{ 'Editar' if user else 'Novo' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">{{ 'Editar Usuario' if user else 'Novo Usuario' }}</h1>
+</div>
+
+<form method="POST" action="/admin/users{{ '/' + user.id|string if user else '' }}" class="admin-form">
+    <div class="admin-form-grid">
+        <div class="admin-form-main">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Informacoes do Usuario</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label for="name" class="admin-label">Nome *</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value="{{ user.name if user else '' }}"
+                            class="admin-input"
+                            required
+                        >
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="email" class="admin-label">Email *</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value="{{ user.email if user else '' }}"
+                            class="admin-input"
+                            required
+                        >
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="password" class="admin-label">
+                            {{ 'Nova Senha (deixe vazio para manter)' if user else 'Senha *' }}
+                        </label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="admin-input"
+                            {{ '' if user else 'required' }}
+                            minlength="8"
+                        >
+                        <small class="admin-help-text">Minimo de 8 caracteres</small>
+                    </div>
+
+                    {% if not user %}
+                    <div class="admin-form-group">
+                        <label for="password_confirm" class="admin-label">Confirmar Senha *</label>
+                        <input
+                            type="password"
+                            id="password_confirm"
+                            name="password_confirm"
+                            class="admin-input"
+                            required
+                            minlength="8"
+                        >
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-form-sidebar">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Configuracoes</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label for="role" class="admin-label">Funcao *</label>
+                        <select id="role" name="role" class="admin-select" required>
+                            <option value="author" {{ 'selected' if user and user.role == 'author' else '' }}>Autor</option>
+                            <option value="editor" {{ 'selected' if user and user.role == 'editor' else '' }}>Editor</option>
+                            <option value="admin" {{ 'selected' if user and user.role == 'admin' else '' }}>Admin</option>
+                        </select>
+                        <small class="admin-help-text">
+                            <strong>Autor:</strong> Pode criar e editar seus proprios posts<br>
+                            <strong>Editor:</strong> Pode editar todos os posts<br>
+                            <strong>Admin:</strong> Acesso total ao sistema
+                        </small>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label class="admin-checkbox">
+                            <input
+                                type="checkbox"
+                                name="is_active"
+                                value="1"
+                                {{ 'checked' if not user or user.is_active else '' }}
+                            >
+                            <span>Usuario ativo</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {% if user %}
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Informacoes</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Criado em:</span>
+                        <span class="admin-info-value">{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </div>
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Atualizado em:</span>
+                        <span class="admin-info-value">{{ user.updated_at.strftime('%d/%m/%Y %H:%M') if user.updated_at else '-' }}</span>
+                    </div>
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Ultimo acesso:</span>
+                        <span class="admin-info-value">{{ user.last_login.strftime('%d/%m/%Y %H:%M') if user.last_login else 'Nunca' }}</span>
+                    </div>
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Posts:</span>
+                        <span class="admin-info-value">{{ user.posts | length if user.posts else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="admin-form-actions">
+                <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
+                    {{ 'Salvar Alteracoes' if user else 'Criar Usuario' }}
+                </button>
+                <a href="/admin/users" class="admin-btn admin-btn-secondary admin-btn-block">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

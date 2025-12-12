@@ -1,0 +1,133 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Posts{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Posts</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/posts/new" class="admin-btn admin-btn-primary">
+    ➕ Novo Post
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Posts</h1>
+</div>
+
+<!-- Filters -->
+<div class="admin-card" style="margin-bottom: 1rem;">
+    <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 200px;">
+            <label class="admin-form-label">Buscar</label>
+            <input type="text" name="q" value="{{ q or '' }}" class="admin-form-input" placeholder="Titulo...">
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label class="admin-form-label">Status</label>
+            <select name="status" class="admin-form-select">
+                <option value="">Todos</option>
+                <option value="draft" {% if status == 'draft' %}selected{% endif %}>Rascunho</option>
+                <option value="published" {% if status == 'published' %}selected{% endif %}>Publicado</option>
+                <option value="scheduled" {% if status == 'scheduled' %}selected{% endif %}>Agendado</option>
+                <option value="archived" {% if status == 'archived' %}selected{% endif %}>Arquivado</option>
+            </select>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-secondary">Filtrar</button>
+        <a href="/admin/posts" class="admin-btn admin-btn-secondary">Limpar</a>
+    </form>
+</div>
+
+<!-- Posts Table -->
+<div class="admin-card">
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" onchange="toggleAllCheckboxes(this)">
+                    </th>
+                    <th>Titulo</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th>Categoria</th>
+                    <th>Views</th>
+                    <th>Data</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>
+                        <input type="checkbox" class="row-checkbox" value="{{ post.id }}">
+                    </td>
+                    <td>
+                        <a href="/admin/posts/{{ post.id }}" style="color: var(--admin-text); font-weight: 500;">
+                            {{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}
+                        </a>
+                        <div style="font-size: 0.75rem; color: var(--admin-text-muted);">
+                            /blog/{{ post.slug }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="admin-badge admin-badge-primary">{{ post.type.value }}</span>
+                    </td>
+                    <td>
+                        {% if post.status.value == 'published' %}
+                        <span class="admin-badge admin-badge-success">Publicado</span>
+                        {% elif post.status.value == 'draft' %}
+                        <span class="admin-badge admin-badge-secondary">Rascunho</span>
+                        {% elif post.status.value == 'scheduled' %}
+                        <span class="admin-badge admin-badge-warning">Agendado</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-danger">Arquivado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ post.category.name if post.category else '-' }}</td>
+                    <td>{{ post.view_count or 0 }}</td>
+                    <td>{{ post.created_at.strftime('%d/%m/%Y') }}</td>
+                    <td class="actions">
+                        <a href="/admin/posts/{{ post.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            ✏️
+                        </a>
+                        <a href="/blog/{{ post.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            👁️
+                        </a>
+                        <button onclick="deleteItem('/api/v1/posts/{{ post.id }}', '{{ post.title }}')" class="admin-btn admin-btn-sm admin-btn-danger">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                        Nenhum post encontrado.
+                        <a href="/admin/posts/new" style="color: var(--admin-primary);">Criar primeiro post</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.total_pages > 1 %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+        {% if pagination.page > 1 %}
+        <a href="?page={{ pagination.page - 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        {% endif %}
+
+        <span style="padding: 0.5rem 1rem; color: var(--admin-text-muted);">
+            Pagina {{ pagination.page }} de {{ pagination.total_pages }}
+        </span>
+
+        {% if pagination.page < pagination.total_pages %}
+        <a href="?page={{ pagination.page + 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

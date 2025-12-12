@@ -1,0 +1,152 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Dashboard</h1>
+</div>
+
+<!-- Stats Cards -->
+<div class="admin-stats">
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon primary">📝</div>
+        <div class="admin-stat-info">
+            <div class="admin-stat-value">{{ stats.total_posts }}</div>
+            <div class="admin-stat-label">Posts</div>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon success">✅</div>
+        <div class="admin-stat-info">
+            <div class="admin-stat-value">{{ stats.published_posts }}</div>
+            <div class="admin-stat-label">Publicados</div>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon warning">🎁</div>
+        <div class="admin-stat-info">
+            <div class="admin-stat-value">{{ stats.total_products }}</div>
+            <div class="admin-stat-label">Produtos</div>
+        </div>
+    </div>
+
+    <div class="admin-stat-card">
+        <div class="admin-stat-icon danger">🔗</div>
+        <div class="admin-stat-info">
+            <div class="admin-stat-value">{{ stats.total_clicks }}</div>
+            <div class="admin-stat-label">Cliques Afiliados</div>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+    <!-- Recent Posts -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h2 class="admin-card-title">Posts Recentes</h2>
+            <a href="/admin/posts" class="admin-btn admin-btn-sm admin-btn-secondary">Ver todos</a>
+        </div>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Titulo</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in recent_posts %}
+                    <tr>
+                        <td>
+                            <a href="/admin/posts/{{ post.id }}" style="color: var(--admin-text);">
+                                {{ post.title[:40] }}{% if post.title|length > 40 %}...{% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            {% if post.status.value == 'published' %}
+                            <span class="admin-badge admin-badge-success">Publicado</span>
+                            {% elif post.status.value == 'draft' %}
+                            <span class="admin-badge admin-badge-secondary">Rascunho</span>
+                            {% elif post.status.value == 'scheduled' %}
+                            <span class="admin-badge admin-badge-warning">Agendado</span>
+                            {% else %}
+                            <span class="admin-badge admin-badge-danger">Arquivado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ post.created_at.strftime('%d/%m') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--admin-text-muted);">
+                            Nenhum post encontrado
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h2 class="admin-card-title">Produtos Mais Clicados</h2>
+            <a href="/admin/products" class="admin-btn admin-btn-sm admin-btn-secondary">Ver todos</a>
+        </div>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Plataforma</th>
+                        <th>Cliques</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in top_products %}
+                    <tr>
+                        <td>
+                            <a href="/admin/products/{{ product.id }}" style="color: var(--admin-text);">
+                                {{ product.name[:30] }}{% if product.name|length > 30 %}...{% endif %}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="admin-badge admin-badge-primary">{{ product.platform.value }}</span>
+                        </td>
+                        <td>{{ product.click_count or 0 }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--admin-text-muted);">
+                            Nenhum produto encontrado
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="admin-card" style="margin-top: 1.5rem;">
+    <div class="admin-card-header">
+        <h2 class="admin-card-title">Acoes Rapidas</h2>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="/admin/posts/new" class="admin-btn admin-btn-primary">
+            ➕ Novo Post
+        </a>
+        <a href="/admin/products/new" class="admin-btn admin-btn-secondary">
+            🎁 Novo Produto
+        </a>
+        <a href="/admin/categories/new" class="admin-btn admin-btn-secondary">
+            📁 Nova Categoria
+        </a>
+    </div>
+</div>
+{% endblock %}

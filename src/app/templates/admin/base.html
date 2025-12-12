@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}Admin{% endblock %} - geek.bidu.guru</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-header">
+                <a href="/admin" class="admin-logo">
+                    <div class="admin-logo-icon">G</div>
+                    <div class="admin-logo-text">geek<span>.bidu</span></div>
+                </a>
+            </div>
+
+            <nav class="admin-nav">
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">Principal</div>
+                    <a href="/admin" class="admin-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+                        <span class="icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">Conteudo</div>
+                    <a href="/admin/posts" class="admin-nav-item {% if active_page == 'posts' %}active{% endif %}">
+                        <span class="icon">📝</span>
+                        <span>Posts</span>
+                    </a>
+                    <a href="/admin/products" class="admin-nav-item {% if active_page == 'products' %}active{% endif %}">
+                        <span class="icon">🎁</span>
+                        <span>Produtos</span>
+                    </a>
+                    <a href="/admin/categories" class="admin-nav-item {% if active_page == 'categories' %}active{% endif %}">
+                        <span class="icon">📁</span>
+                        <span>Categorias</span>
+                    </a>
+                </div>
+
+                {% if current_user and current_user.role.value == 'admin' %}
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">Administracao</div>
+                    <a href="/admin/users" class="admin-nav-item {% if active_page == 'users' %}active{% endif %}">
+                        <span class="icon">👥</span>
+                        <span>Usuarios</span>
+                    </a>
+                </div>
+                {% endif %}
+
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">Ferramentas</div>
+                    <a href="/" class="admin-nav-item" target="_blank">
+                        <span class="icon">🌐</span>
+                        <span>Ver Site</span>
+                    </a>
+                    <a href="/admin/logout" class="admin-nav-item">
+                        <span class="icon">🚪</span>
+                        <span>Sair</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-user">
+                    <div class="admin-user-avatar">
+                        {{ current_user.name[0] if current_user else 'A' }}
+                    </div>
+                    <div class="admin-user-info">
+                        <div class="admin-user-name">{{ current_user.name if current_user else 'Admin' }}</div>
+                        <div class="admin-user-role">{{ current_user.role.value if current_user else 'admin' }}</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <button class="admin-btn admin-btn-icon sidebar-toggle" onclick="toggleSidebar()">
+                        ☰
+                    </button>
+                    <nav class="admin-breadcrumb">
+                        <a href="/admin">Admin</a>
+                        {% block breadcrumb %}{% endblock %}
+                    </nav>
+                </div>
+                <div class="admin-header-right">
+                    {% block header_actions %}{% endblock %}
+                </div>
+            </header>
+
+            <div class="admin-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

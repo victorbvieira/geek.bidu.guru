@@ -3,7 +3,6 @@ Entry point da aplicacao FastAPI - geek.bidu.guru
 Blog de Presentes Geek com Automacao e IA
 """
 
-import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -18,19 +17,17 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.config import settings
+from app.core.logging import setup_logging, get_logger
 from app.core.middleware import SecurityHeadersMiddleware
 from app.core.rate_limit import limiter
 from app.database import check_database_connection
 
 # -----------------------------------------------------------------------------
-# Logging
+# Logging Estruturado (JSON em producao)
 # -----------------------------------------------------------------------------
 
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+setup_logging()
+logger = get_logger(__name__)
 
 
 # -----------------------------------------------------------------------------
@@ -260,3 +257,12 @@ app.include_router(affiliates_router)
 from app.routers.seo import router as seo_router
 
 app.include_router(seo_router)
+
+
+# -----------------------------------------------------------------------------
+# Admin Routes (painel administrativo)
+# -----------------------------------------------------------------------------
+
+from app.routers.admin import router as admin_router
+
+app.include_router(admin_router)

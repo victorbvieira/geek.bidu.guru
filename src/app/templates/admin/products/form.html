@@ -1,0 +1,214 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ 'Editar' if product else 'Novo' }} Produto{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/products">Produtos</a>
+<span>/</span>
+<span class="current">{{ 'Editar' if product else 'Novo' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">{{ 'Editar Produto' if product else 'Novo Produto' }}</h1>
+</div>
+
+<form method="POST" action="{{ '/admin/products/' ~ product.id if product else '/admin/products' }}">
+    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem;">
+        <!-- Main Content -->
+        <div>
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label for="name" class="admin-form-label">Nome do Produto *</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="admin-form-input"
+                        value="{{ product.name if product else '' }}"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="slug" class="admin-form-label">Slug</label>
+                    <input
+                        type="text"
+                        id="slug"
+                        name="slug"
+                        class="admin-form-input"
+                        value="{{ product.slug if product else '' }}"
+                        placeholder="gerado-automaticamente"
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="short_description" class="admin-form-label">Descricao Curta</label>
+                    <textarea
+                        id="short_description"
+                        name="short_description"
+                        class="admin-form-textarea"
+                        style="min-height: 80px;"
+                    >{{ product.short_description if product else '' }}</textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="long_description" class="admin-form-label">Descricao Completa</label>
+                    <textarea
+                        id="long_description"
+                        name="long_description"
+                        class="admin-form-textarea"
+                        style="min-height: 150px;"
+                    >{{ product.long_description if product else '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Affiliate Link -->
+            <div class="admin-card" style="margin-top: 1.5rem;">
+                <h3 class="admin-card-title" style="margin-bottom: 1rem;">Link de Afiliado</h3>
+
+                <div class="admin-form-group">
+                    <label for="affiliate_url_raw" class="admin-form-label">URL do Afiliado *</label>
+                    <input
+                        type="url"
+                        id="affiliate_url_raw"
+                        name="affiliate_url_raw"
+                        class="admin-form-input"
+                        value="{{ product.affiliate_url_raw if product else '' }}"
+                        placeholder="https://amazon.com.br/dp/..."
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="affiliate_redirect_slug" class="admin-form-label">Slug de Redirecionamento *</label>
+                    <input
+                        type="text"
+                        id="affiliate_redirect_slug"
+                        name="affiliate_redirect_slug"
+                        class="admin-form-input"
+                        value="{{ product.affiliate_redirect_slug if product else '' }}"
+                        placeholder="produto-amazon"
+                        required
+                    >
+                    <div class="admin-form-hint">URL: /goto/{{ product.affiliate_redirect_slug if product else 'seu-slug' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+            <!-- Platform & Price -->
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label for="platform" class="admin-form-label">Plataforma *</label>
+                    <select id="platform" name="platform" class="admin-form-select" required>
+                        <option value="amazon" {% if not product or product.platform.value == 'amazon' %}selected{% endif %}>Amazon</option>
+                        <option value="mercadolivre" {% if product and product.platform.value == 'mercadolivre' %}selected{% endif %}>Mercado Livre</option>
+                        <option value="shopee" {% if product and product.platform.value == 'shopee' %}selected{% endif %}>Shopee</option>
+                    </select>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="platform_product_id" class="admin-form-label">ID do Produto na Plataforma</label>
+                    <input
+                        type="text"
+                        id="platform_product_id"
+                        name="platform_product_id"
+                        class="admin-form-input"
+                        value="{{ product.platform_product_id if product else '' }}"
+                        placeholder="B08XYZ123"
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="price" class="admin-form-label">Preco (R$)</label>
+                    <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        class="admin-form-input"
+                        value="{{ product.price if product else '' }}"
+                        step="0.01"
+                        min="0"
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="availability" class="admin-form-label">Disponibilidade</label>
+                    <select id="availability" name="availability" class="admin-form-select">
+                        <option value="available" {% if not product or product.availability.value == 'available' %}selected{% endif %}>Disponivel</option>
+                        <option value="out_of_stock" {% if product and product.availability.value == 'out_of_stock' %}selected{% endif %}>Sem estoque</option>
+                        <option value="discontinued" {% if product and product.availability.value == 'discontinued' %}selected{% endif %}>Descontinuado</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="admin-btn admin-btn-primary" style="width: 100%;">
+                    {{ 'Salvar' if product else 'Criar Produto' }}
+                </button>
+            </div>
+
+            <!-- Image -->
+            <div class="admin-card" style="margin-top: 1rem;">
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                    <label for="main_image_url" class="admin-form-label">Imagem Principal</label>
+                    <input
+                        type="url"
+                        id="main_image_url"
+                        name="main_image_url"
+                        class="admin-form-input"
+                        value="{{ product.main_image_url if product else '' }}"
+                        placeholder="https://..."
+                    >
+                </div>
+            </div>
+
+            <!-- Rating -->
+            <div class="admin-card" style="margin-top: 1rem;">
+                <div class="admin-form-group">
+                    <label for="rating" class="admin-form-label">Avaliacao (0-5)</label>
+                    <input
+                        type="number"
+                        id="rating"
+                        name="rating"
+                        class="admin-form-input"
+                        value="{{ product.rating if product else '' }}"
+                        step="0.1"
+                        min="0"
+                        max="5"
+                    >
+                </div>
+
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                    <label for="review_count" class="admin-form-label">Numero de Reviews</label>
+                    <input
+                        type="number"
+                        id="review_count"
+                        name="review_count"
+                        class="admin-form-input"
+                        value="{{ product.review_count if product else '' }}"
+                        min="0"
+                    >
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="admin-card" style="margin-top: 1rem;">
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                    <label for="tags" class="admin-form-label">Tags</label>
+                    <input
+                        type="text"
+                        id="tags"
+                        name="tags"
+                        class="admin-form-input"
+                        value="{{ product.tags | join(', ') if product and product.tags else '' }}"
+                        placeholder="tag1, tag2, tag3"
+                    >
+                    <div class="admin-form-hint">Separadas por virgula</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

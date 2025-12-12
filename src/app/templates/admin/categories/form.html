@@ -1,0 +1,185 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ 'Editar' if category else 'Nova' }} Categoria{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/categories">Categorias</a>
+<span>/</span>
+<span class="current">{{ 'Editar' if category else 'Nova' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">{{ 'Editar Categoria' if category else 'Nova Categoria' }}</h1>
+</div>
+
+<form method="POST" action="/admin/categories{{ '/' + category.id|string if category else '' }}" class="admin-form">
+    <div class="admin-form-grid">
+        <div class="admin-form-main">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Informacoes da Categoria</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label for="name" class="admin-label">Nome *</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value="{{ category.name if category else '' }}"
+                            class="admin-input"
+                            required
+                            data-slug-source="slug"
+                        >
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="slug" class="admin-label">Slug *</label>
+                        <input
+                            type="text"
+                            id="slug"
+                            name="slug"
+                            value="{{ category.slug if category else '' }}"
+                            class="admin-input"
+                            required
+                            pattern="[a-z0-9-]+"
+                        >
+                        <small class="admin-help-text">URL amigavel (apenas letras minusculas, numeros e hifens)</small>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="description" class="admin-label">Descricao</label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            class="admin-textarea"
+                            rows="4"
+                            maxlength="500"
+                            data-char-counter
+                        >{{ category.description if category else '' }}</textarea>
+                        <small class="admin-help-text">Descricao para SEO (max 500 caracteres)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>SEO</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label for="seo_title" class="admin-label">Titulo SEO</label>
+                        <input
+                            type="text"
+                            id="seo_title"
+                            name="seo_title"
+                            value="{{ category.seo_title if category and category.seo_title else '' }}"
+                            class="admin-input"
+                            maxlength="60"
+                            data-char-counter
+                        >
+                        <small class="admin-help-text">Titulo para mecanismos de busca (max 60 caracteres)</small>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="seo_description" class="admin-label">Descricao SEO</label>
+                        <textarea
+                            id="seo_description"
+                            name="seo_description"
+                            class="admin-textarea"
+                            rows="2"
+                            maxlength="160"
+                            data-char-counter
+                        >{{ category.seo_description if category and category.seo_description else '' }}</textarea>
+                        <small class="admin-help-text">Meta description (max 160 caracteres)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-form-sidebar">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Hierarquia</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label for="parent_id" class="admin-label">Categoria Pai</label>
+                        <select id="parent_id" name="parent_id" class="admin-select">
+                            <option value="">Nenhuma (categoria raiz)</option>
+                            {% for cat in categories %}
+                            <option
+                                value="{{ cat.id }}"
+                                {{ 'selected' if category and category.parent_id == cat.id else '' }}
+                            >
+                                {{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="admin-help-text">Selecione para criar subcategoria</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Imagem</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label for="image_url" class="admin-label">URL da Imagem</label>
+                        <input
+                            type="url"
+                            id="image_url"
+                            name="image_url"
+                            value="{{ category.image_url if category and category.image_url else '' }}"
+                            class="admin-input"
+                            placeholder="https://..."
+                        >
+                        <small class="admin-help-text">Imagem de capa da categoria</small>
+                    </div>
+
+                    {% if category and category.image_url %}
+                    <div class="admin-image-preview">
+                        <img src="{{ category.image_url }}" alt="{{ category.name }}" style="max-width: 100%; border-radius: 4px;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if category %}
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Informacoes</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Criado em:</span>
+                        <span class="admin-info-value">{{ category.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </div>
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Atualizado em:</span>
+                        <span class="admin-info-value">{{ category.updated_at.strftime('%d/%m/%Y %H:%M') if category.updated_at else '-' }}</span>
+                    </div>
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Posts:</span>
+                        <span class="admin-info-value">{{ category.posts | length if category.posts else 0 }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="admin-form-actions">
+                <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
+                    {{ 'Salvar Alteracoes' if category else 'Criar Categoria' }}
+                </button>
+                <a href="/admin/categories" class="admin-btn admin-btn-secondary admin-btn-block">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

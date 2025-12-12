@@ -1,0 +1,160 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Produtos{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Produtos</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/products/new" class="admin-btn admin-btn-primary">
+    ➕ Novo Produto
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Produtos</h1>
+</div>
+
+<!-- Filters -->
+<div class="admin-card" style="margin-bottom: 1rem;">
+    <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 200px;">
+            <label class="admin-form-label">Buscar</label>
+            <input type="text" name="q" value="{{ q or '' }}" class="admin-form-input" placeholder="Nome...">
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label class="admin-form-label">Plataforma</label>
+            <select name="platform" class="admin-form-select">
+                <option value="">Todas</option>
+                <option value="amazon" {% if platform == 'amazon' %}selected{% endif %}>Amazon</option>
+                <option value="mercadolivre" {% if platform == 'mercadolivre' %}selected{% endif %}>Mercado Livre</option>
+                <option value="shopee" {% if platform == 'shopee' %}selected{% endif %}>Shopee</option>
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label class="admin-form-label">Disponibilidade</label>
+            <select name="availability" class="admin-form-select">
+                <option value="">Todas</option>
+                <option value="available" {% if availability == 'available' %}selected{% endif %}>Disponivel</option>
+                <option value="out_of_stock" {% if availability == 'out_of_stock' %}selected{% endif %}>Sem estoque</option>
+                <option value="discontinued" {% if availability == 'discontinued' %}selected{% endif %}>Descontinuado</option>
+            </select>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-secondary">Filtrar</button>
+        <a href="/admin/products" class="admin-btn admin-btn-secondary">Limpar</a>
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="admin-card">
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" onchange="toggleAllCheckboxes(this)">
+                    </th>
+                    <th>Produto</th>
+                    <th>Plataforma</th>
+                    <th>Preco</th>
+                    <th>Disponibilidade</th>
+                    <th>Cliques</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>
+                        <input type="checkbox" class="row-checkbox" value="{{ product.id }}">
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            {% if product.main_image_url %}
+                            <img src="{{ product.main_image_url }}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                            {% else %}
+                            <div style="width: 40px; height: 40px; background: var(--admin-border); border-radius: 4px; display: flex; align-items: center; justify-content: center;">🎁</div>
+                            {% endif %}
+                            <div>
+                                <a href="/admin/products/{{ product.id }}" style="color: var(--admin-text); font-weight: 500;">
+                                    {{ product.name[:40] }}{% if product.name|length > 40 %}...{% endif %}
+                                </a>
+                                <div style="font-size: 0.75rem; color: var(--admin-text-muted);">
+                                    {{ product.affiliate_redirect_slug }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if product.platform.value == 'amazon' %}
+                        <span class="admin-badge" style="background: #FF9900; color: #000;">Amazon</span>
+                        {% elif product.platform.value == 'mercadolivre' %}
+                        <span class="admin-badge" style="background: #FFE600; color: #000;">ML</span>
+                        {% elif product.platform.value == 'shopee' %}
+                        <span class="admin-badge" style="background: #EE4D2D; color: #fff;">Shopee</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-secondary">{{ product.platform.value }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.price %}
+                        R$ {{ "%.2f"|format(product.price) }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.availability.value == 'available' %}
+                        <span class="admin-badge admin-badge-success">Disponivel</span>
+                        {% elif product.availability.value == 'out_of_stock' %}
+                        <span class="admin-badge admin-badge-warning">Sem estoque</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-danger">Descontinuado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ product.click_count or 0 }}</td>
+                    <td class="actions">
+                        <a href="/admin/products/{{ product.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            ✏️
+                        </a>
+                        <a href="/goto/{{ product.affiliate_redirect_slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            🔗
+                        </a>
+                        <button onclick="deleteItem('/api/v1/products/{{ product.id }}', '{{ product.name }}')" class="admin-btn admin-btn-sm admin-btn-danger">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                        Nenhum produto encontrado.
+                        <a href="/admin/products/new" style="color: var(--admin-primary);">Adicionar primeiro produto</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.total_pages > 1 %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+        {% if pagination.page > 1 %}
+        <a href="?page={{ pagination.page - 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        {% endif %}
+
+        <span style="padding: 0.5rem 1rem; color: var(--admin-text-muted);">
+            Pagina {{ pagination.page }} de {{ pagination.total_pages }}
+        </span>
+
+        {% if pagination.page < pagination.total_pages %}
+        <a href="?page={{ pagination.page + 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

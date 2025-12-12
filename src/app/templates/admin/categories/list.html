@@ -1,0 +1,68 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Categorias{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Categorias</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/categories/new" class="admin-btn admin-btn-primary">
+    ➕ Nova Categoria
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Categorias</h1>
+</div>
+
+<div class="admin-card">
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Slug</th>
+                    <th>Pai</th>
+                    <th>Posts</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>
+                        <a href="/admin/categories/{{ category.id }}" style="color: var(--admin-text); font-weight: 500;">
+                            {{ category.name }}
+                        </a>
+                    </td>
+                    <td style="color: var(--admin-text-muted);">{{ category.slug }}</td>
+                    <td>{{ category.parent.name if category.parent else '-' }}</td>
+                    <td>{{ category.posts | length if category.posts else 0 }}</td>
+                    <td class="actions">
+                        <a href="/admin/categories/{{ category.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            ✏️
+                        </a>
+                        <a href="/categoria/{{ category.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            👁️
+                        </a>
+                        <button onclick="deleteItem('/api/v1/categories/{{ category.id }}', '{{ category.name }}')" class="admin-btn admin-btn-sm admin-btn-danger">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                        Nenhuma categoria encontrada.
+                        <a href="/admin/categories/new" style="color: var(--admin-primary);">Criar primeira categoria</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

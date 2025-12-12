@@ -1,0 +1,135 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Usuarios{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Usuarios</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/users/new" class="admin-btn admin-btn-primary">
+    + Novo Usuario
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Usuarios</h1>
+</div>
+
+<div class="admin-card">
+    <div class="admin-filters">
+        <form method="GET" action="/admin/users" class="admin-filters-form">
+            <input
+                type="text"
+                name="q"
+                placeholder="Buscar usuarios..."
+                value="{{ request.query_params.get('q', '') }}"
+                class="admin-input"
+            >
+            <select name="role" class="admin-select">
+                <option value="">Todas as funcoes</option>
+                <option value="admin" {{ 'selected' if request.query_params.get('role') == 'admin' else '' }}>Admin</option>
+                <option value="editor" {{ 'selected' if request.query_params.get('role') == 'editor' else '' }}>Editor</option>
+                <option value="author" {{ 'selected' if request.query_params.get('role') == 'author' else '' }}>Autor</option>
+            </select>
+            <button type="submit" class="admin-btn admin-btn-secondary">Filtrar</button>
+        </form>
+    </div>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="select-all">
+                    </th>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Funcao</th>
+                    <th>Posts</th>
+                    <th>Ultimo Acesso</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="selected" value="{{ user.id }}">
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--admin-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                {{ user.name[0].upper() if user.name else 'U' }}
+                            </div>
+                            <div>
+                                <a href="/admin/users/{{ user.id }}" style="color: var(--admin-text); font-weight: 500;">
+                                    {{ user.name }}
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color: var(--admin-text-muted);">{{ user.email }}</td>
+                    <td>
+                        {% if user.role == 'admin' %}
+                        <span class="admin-badge admin-badge-danger">Admin</span>
+                        {% elif user.role == 'editor' %}
+                        <span class="admin-badge admin-badge-primary">Editor</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-secondary">Autor</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.posts | length if user.posts else 0 }}</td>
+                    <td style="color: var(--admin-text-muted);">
+                        {{ user.last_login.strftime('%d/%m/%Y %H:%M') if user.last_login else 'Nunca' }}
+                    </td>
+                    <td>
+                        {% if user.is_active %}
+                        <span class="admin-badge admin-badge-success">Ativo</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <a href="/admin/users/{{ user.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            Editar
+                        </a>
+                        {% if user.id != current_user.id %}
+                        <button onclick="deleteItem('/api/v1/users/{{ user.id }}', '{{ user.name }}')" class="admin-btn admin-btn-sm admin-btn-danger">
+                            Excluir
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                        Nenhum usuario encontrado.
+                        <a href="/admin/users/new" style="color: var(--admin-primary);">Criar primeiro usuario</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination and pagination.total_pages > 1 %}
+    <div class="admin-pagination">
+        {% if pagination.page > 1 %}
+        <a href="?page={{ pagination.page - 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        {% endif %}
+
+        <span style="color: var(--admin-text-muted);">
+            Pagina {{ pagination.page }} de {{ pagination.total_pages }}
+        </span>
+
+        {% if pagination.page < pagination.total_pages %}
+        <a href="?page={{ pagination.page + 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
