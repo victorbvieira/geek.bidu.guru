@@ -1,18 +1,58 @@
 # Deploy Cookbook - geek.bidu.guru
 
-> Guia passo a passo para deploy em produção na VPS Hostinger KVM8 usando Docker Compose.
+> Guia passo a passo para deploy em produção na VPS Hostinger KVM8 usando **Easypanel + Docker Compose** (abordagem híbrida).
 
 ## Índice
 
-1. [Pré-requisitos](#pré-requisitos)
-2. [Configuração do Banco de Dados](#configuração-do-banco-de-dados)
-3. [Deploy da Aplicação](#deploy-da-aplicação)
-4. [Configuração do Traefik](#configuração-do-traefik)
-5. [Executar Migrations](#executar-migrations)
-6. [Verificação Pós-Deploy](#verificação-pós-deploy)
-7. [Manutenção e Updates](#manutenção-e-updates)
-8. [Deploy Automático com Webhook](#deploy-automático-com-webhook)
-9. [Troubleshooting](#troubleshooting)
+1. [Visão Geral da Arquitetura](#visão-geral-da-arquitetura)
+2. [Pré-requisitos](#pré-requisitos)
+3. [Etapa 1: Configuração do Banco de Dados](#etapa-1-configuração-do-banco-de-dados)
+4. [Etapa 2: Clonar Repositório na VPS](#etapa-2-clonar-repositório-na-vps)
+5. [Etapa 3: Configurar Projeto no Easypanel](#etapa-3-configurar-projeto-no-easypanel)
+6. [Etapa 4: Executar Migrations](#etapa-4-executar-migrations)
+7. [Etapa 5: Verificação Pós-Deploy](#etapa-5-verificação-pós-deploy)
+8. [Etapa 6: Configurar Webhook para Deploy Automático](#etapa-6-configurar-webhook-para-deploy-automático)
+9. [Manutenção e Updates](#manutenção-e-updates)
+10. [Troubleshooting](#troubleshooting)
+
+---
+
+## Visão Geral da Arquitetura
+
+Usamos uma **abordagem híbrida**:
+- **Easypanel**: Interface web para gerenciar o serviço docker-compose
+- **Docker Compose**: Controle total sobre redes e containers
+- **Webhook Script**: Deploy automático via script Python (não usa Easypanel)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    VPS Hostinger KVM8                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐     ┌─────────────────────────────────┐   │
+│  │   Traefik   │────▶│  Rede: interna                  │   │
+│  │  (SSL/Proxy)│     │  ┌───────────────┐              │   │
+│  └─────────────┘     │  │  PostgreSQL   │              │   │
+│         │            │  │ alias:postgres│              │   │
+│         │            │  └───────────────┘              │   │
+│         │            │         ▲                       │   │
+│         ▼            │         │                       │   │
+│  ┌─────────────────────────────┼───────────────────┐   │   │
+│  │  Projeto: geek-bidu-guru    │                   │   │   │
+│  │  (gerenciado via Easypanel) │                   │   │   │
+│  │  ┌───────────────┐  ┌───────┴─────┐            │   │   │
+│  │  │  geek_bidu_app│──│   Redis     │            │   │   │
+│  │  │  (FastAPI)    │  │             │            │   │   │
+│  │  └───────────────┘  └─────────────┘            │   │   │
+│  │  Redes: geek_bidu_network + interna            │   │   │
+│  └─────────────────────────────────────────────────┘   │   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Webhook Server (porta 9000) - Deploy Automático    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -20,52 +60,61 @@
 
 ### Na VPS (já configurado)
 - [x] Docker e Docker Compose instalados
+- [x] Easypanel instalado e acessível
 - [x] PostgreSQL rodando em container com rede `interna`
 - [x] Traefik configurado para SSL automático
 - [x] Rede Docker `interna` criada e compartilhada
 
 ### Verificar pré-requisitos
 
+Execute estes comandos na VPS para verificar se tudo está pronto:
+
 ```bash
-# Verificar Docker
+# 1. Verificar Docker
 docker --version
 docker compose version
 
-# Verificar rede interna existe
+# 2. Verificar rede interna existe
 docker network ls | grep interna
 
-# Verificar PostgreSQL está rodando e na rede interna
+# 3. Verificar PostgreSQL está rodando
 docker ps | grep postgres
-docker inspect kvm8_postgre-postgres-1 --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
-# Deve mostrar: interna monitoring
 
-# Verificar alias do PostgreSQL na rede interna
+# 4. Verificar PostgreSQL está na rede interna
+docker inspect kvm8_postgre-postgres-1 --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+# Deve mostrar: interna (entre outras)
+
+# 5. Verificar alias do PostgreSQL na rede interna (IMPORTANTE!)
 docker inspect kvm8_postgre-postgres-1 --format='{{json .NetworkSettings.Networks.interna.Aliases}}'
-# Deve mostrar: ["postgres","db"]
+# Deve mostrar: ["postgres","db"] ou similar
 ```
 
-### Se o alias não existir, criar:
+### Se o alias "postgres" não existir:
 
 ```bash
+# Desconectar e reconectar com aliases
 docker network disconnect interna kvm8_postgre-postgres-1
 docker network connect --alias postgres --alias db interna kvm8_postgre-postgres-1
+
+# Verificar novamente
+docker inspect kvm8_postgre-postgres-1 --format='{{json .NetworkSettings.Networks.interna.Aliases}}'
 ```
 
 ---
 
-## Configuração do Banco de Dados
+## Etapa 1: Configuração do Banco de Dados
 
-### 1. Acessar PostgreSQL
+### 1.1 Acessar PostgreSQL
 
 ```bash
 docker exec -it kvm8_postgre-postgres-1 psql -U postgres
 ```
 
-### 2. Criar Database e Usuário de Produção
+### 1.2 Criar Database e Usuário de Produção
 
 ```sql
--- Criar usuário de produção
-CREATE USER geek_app_prod WITH PASSWORD 'sua-senha-segura-aqui';
+-- Criar usuário de produção (troque a senha!)
+CREATE USER geek_app_prod WITH PASSWORD 'SUA_SENHA_SEGURA_AQUI';
 
 -- Criar database
 CREATE DATABASE geek_bidu_prod OWNER geek_app_prod;
@@ -83,44 +132,72 @@ GRANT ALL ON SCHEMA public TO geek_app_prod;
 \q
 ```
 
-### 3. Verificar Conexão
+### 1.3 Verificar Conexão
 
 ```bash
 docker exec -it kvm8_postgre-postgres-1 psql -U geek_app_prod -d geek_bidu_prod -c "SELECT 1;"
 ```
 
+Se retornar `1`, a conexão está funcionando!
+
 ---
 
-## Deploy da Aplicação
+## Etapa 2: Clonar Repositório na VPS
 
-### 1. Clonar Repositório na VPS
+### 2.1 Criar diretório e clonar
 
 ```bash
 # Criar diretório do projeto
 mkdir -p /opt/geek-bidu-guru
 cd /opt/geek-bidu-guru
 
-# Clonar repositório
+# Clonar repositório (troque pelo seu usuário/repo)
 git clone https://github.com/victorbvieira/geek.bidu.guru.git .
 
-# Ou se já existe, atualizar
-git pull origin main
+# Verificar se clonou corretamente
+ls -la
+# Deve mostrar: docker/, src/, docs/, requirements.txt, etc.
 ```
 
-### 2. Criar Arquivo .env
+### 2.2 Verificar arquivo docker-compose.prod.yml existe
 
 ```bash
-# Criar .env na raiz do projeto
-cat > .env << 'EOF'
-# =============================================================================
-# Variáveis de Ambiente - Produção
-# =============================================================================
+cat docker/docker-compose.prod.yml
+```
 
+Deve mostrar o arquivo de compose com os serviços `app` e `redis`.
+
+---
+
+## Etapa 3: Configurar Projeto no Easypanel
+
+### 3.1 Acessar Easypanel
+
+Acesse o Easypanel via browser: `https://seu-ip-ou-dominio:3000`
+
+### 3.2 Criar Novo Projeto
+
+1. Clique em **"+ Create Project"**
+2. Nome do projeto: `geek-bidu-guru`
+3. Clique em **"Create"**
+
+### 3.3 Adicionar Serviço Docker Compose
+
+1. Dentro do projeto, clique em **"+ Create Service"**
+2. Selecione **"Docker Compose"**
+3. Em **"Compose Path"**, digite: `/opt/geek-bidu-guru/docker/docker-compose.prod.yml`
+   - Ou copie/cole o conteúdo do arquivo docker-compose.prod.yml
+
+### 3.4 Configurar Variáveis de Ambiente
+
+No Easypanel, vá em **"Environment"** e adicione:
+
+```env
 # Banco de Dados
 DB_PASSWORD=SUA_SENHA_DO_POSTGRES_AQUI
 
-# Segurança (gerar com: python -c "import secrets; print(secrets.token_urlsafe(64))")
-SECRET_KEY=GERE_UMA_CHAVE_SEGURA_AQUI
+# Segurança (gere com: python -c "import secrets; print(secrets.token_urlsafe(64))")
+SECRET_KEY=SUA_CHAVE_SECRETA_AQUI
 
 # JWT
 JWT_ALGORITHM=HS256
@@ -136,7 +213,7 @@ ALLOWED_HOSTS=geek.bidu.guru,www.geek.bidu.guru
 LOG_LEVEL=INFO
 LOG_FORMAT=json
 
-# APIs de Afiliados (preencher conforme necessário)
+# APIs de Afiliados (opcional - preencha conforme necessário)
 AMAZON_ACCESS_KEY=
 AMAZON_SECRET_KEY=
 AMAZON_PARTNER_TAG=
@@ -148,99 +225,101 @@ MELI_CLIENT_SECRET=
 SHOPEE_APP_ID=
 SHOPEE_SECRET_KEY=
 
-# IA
+# IA (opcional)
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini
 
-# Analytics
+# Analytics (opcional)
 GA4_MEASUREMENT_ID=
 GA4_API_SECRET=
+```
+
+**Ou** crie o arquivo `.env` manualmente na VPS:
+
+```bash
+cd /opt/geek-bidu-guru
+
+# Criar arquivo .env (será lido pelo docker-compose)
+cat > .env << 'EOF'
+# Banco de Dados
+DB_PASSWORD=SUA_SENHA_DO_POSTGRES_AQUI
+
+# Segurança
+SECRET_KEY=SUA_CHAVE_SECRETA_AQUI
+
+# JWT
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+# Aplicação
+APP_NAME=geek.bidu.guru
+APP_URL=https://geek.bidu.guru
+ALLOWED_HOSTS=geek.bidu.guru,www.geek.bidu.guru
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FORMAT=json
 EOF
 
-# Editar e preencher as variáveis
+# Editar e preencher valores reais
 nano .env
 ```
 
-### 3. Build e Deploy
+### 3.5 Gerar SECRET_KEY segura
 
 ```bash
-# Build e subir containers
-docker compose -f docker/docker-compose.prod.yml up -d --build
-
-# Verificar se subiu
-docker ps | grep geek
-
-# Deve mostrar:
-# geek_bidu_app    ... Up ...
-# geek_bidu_redis  ... Up ...
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-### 4. Verificar Logs
+Copie o resultado e cole no campo `SECRET_KEY`.
+
+### 3.6 Iniciar o Serviço
+
+1. Clique em **"Deploy"** ou **"Start"** no Easypanel
+2. Aguarde o build e inicialização
+3. Verifique os logs para erros
+
+**Ou** inicie via linha de comando:
+
+```bash
+cd /opt/geek-bidu-guru
+docker compose -f docker/docker-compose.prod.yml up -d --build
+```
+
+### 3.7 Verificar se containers estão rodando
+
+```bash
+docker ps | grep geek
+```
+
+Deve mostrar:
+```
+geek_bidu_app    ... Up ...
+geek_bidu_redis  ... Up ...
+```
+
+### 3.8 Verificar logs
 
 ```bash
 # Ver logs da aplicação
+docker logs -f geek_bidu_app
+
+# Ou via docker-compose
 docker compose -f docker/docker-compose.prod.yml logs -f app
-
-# Ver logs de todos os serviços
-docker compose -f docker/docker-compose.prod.yml logs -f
-```
-
-### 5. Verificar Conexão com PostgreSQL
-
-```bash
-# Testar se a aplicação consegue conectar ao PostgreSQL
-docker exec -it geek_bidu_app python -c "
-import asyncio
-import asyncpg
-
-async def test():
-    try:
-        conn = await asyncpg.connect('postgresql://geek_app_prod:SUA_SENHA@postgres:5432/geek_bidu_prod')
-        await conn.close()
-        print('✓ Conexão com PostgreSQL OK!')
-    except Exception as e:
-        print(f'✗ Erro: {e}')
-
-asyncio.run(test())
-"
 ```
 
 ---
 
-## Configuração do Traefik
+## Etapa 4: Executar Migrations
 
-O docker-compose.prod.yml já inclui labels para o Traefik. Se o Traefik está rodando, a aplicação será automaticamente exposta.
-
-### Verificar se Traefik detectou o serviço
-
-```bash
-# Ver logs do Traefik
-docker logs traefik 2>&1 | grep geek
-```
-
-### Configuração DNS
-
-No seu provedor de DNS (Cloudflare, etc.):
-
-```
-# Registro A
-geek.bidu.guru    A    167.88.32.240
-
-# WWW (opcional)
-www.geek.bidu.guru    CNAME    geek.bidu.guru
-```
-
----
-
-## Executar Migrations
-
-### Primeiro Deploy (criar tabelas)
+### 4.1 Rodar migrations do Alembic
 
 ```bash
 docker exec -it geek_bidu_app sh -c "cd /app/src && alembic upgrade head"
 ```
 
-### Verificar status das migrations
+### 4.2 Verificar status das migrations
 
 ```bash
 docker exec -it geek_bidu_app sh -c "cd /app/src && alembic current"
@@ -248,16 +327,12 @@ docker exec -it geek_bidu_app sh -c "cd /app/src && alembic current"
 
 ---
 
-## Verificação Pós-Deploy
+## Etapa 5: Verificação Pós-Deploy
 
-### 1. Health Check
+### 5.1 Health Check Local
 
 ```bash
-# Testar localmente na VPS
 curl http://localhost:8000/health
-
-# Testar via domínio (após DNS propagado)
-curl https://geek.bidu.guru/health
 ```
 
 Resposta esperada:
@@ -270,25 +345,24 @@ Resposta esperada:
 }
 ```
 
-### 2. Testar Admin
+### 5.2 Configurar DNS (se ainda não configurou)
 
-1. Acesse: `https://geek.bidu.guru/admin/login`
-2. Login com credenciais iniciais
-3. **IMPORTANTE**: Altere a senha após primeiro login!
+No seu provedor de DNS (Cloudflare, etc.):
 
-### 3. Verificar SSL
+```
+# Registro A
+geek.bidu.guru    A    167.88.32.240
 
-```bash
-curl -I https://geek.bidu.guru
+# WWW (opcional)
+www.geek.bidu.guru    CNAME    geek.bidu.guru
 ```
 
-Deve mostrar:
-- `HTTP/2 200`
-- Headers de segurança
-
-### 4. Testar Endpoints
+### 5.3 Testar via Domínio (após DNS propagado)
 
 ```bash
+# Health check
+curl https://geek.bidu.guru/health
+
 # Homepage
 curl https://geek.bidu.guru/
 
@@ -299,61 +373,27 @@ curl https://geek.bidu.guru/sitemap.xml
 curl https://geek.bidu.guru/robots.txt
 ```
 
----
-
-## Manutenção e Updates
-
-### Atualizar Aplicação
+### 5.4 Verificar SSL
 
 ```bash
-cd /opt/geek-bidu-guru
-
-# Baixar alterações
-git pull origin main
-
-# Rebuild e restart
-docker compose -f docker/docker-compose.prod.yml up -d --build
-
-# Executar novas migrations (se houver)
-docker exec -it geek_bidu_app sh -c "cd /app/src && alembic upgrade head"
-
-# Verificar logs
-docker compose -f docker/docker-compose.prod.yml logs -f app
+curl -I https://geek.bidu.guru
 ```
 
-### Reiniciar Serviços
+Deve mostrar: `HTTP/2 200` e headers de segurança.
 
-```bash
-# Reiniciar tudo
-docker compose -f docker/docker-compose.prod.yml restart
+### 5.5 Testar Admin
 
-# Reiniciar apenas a aplicação
-docker restart geek_bidu_app
-```
-
-### Parar Serviços
-
-```bash
-docker compose -f docker/docker-compose.prod.yml down
-```
-
-### Backup do Banco
-
-```bash
-# Criar backup
-docker exec kvm8_postgre-postgres-1 pg_dump -U geek_app_prod geek_bidu_prod > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Restaurar backup
-cat backup.sql | docker exec -i kvm8_postgre-postgres-1 psql -U geek_app_prod geek_bidu_prod
-```
+1. Acesse: `https://geek.bidu.guru/admin/login`
+2. Login com credenciais iniciais
+3. **IMPORTANTE**: Altere a senha após primeiro login!
 
 ---
 
-## Deploy Automático com Webhook
+## Etapa 6: Configurar Webhook para Deploy Automático
 
-Configure deploy automático a cada push na branch `main` usando GitHub Webhooks.
+Configure deploy automático a cada push na branch `main` usando GitHub Webhooks com um script Python.
 
-### 1. Criar Script de Deploy na VPS
+### 6.1 Criar Script de Deploy
 
 ```bash
 # Criar diretório para scripts
@@ -417,9 +457,7 @@ EOF
 chmod +x /opt/scripts/deploy-geek.sh
 ```
 
-### 2. Criar Servidor de Webhook
-
-Vamos usar um pequeno servidor Python para receber webhooks do GitHub.
+### 6.2 Criar Servidor de Webhook
 
 ```bash
 # Criar script do servidor webhook
@@ -435,7 +473,6 @@ import hmac
 import json
 import os
 import subprocess
-import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Configurações
@@ -523,11 +560,19 @@ EOF
 chmod +x /opt/scripts/webhook-server.py
 ```
 
-### 3. Criar Serviço Systemd
+### 6.3 Criar Serviço Systemd
 
 ```bash
+# Gerar secret seguro
+WEBHOOK_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+echo "============================================"
+echo "Seu WEBHOOK_SECRET: $WEBHOOK_SECRET"
+echo "============================================"
+echo "GUARDE ESTE VALOR! Você vai precisar dele no GitHub."
+echo ""
+
 # Criar arquivo de serviço
-cat > /etc/systemd/system/geek-webhook.service << 'EOF'
+cat > /etc/systemd/system/geek-webhook.service << EOF
 [Unit]
 Description=Webhook Server para Deploy do geek.bidu.guru
 After=network.target docker.service
@@ -535,7 +580,7 @@ After=network.target docker.service
 [Service]
 Type=simple
 User=root
-Environment=WEBHOOK_SECRET=SEU_SECRET_SEGURO_AQUI
+Environment=WEBHOOK_SECRET=$WEBHOOK_SECRET
 ExecStart=/usr/bin/python3 /opt/scripts/webhook-server.py
 Restart=always
 RestartSec=10
@@ -543,14 +588,6 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# Gerar um secret seguro
-WEBHOOK_SECRET=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
-echo "Seu WEBHOOK_SECRET: $WEBHOOK_SECRET"
-echo "GUARDE ESTE VALOR! Você vai precisar dele no GitHub."
-
-# Atualizar o serviço com o secret gerado
-sed -i "s/SEU_SECRET_SEGURO_AQUI/$WEBHOOK_SECRET/" /etc/systemd/system/geek-webhook.service
 
 # Habilitar e iniciar serviço
 systemctl daemon-reload
@@ -561,88 +598,104 @@ systemctl start geek-webhook
 systemctl status geek-webhook
 ```
 
-### 4. Configurar Traefik para Expor o Webhook
-
-Adicione labels no docker-compose.prod.yml ou crie um serviço separado. A forma mais simples é expor a porta diretamente:
+### 6.4 Abrir Porta no Firewall
 
 ```bash
-# Verificar se a porta está acessível
-curl http://localhost:9000/webhook/deploy
-# Deve retornar 404 (método GET não permitido)
-
-# Se precisar expor via Traefik, adicione no seu traefik config:
-# - Host(`webhook.geek.bidu.guru`) com roteamento para porta 9000
-```
-
-**Alternativa**: Expor porta 9000 no firewall:
-
-```bash
-# Usando UFW
+# Usando UFW (se instalado)
 ufw allow 9000/tcp
 
 # Ou usando iptables
 iptables -A INPUT -p tcp --dport 9000 -j ACCEPT
 ```
 
-### 5. Configurar Webhook no GitHub
+### 6.5 Configurar Webhook no GitHub
 
-1. Vá no repositório GitHub: `https://github.com/victorbvieira/geek.bidu.guru`
-2. Clique em **Settings** → **Webhooks** → **Add webhook**
+1. Acesse o repositório: `https://github.com/victorbvieira/geek.bidu.guru`
+2. Vá em **Settings** → **Webhooks** → **Add webhook**
 3. Configure:
    - **Payload URL**: `http://167.88.32.240:9000/webhook/deploy`
    - **Content type**: `application/json`
-   - **Secret**: Cole o `WEBHOOK_SECRET` gerado no passo 3
+   - **Secret**: Cole o `WEBHOOK_SECRET` que foi gerado no passo 6.3
    - **Which events?**: Selecione "Just the push event"
    - **Active**: ✓ Marcado
 4. Clique em **Add webhook**
 
-### 6. Testar o Webhook
+### 6.6 Testar o Webhook
 
 ```bash
 # Ver logs do servidor webhook
 journalctl -u geek-webhook -f
+```
 
-# Em outra janela, faça um commit de teste
+Em outro terminal ou no seu computador local:
+
+```bash
+# Fazer um commit de teste
 git commit --allow-empty -m "test: trigger webhook deploy"
 git push origin main
+```
 
-# Verificar logs de deploy
+Verifique os logs:
+
+```bash
+# Logs de deploy
 tail -f /var/log/geek-deploy.log
 ```
 
-### 7. Verificar Funcionamento
+### 6.7 Verificar no GitHub
 
-No GitHub, vá em **Settings** → **Webhooks** → Clique no webhook criado → **Recent Deliveries**
+Vá em **Settings** → **Webhooks** → Clique no webhook → **Recent Deliveries**
 
-Você verá:
 - ✓ Verde: Webhook entregue com sucesso
-- ✗ Vermelho: Erro na entrega (verifique logs)
+- ✗ Vermelho: Erro na entrega
 
-### Troubleshooting do Webhook
+---
+
+## Manutenção e Updates
+
+### Atualização Manual
 
 ```bash
-# Ver status do serviço
-systemctl status geek-webhook
+cd /opt/geek-bidu-guru
 
-# Ver logs do serviço
-journalctl -u geek-webhook -n 50
+# Baixar alterações
+git pull origin main
 
-# Ver logs de deploy
-tail -50 /var/log/geek-deploy.log
+# Rebuild e restart
+docker compose -f docker/docker-compose.prod.yml up -d --build
 
-# Reiniciar serviço
-systemctl restart geek-webhook
+# Executar novas migrations (se houver)
+docker exec -it geek_bidu_app sh -c "cd /app/src && alembic upgrade head"
 
-# Testar script de deploy manualmente
-/opt/scripts/deploy-geek.sh
+# Verificar logs
+docker compose -f docker/docker-compose.prod.yml logs -f app
 ```
 
-### Segurança do Webhook
+### Reiniciar Serviços
 
-- O `WEBHOOK_SECRET` garante que apenas o GitHub pode disparar deploys
-- O servidor verifica a assinatura HMAC-SHA256 de cada request
-- Considere usar HTTPS (via Traefik) para o endpoint do webhook
-- Mantenha o secret seguro e não commite no repositório
+```bash
+# Reiniciar tudo
+docker compose -f docker/docker-compose.prod.yml restart
+
+# Reiniciar apenas a aplicação
+docker restart geek_bidu_app
+```
+
+### Parar Serviços
+
+```bash
+docker compose -f docker/docker-compose.prod.yml down
+```
+
+### Backup do Banco
+
+```bash
+# Criar backup
+docker exec kvm8_postgre-postgres-1 pg_dump -U geek_app_prod geek_bidu_prod > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Restaurar backup
+cat backup.sql | docker exec -i kvm8_postgre-postgres-1 psql -U geek_app_prod geek_bidu_prod
+```
 
 ---
 
@@ -652,44 +705,36 @@ systemctl restart geek-webhook
 
 O container não consegue resolver o hostname `postgres`.
 
-**Solução**: Verificar se o container está na rede `interna`:
-
 ```bash
 # Ver redes do container
 docker inspect geek_bidu_app --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
-
 # Deve mostrar: geek_bidu_network interna
 
-# Se não mostrar "interna", verificar docker-compose.prod.yml
-# e fazer rebuild:
+# Se não mostrar "interna", rebuild:
 docker compose -f docker/docker-compose.prod.yml down
 docker compose -f docker/docker-compose.prod.yml up -d --build
 ```
 
 ### Erro: "Connection refused" ou "Timeout"
 
-O PostgreSQL não está acessível.
-
 ```bash
 # Verificar se PostgreSQL está rodando
 docker ps | grep postgres
 
-# Verificar se PostgreSQL está na rede interna
-docker inspect kvm8_postgre-postgres-1 --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+# Verificar alias existe
+docker inspect kvm8_postgre-postgres-1 --format='{{json .NetworkSettings.Networks.interna.Aliases}}'
 
 # Testar conexão de dentro do container app
-docker exec -it geek_bidu_app ping postgres
-```
+docker exec -it geek_bidu_app python -c "
+import asyncio
+import asyncpg
 
-### Erro: "Permission denied" no PostgreSQL
+async def test():
+    conn = await asyncpg.connect('postgresql://geek_app_prod:SENHA@postgres:5432/geek_bidu_prod')
+    print('Conexão OK!')
+    await conn.close()
 
-```bash
-# Verificar se usuário existe e tem permissões
-docker exec -it kvm8_postgre-postgres-1 psql -U postgres -c "\du geek_app_prod"
-
-# Recriar permissões se necessário
-docker exec -it kvm8_postgre-postgres-1 psql -U postgres -c "
-GRANT ALL PRIVILEGES ON DATABASE geek_bidu_prod TO geek_app_prod;
+asyncio.run(test())
 "
 ```
 
@@ -699,39 +744,34 @@ GRANT ALL PRIVILEGES ON DATABASE geek_bidu_prod TO geek_app_prod;
 # Ver logs detalhados
 docker logs geek_bidu_app --tail 100
 
-# Ver status
-docker ps -a | grep geek
+# Verificar .env
+cat /opt/geek-bidu-guru/.env
+```
 
-# Verificar .env está correto
-cat .env
+### Webhook não funciona
+
+```bash
+# Ver status do serviço
+systemctl status geek-webhook
+
+# Ver logs
+journalctl -u geek-webhook -n 50
+
+# Reiniciar serviço
+systemctl restart geek-webhook
+
+# Testar script manualmente
+/opt/scripts/deploy-geek.sh
 ```
 
 ### Erro: "502 Bad Gateway"
-
-O Traefik não consegue alcançar a aplicação.
 
 ```bash
 # Verificar se app está rodando
 docker ps | grep geek_bidu_app
 
-# Verificar se porta 8000 está respondendo
+# Verificar porta 8000
 docker exec -it geek_bidu_app curl http://localhost:8000/health
-
-# Verificar labels do Traefik
-docker inspect geek_bidu_app --format='{{json .Config.Labels}}' | jq
-```
-
-### Migrations falham
-
-```bash
-# Ver erro detalhado
-docker exec -it geek_bidu_app sh -c "cd /app/src && alembic upgrade head"
-
-# Ver histórico de migrations
-docker exec -it geek_bidu_app sh -c "cd /app/src && alembic history"
-
-# Ver versão atual
-docker exec -it geek_bidu_app sh -c "cd /app/src && alembic current"
 ```
 
 ---
@@ -739,20 +779,22 @@ docker exec -it geek_bidu_app sh -c "cd /app/src && alembic current"
 ## Checklist de Deploy
 
 ```
-[ ] 1. Verificar pré-requisitos (Docker, rede interna, PostgreSQL)
+[ ] 1. Verificar pré-requisitos (Docker, rede interna, PostgreSQL, aliases)
 [ ] 2. Criar database e usuário PostgreSQL
-[ ] 3. Clonar repositório na VPS
-[ ] 4. Criar arquivo .env com variáveis de produção
-[ ] 5. Build e subir containers
-[ ] 6. Verificar logs (sem erros)
-[ ] 7. Executar migrations
-[ ] 8. Testar health check local
-[ ] 9. Configurar DNS
-[ ] 10. Testar health check via domínio
-[ ] 11. Verificar SSL/HTTPS
-[ ] 12. Testar login no admin
-[ ] 13. Alterar senha do admin
-[ ] 14. Testar endpoints principais
+[ ] 3. Clonar repositório na VPS (/opt/geek-bidu-guru)
+[ ] 4. Configurar projeto no Easypanel (ou criar .env manual)
+[ ] 5. Definir variáveis de ambiente (DB_PASSWORD, SECRET_KEY, etc.)
+[ ] 6. Iniciar serviço (via Easypanel ou docker-compose)
+[ ] 7. Verificar containers rodando (docker ps)
+[ ] 8. Verificar logs (sem erros)
+[ ] 9. Executar migrations (alembic upgrade head)
+[ ] 10. Testar health check local (curl localhost:8000/health)
+[ ] 11. Configurar DNS (se necessário)
+[ ] 12. Testar via domínio (curl https://geek.bidu.guru/health)
+[ ] 13. Verificar SSL/HTTPS
+[ ] 14. Testar login no admin
+[ ] 15. Configurar webhook (script + systemd + GitHub)
+[ ] 16. Testar deploy automático
 ```
 
 ---
@@ -772,48 +814,22 @@ docker exec -it geek_bidu_app bash
 # Ver uso de recursos
 docker stats geek_bidu_app geek_bidu_redis
 
-# Listar containers do projeto
-docker compose -f docker/docker-compose.prod.yml ps
-
 # Rebuild completo
 docker compose -f docker/docker-compose.prod.yml down
 docker compose -f docker/docker-compose.prod.yml up -d --build --force-recreate
 
 # Limpar imagens antigas
 docker image prune -f
+
+# Ver logs do webhook
+journalctl -u geek-webhook -f
+
+# Ver logs de deploy
+tail -f /var/log/geek-deploy.log
 ```
 
 ---
 
-## Arquitetura de Produção
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    VPS Hostinger KVM8                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────┐     ┌─────────────────────────────────┐   │
-│  │   Traefik   │────▶│  Rede: interna                  │   │
-│  │  (SSL/Proxy)│     │  ┌───────────────┐              │   │
-│  └─────────────┘     │  │  PostgreSQL   │              │   │
-│         │            │  │  (postgres)   │              │   │
-│         │            │  └───────────────┘              │   │
-│         │            │         ▲                       │   │
-│         ▼            │         │                       │   │
-│  ┌─────────────────────────────┼───────────────────┐   │   │
-│  │  Projeto: geek-bidu-guru    │                   │   │   │
-│  │  ┌───────────────┐  ┌───────┴─────┐            │   │   │
-│  │  │  geek_bidu_app│──│   Redis     │            │   │   │
-│  │  │  (FastAPI)    │  │             │            │   │   │
-│  │  └───────────────┘  └─────────────┘            │   │   │
-│  │  Rede: geek_bidu_network + interna             │   │   │
-│  └─────────────────────────────────────────────────┘   │   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-**Versão**: 2.0
+**Versão**: 2.1
 **Última atualização**: 2025-12-12
-**Método**: Docker Compose (sem Easypanel)
+**Método**: Easypanel + Docker Compose (híbrido)

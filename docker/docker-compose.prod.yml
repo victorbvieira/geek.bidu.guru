@@ -22,8 +22,6 @@ services:
       dockerfile: docker/Dockerfile
     container_name: geek_bidu_app
     restart: unless-stopped
-    env_file:
-      - ../.env
     environment:
       # Conexão com PostgreSQL via rede interna (alias configurado)
       - DATABASE_URL=postgresql+asyncpg://geek_app_prod:${DB_PASSWORD}@postgres:5432/geek_bidu_prod
@@ -32,6 +30,33 @@ services:
       # Produção
       - ENVIRONMENT=production
       - DEBUG=false
+      # Segurança
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      # Aplicação
+      - APP_NAME=${APP_NAME:-geek.bidu.guru}
+      - APP_URL=${APP_URL:-https://geek.bidu.guru}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-geek.bidu.guru,www.geek.bidu.guru}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      # APIs de Afiliados (opcional)
+      - AMAZON_ACCESS_KEY=${AMAZON_ACCESS_KEY:-}
+      - AMAZON_SECRET_KEY=${AMAZON_SECRET_KEY:-}
+      - AMAZON_PARTNER_TAG=${AMAZON_PARTNER_TAG:-}
+      - AMAZON_REGION=${AMAZON_REGION:-BR}
+      - MELI_CLIENT_ID=${MELI_CLIENT_ID:-}
+      - MELI_CLIENT_SECRET=${MELI_CLIENT_SECRET:-}
+      - SHOPEE_APP_ID=${SHOPEE_APP_ID:-}
+      - SHOPEE_SECRET_KEY=${SHOPEE_SECRET_KEY:-}
+      # IA (opcional)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      # Analytics (opcional)
+      - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
+      - GA4_API_SECRET=${GA4_API_SECRET:-}
     volumes:
       # Volume para uploads persistentes
       - uploads_data:/app/uploads
