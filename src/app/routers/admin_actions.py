@@ -5,6 +5,7 @@ Processa formularios de criacao, edicao e exclusao de:
 - Posts, Produtos, Categorias e Usuarios
 """
 
+import json
 from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
@@ -262,7 +263,7 @@ async def create_product(
     platform_product_id: str = Form(""),
     price: str = Form(""),
     availability: str = Form("available"),
-    main_image_url: str = Form(""),
+    images: str = Form("[]"),
     rating: str = Form(""),
     review_count: str = Form(""),
     tags: str = Form(""),
@@ -288,6 +289,10 @@ async def create_product(
             redirect_slug = f"{base_slug}-{counter}"
             counter += 1
 
+    # Processa lista de imagens
+    images_list = json.loads(images) if images else []
+    main_image = images_list[0] if images_list else None
+
     # Monta dados do produto
     product_data = {
         "name": name.strip(),
@@ -300,7 +305,8 @@ async def create_product(
         "platform_product_id": platform_product_id.strip() or None,
         "price": float(price) if price else None,
         "availability": ProductAvailability(availability),
-        "main_image_url": main_image_url.strip() or None,
+        "main_image_url": main_image,
+        "images": images_list,
         "rating": float(rating) if rating else None,
         "review_count": int(review_count) if review_count else 0,
         "tags": parse_tags(tags),
@@ -334,7 +340,7 @@ async def update_product(
     platform_product_id: str = Form(""),
     price: str = Form(""),
     availability: str = Form("available"),
-    main_image_url: str = Form(""),
+    images: str = Form("[]"),
     rating: str = Form(""),
     review_count: str = Form(""),
     tags: str = Form(""),
@@ -364,6 +370,10 @@ async def update_product(
             redirect_slug = f"{base_slug}-{counter}"
             counter += 1
 
+    # Processa lista de imagens
+    images_list = json.loads(images) if images else []
+    main_image = images_list[0] if images_list else None
+
     # Monta dados de atualizacao
     update_data = {
         "name": name.strip(),
@@ -376,7 +386,8 @@ async def update_product(
         "platform_product_id": platform_product_id.strip() or None,
         "price": float(price) if price else None,
         "availability": ProductAvailability(availability),
-        "main_image_url": main_image_url.strip() or None,
+        "main_image_url": main_image,
+        "images": images_list,
         "rating": float(rating) if rating else None,
         "review_count": int(review_count) if review_count else 0,
         "tags": parse_tags(tags),

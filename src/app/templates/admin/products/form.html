@@ -153,60 +153,84 @@
                 </div>
             </div>
 
-            <!-- Image -->
+            <!-- Images Gallery -->
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h3 class="admin-card-title">Imagem Principal</h3>
+                    <h3 class="admin-card-title">Imagens do Produto</h3>
                 </div>
 
-                <div class="image-upload-section">
-                    <!-- Preview da imagem -->
-                    <div class="image-preview" id="image-preview">
-                        {% if product and product.main_image_url %}
-                        <img src="{{ product.main_image_url }}" alt="Preview" id="preview-img">
-                        {% else %}
-                        <div class="image-placeholder" id="preview-placeholder">
-                            <span>Nenhuma imagem</span>
-                        </div>
+                <div class="image-gallery-section">
+                    <!-- Galeria de imagens -->
+                    <div class="image-gallery" id="image-gallery">
+                        {% if product and product.images %}
+                            {% for img_url in product.images %}
+                            <div class="gallery-item" data-url="{{ img_url }}">
+                                <img src="{{ img_url }}" alt="Imagem {{ loop.index }}">
+                                <div class="gallery-item-actions">
+                                    {% if loop.index0 == 0 %}
+                                    <span class="gallery-item-main" title="Imagem principal">Principal</span>
+                                    {% else %}
+                                    <button type="button" class="gallery-action-btn" onclick="setAsMain(this)" title="Definir como principal">
+                                        <span>&#9733;</span>
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="gallery-action-btn gallery-action-delete" onclick="removeImage(this)" title="Remover">
+                                        <span>&times;</span>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
                         {% endif %}
+                        <!-- Botao de adicionar -->
+                        <div class="gallery-add" onclick="document.getElementById('image-file').click()">
+                            <span class="gallery-add-icon">+</span>
+                            <span class="gallery-add-text">Adicionar</span>
+                        </div>
                     </div>
 
-                    <!-- Upload -->
-                    <div class="image-upload-controls">
-                        <input
-                            type="file"
-                            id="image-file"
-                            accept="image/jpeg,image/png,image/webp,image/gif"
-                            style="display: none;"
-                        >
-                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="document.getElementById('image-file').click()">
-                            Fazer Upload
-                        </button>
-                        <span class="upload-status" id="upload-status"></span>
+                    <!-- Input de arquivo oculto -->
+                    <input
+                        type="file"
+                        id="image-file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        multiple
+                        style="display: none;"
+                    >
+
+                    <!-- Status de upload -->
+                    <div class="upload-status-bar" id="upload-status-bar" style="display: none;">
+                        <span id="upload-status-text">Enviando...</span>
+                        <div class="upload-progress">
+                            <div class="upload-progress-bar" id="upload-progress-bar"></div>
+                        </div>
                     </div>
 
-                    <!-- URL manual (hidden input para o form) -->
+                    <!-- Hidden input para lista de imagens (JSON) -->
                     <input
                         type="hidden"
-                        id="main_image_url"
-                        name="main_image_url"
-                        value="{{ product.main_image_url if product else '' }}"
+                        id="images"
+                        name="images"
+                        value="{{ product.images | tojson if product and product.images else '[]' }}"
                     >
 
                     <!-- URL manual opcional -->
                     <div class="admin-form-group" style="margin-top: 1rem;">
-                        <label for="image_url_manual" class="admin-form-label">Ou cole uma URL</label>
-                        <input
-                            type="url"
-                            id="image_url_manual"
-                            class="admin-form-input"
-                            value="{{ product.main_image_url if product else '' }}"
-                            placeholder="https://..."
-                            onchange="setImageUrl(this.value)"
-                        >
+                        <label for="image_url_manual" class="admin-form-label">Ou cole uma URL externa</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input
+                                type="text"
+                                id="image_url_manual"
+                                class="admin-form-input"
+                                placeholder="https://exemplo.com/imagem.jpg"
+                                style="flex: 1;"
+                            >
+                            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="addExternalUrl()">
+                                Adicionar
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="admin-form-hint">Formatos: JPG, PNG, WebP, GIF. Max: 5MB</div>
+                    <div class="admin-form-hint">Formatos: JPG, PNG, WebP, GIF. Max: 5MB. A primeira imagem sera a principal.</div>
                 </div>
             </div>
 
@@ -261,85 +285,172 @@
 
 {% block extra_js %}
 <script>
-// Image Upload Handler
+// =============================================================================
+// Image Gallery Handler - Multiplas Imagens
+// =============================================================================
+
 const imageFileInput = document.getElementById('image-file');
-const mainImageUrlInput = document.getElementById('main_image_url');
+const imageGallery = document.getElementById('image-gallery');
+const imagesInput = document.getElementById('images');
+const uploadStatusBar = document.getElementById('upload-status-bar');
+const uploadStatusText = document.getElementById('upload-status-text');
+const uploadProgressBar = document.getElementById('upload-progress-bar');
 const imageUrlManualInput = document.getElementById('image_url_manual');
-const imagePreview = document.getElementById('image-preview');
-const uploadStatus = document.getElementById('upload-status');
 
-// Upload de arquivo
+// Lista de imagens atual
+let images = JSON.parse(imagesInput.value || '[]');
+
+// Upload de multiplos arquivos
 imageFileInput.addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    // Valida tipo
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-    if (!allowedTypes.includes(file.type)) {
-        uploadStatus.textContent = 'Tipo de arquivo nao permitido';
-        uploadStatus.style.color = 'var(--admin-danger)';
-        return;
-    }
+    const maxSize = 5 * 1024 * 1024; // 5MB
 
-    // Valida tamanho (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        uploadStatus.textContent = 'Arquivo muito grande (max 5MB)';
-        uploadStatus.style.color = 'var(--admin-danger)';
-        return;
-    }
-
-    // Mostra loading
-    uploadStatus.textContent = 'Enviando...';
-    uploadStatus.style.color = 'var(--admin-text-muted)';
-
-    // Prepara form data
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await fetch('/admin/upload/image', {
-            method: 'POST',
-            body: formData,
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // Sucesso
-            setImageUrl(data.url);
-            uploadStatus.textContent = 'Enviado!';
-            uploadStatus.style.color = 'var(--admin-success)';
-
-            // Limpa status apos 3s
-            setTimeout(() => {
-                uploadStatus.textContent = '';
-            }, 3000);
-        } else {
-            // Erro
-            uploadStatus.textContent = data.detail || 'Erro no upload';
-            uploadStatus.style.color = 'var(--admin-danger)';
+    // Filtra arquivos validos
+    const validFiles = files.filter(file => {
+        if (!allowedTypes.includes(file.type)) {
+            console.warn(`Tipo nao permitido: ${file.name}`);
+            return false;
         }
-    } catch (error) {
-        uploadStatus.textContent = 'Erro de conexao';
-        uploadStatus.style.color = 'var(--admin-danger)';
-        console.error('Upload error:', error);
+        if (file.size > maxSize) {
+            console.warn(`Arquivo muito grande: ${file.name}`);
+            return false;
+        }
+        return true;
+    });
+
+    if (!validFiles.length) {
+        alert('Nenhum arquivo valido selecionado. Formatos: JPG, PNG, WebP, GIF. Max: 5MB');
+        return;
     }
+
+    // Mostra barra de progresso
+    uploadStatusBar.style.display = 'block';
+    uploadProgressBar.style.width = '0%';
+
+    let uploaded = 0;
+    const total = validFiles.length;
+
+    for (const file of validFiles) {
+        uploadStatusText.textContent = `Enviando ${uploaded + 1}/${total}...`;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/admin/upload/image', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                addImageToGallery(data.url);
+                uploaded++;
+                uploadProgressBar.style.width = `${(uploaded / total) * 100}%`;
+            } else {
+                console.error(`Erro ao enviar ${file.name}:`, data.detail);
+            }
+        } catch (error) {
+            console.error(`Erro de conexao ao enviar ${file.name}:`, error);
+        }
+    }
+
+    // Finaliza
+    uploadStatusText.textContent = `${uploaded}/${total} enviado(s)!`;
+    uploadProgressBar.style.width = '100%';
+
+    setTimeout(() => {
+        uploadStatusBar.style.display = 'none';
+    }, 2000);
 
     // Limpa input
     imageFileInput.value = '';
 });
 
-// Define URL da imagem e atualiza preview
-function setImageUrl(url) {
-    mainImageUrlInput.value = url;
-    imageUrlManualInput.value = url;
+// Adiciona imagem a galeria
+function addImageToGallery(url) {
+    images.push(url);
+    updateImagesInput();
+    renderGallery();
+}
 
-    // Atualiza preview
-    if (url) {
-        imagePreview.innerHTML = `<img src="${url}" alt="Preview" id="preview-img">`;
-    } else {
-        imagePreview.innerHTML = `<div class="image-placeholder" id="preview-placeholder"><span>Nenhuma imagem</span></div>`;
+// Adiciona URL externa
+function addExternalUrl() {
+    const url = imageUrlManualInput.value.trim();
+    if (!url) return;
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        alert('URL deve comecar com http:// ou https://');
+        return;
     }
+
+    addImageToGallery(url);
+    imageUrlManualInput.value = '';
+}
+
+// Remove imagem da galeria
+function removeImage(btn) {
+    const item = btn.closest('.gallery-item');
+    const url = item.dataset.url;
+
+    images = images.filter(img => img !== url);
+    updateImagesInput();
+    renderGallery();
+}
+
+// Define imagem como principal (move para primeira posicao)
+function setAsMain(btn) {
+    const item = btn.closest('.gallery-item');
+    const url = item.dataset.url;
+
+    // Remove da posicao atual e adiciona no inicio
+    images = images.filter(img => img !== url);
+    images.unshift(url);
+
+    updateImagesInput();
+    renderGallery();
+}
+
+// Atualiza input hidden com lista de imagens
+function updateImagesInput() {
+    imagesInput.value = JSON.stringify(images);
+}
+
+// Renderiza galeria completa
+function renderGallery() {
+    // Remove itens existentes (exceto botao de adicionar)
+    const existingItems = imageGallery.querySelectorAll('.gallery-item');
+    existingItems.forEach(item => item.remove());
+
+    // Adiciona cada imagem
+    const addButton = imageGallery.querySelector('.gallery-add');
+
+    images.forEach((url, index) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.dataset.url = url;
+
+        const isMain = index === 0;
+        const mainBadge = isMain
+            ? '<span class="gallery-item-main" title="Imagem principal">Principal</span>'
+            : `<button type="button" class="gallery-action-btn" onclick="setAsMain(this)" title="Definir como principal"><span>&#9733;</span></button>`;
+
+        item.innerHTML = `
+            <img src="${url}" alt="Imagem ${index + 1}">
+            <div class="gallery-item-actions">
+                ${mainBadge}
+                <button type="button" class="gallery-action-btn gallery-action-delete" onclick="removeImage(this)" title="Remover">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+
+        imageGallery.insertBefore(item, addButton);
+    });
 }
 </script>
 {% endblock %}

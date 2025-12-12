@@ -14,9 +14,36 @@
 <article class="product-detail">
     <div class="container">
         <div class="product-layout">
-            <!-- Imagem -->
+            <!-- Imagens com Carrossel -->
             <div class="product-image-section">
-                {% if product.main_image_url %}
+                {% if product.images and product.images|length > 1 %}
+                <!-- Carrossel para multiplas imagens -->
+                <div class="product-carousel" id="product-carousel">
+                    <div class="carousel-main">
+                        <button class="carousel-nav carousel-prev" onclick="prevImage()" aria-label="Imagem anterior">&#10094;</button>
+                        <figure class="carousel-image">
+                            <img src="{{ product.images[0] }}" alt="{{ product.name }}" id="carousel-main-img">
+                        </figure>
+                        <button class="carousel-nav carousel-next" onclick="nextImage()" aria-label="Proxima imagem">&#10095;</button>
+                    </div>
+                    <div class="carousel-thumbnails">
+                        {% for img in product.images %}
+                        <button class="carousel-thumb {% if loop.index0 == 0 %}active{% endif %}"
+                                onclick="goToImage({{ loop.index0 }})"
+                                aria-label="Ver imagem {{ loop.index }}">
+                            <img src="{{ img }}" alt="Miniatura {{ loop.index }}">
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <div class="carousel-indicators">
+                        {% for img in product.images %}
+                        <span class="carousel-dot {% if loop.index0 == 0 %}active{% endif %}"
+                              onclick="goToImage({{ loop.index0 }})"></span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% elif product.main_image_url %}
+                <!-- Imagem unica -->
                 <figure class="product-main-image">
                     <img src="{{ product.main_image_url }}" alt="{{ product.name }}">
                 </figure>
@@ -153,6 +180,116 @@
     align-items: center;
     justify-content: center;
     color: #999;
+}
+
+/* Carrossel de Imagens */
+.product-carousel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.carousel-main {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.carousel-image {
+    margin: 0;
+    flex: 1;
+}
+
+.carousel-image img {
+    width: 100%;
+    max-height: 450px;
+    object-fit: contain;
+    background: var(--bg-tertiary, #f8f9fa);
+    border-radius: 8px;
+}
+
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 1.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-nav:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.carousel-prev {
+    left: 10px;
+}
+
+.carousel-next {
+    right: 10px;
+}
+
+.carousel-thumbnails {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.carousel-thumb {
+    width: 60px;
+    height: 60px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    padding: 0;
+    background: var(--bg-tertiary, #f8f9fa);
+    transition: border-color 0.2s;
+}
+
+.carousel-thumb:hover {
+    border-color: var(--color-primary, #8b5cf6);
+}
+
+.carousel-thumb.active {
+    border-color: var(--color-primary, #8b5cf6);
+}
+
+.carousel-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.carousel-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-border, #e5e7eb);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.carousel-dot:hover,
+.carousel-dot.active {
+    background: var(--color-primary, #8b5cf6);
 }
 
 .product-info-section {
@@ -346,6 +483,122 @@
     .product-price-box .price {
         font-size: 1.5rem;
     }
+
+    .carousel-nav {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    .carousel-thumb {
+        width: 50px;
+        height: 50px;
+    }
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Carrossel de Imagens com Autoplay
+(function() {
+    const carousel = document.getElementById('product-carousel');
+    if (!carousel) return;
+
+    const mainImg = document.getElementById('carousel-main-img');
+    const thumbs = carousel.querySelectorAll('.carousel-thumb');
+    const dots = carousel.querySelectorAll('.carousel-dot');
+
+    // Lista de imagens do template
+    const images = {{ product.images | tojson if product.images else '[]' }};
+    let currentIndex = 0;
+    let autoplayInterval = null;
+    const AUTOPLAY_DELAY = 4000; // 4 segundos
+
+    function goToImage(index) {
+        if (index < 0) index = images.length - 1;
+        if (index >= images.length) index = 0;
+
+        currentIndex = index;
+        mainImg.src = images[index];
+
+        // Atualiza thumbnails
+        thumbs.forEach((thumb, i) => {
+            thumb.classList.toggle('active', i === index);
+        });
+
+        // Atualiza dots
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === index);
+        });
+
+        // Reinicia autoplay
+        resetAutoplay();
+    }
+
+    function nextImage() {
+        goToImage(currentIndex + 1);
+    }
+
+    function prevImage() {
+        goToImage(currentIndex - 1);
+    }
+
+    function startAutoplay() {
+        if (images.length <= 1) return;
+        autoplayInterval = setInterval(nextImage, AUTOPLAY_DELAY);
+    }
+
+    function stopAutoplay() {
+        if (autoplayInterval) {
+            clearInterval(autoplayInterval);
+            autoplayInterval = null;
+        }
+    }
+
+    function resetAutoplay() {
+        stopAutoplay();
+        startAutoplay();
+    }
+
+    // Pausa autoplay ao passar mouse
+    carousel.addEventListener('mouseenter', stopAutoplay);
+    carousel.addEventListener('mouseleave', startAutoplay);
+
+    // Teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') prevImage();
+        if (e.key === 'ArrowRight') nextImage();
+    });
+
+    // Touch/swipe
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    carousel.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    carousel.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) nextImage();
+            else prevImage();
+        }
+    }
+
+    // Expoe funcoes globalmente para onclick
+    window.goToImage = goToImage;
+    window.nextImage = nextImage;
+    window.prevImage = prevImage;
+
+    // Inicia autoplay
+    startAutoplay();
+})();
+</script>
 {% endblock %}
