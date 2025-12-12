@@ -243,8 +243,28 @@ class TestUserEndpoints:
 
     @pytest.mark.asyncio
     async def test_delete_user(self, client):
-        """Deve remover usuário existente."""
-        # Arrange - Cria usuário
+        """Deve remover usuário existente (requer admin)."""
+        # Arrange - Cria um admin para autenticar
+        admin_email = "admin_delete_test@example.com"
+        await client.post(
+            "/api/v1/users",
+            json={
+                "name": "Admin Delete Test",
+                "email": admin_email,
+                "password": "senha123456",
+                "role": "admin",
+            },
+        )
+
+        # Login como admin
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            data={"username": admin_email, "password": "senha123456"},
+        )
+        admin_token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {admin_token}"}
+
+        # Cria usuário para deletar
         create_response = await client.post(
             "/api/v1/users",
             json={
@@ -256,8 +276,8 @@ class TestUserEndpoints:
         )
         user_id = create_response.json()["id"]
 
-        # Act
-        response = await client.delete(f"/api/v1/users/{user_id}")
+        # Act - Deleta com token de admin
+        response = await client.delete(f"/api/v1/users/{user_id}", headers=headers)
 
         # Assert
         assert response.status_code == 200
@@ -269,10 +289,70 @@ class TestUserEndpoints:
 
     @pytest.mark.asyncio
     async def test_delete_user_not_found(self, client):
-        """Deve retornar 404 ao deletar usuário inexistente."""
+        """Deve retornar 404 ao deletar usuário inexistente (requer admin)."""
+        # Arrange - Cria um admin para autenticar
+        admin_email = "admin_delete_notfound@example.com"
+        await client.post(
+            "/api/v1/users",
+            json={
+                "name": "Admin Delete NotFound",
+                "email": admin_email,
+                "password": "senha123456",
+                "role": "admin",
+            },
+        )
+
+        # Login como admin
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            data={"username": admin_email, "password": "senha123456"},
+        )
+        admin_token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {admin_token}"}
+
         # Act
         fake_id = "00000000-0000-0000-0000-000000000000"
-        response = await client.delete(f"/api/v1/users/{fake_id}")
+        response = await client.delete(f"/api/v1/users/{fake_id}", headers=headers)
 
         # Assert
         assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_delete_user_requires_admin(self, client):
+        """Deve retornar 403 quando usuário não-admin tenta deletar."""
+        # Arrange - Cria um author (não-admin)
+        author_email = "author_no_delete@example.com"
+        await client.post(
+            "/api/v1/users",
+            json={
+                "name": "Author No Delete",
+                "email": author_email,
+                "password": "senha123456",
+                "role": "author",
+            },
+        )
+
+        # Login como author
+        login_response = await client.post(
+            "/api/v1/auth/login",
+            data={"username": author_email, "password": "senha123456"},
+        )
+        author_token = login_response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {author_token}"}
+
+        # Act - Tenta deletar com token de author
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        response = await client.delete(f"/api/v1/users/{fake_id}", headers=headers)
+
+        # Assert - Deve retornar 403 Forbidden
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_delete_user_requires_authentication(self, client):
+        """Deve retornar 401 quando não autenticado."""
+        # Act - Tenta deletar sem token
+        fake_id = "00000000-0000-0000-0000-000000000000"
+        response = await client.delete(f"/api/v1/users/{fake_id}")
+
+        # Assert - Deve retornar 401 Unauthorized
+        assert response.status_code == 401
