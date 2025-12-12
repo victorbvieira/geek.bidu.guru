@@ -240,3 +240,12 @@ app.include_router(blog_router)
 from app.routers.affiliates import router as affiliates_router
 
 app.include_router(affiliates_router)
+
+
+# -----------------------------------------------------------------------------
+# SEO Routes (sitemap.xml, robots.txt)
+# -----------------------------------------------------------------------------
+
+from app.routers.seo import router as seo_router
+
+app.include_router(seo_router)

@@ -197,8 +197,8 @@
 
 | ID | Tarefa | Agente | Dependencia | Status | Notas |
 |----|--------|--------|-------------|--------|-------|
-| 2.1.1 | Implementar geracao de sitemap.xml | SEO Specialist | 1.9.1-1.9.4 | :white_large_square: | Dinamico, atualizado |
-| 2.1.2 | Criar robots.txt otimizado | SEO Specialist | 1.2.2 | :white_large_square: | Sitemap reference |
+| 2.1.1 | Implementar geracao de sitemap.xml | SEO Specialist | 1.9.1-1.9.4 | :white_check_mark: | routers/seo.py + 11 testes |
+| 2.1.2 | Criar robots.txt otimizado | SEO Specialist | 1.2.2 | :white_check_mark: | Dinamico por ambiente + 3 testes |
 | 2.1.3 | Implementar canonical URLs | SEO Specialist | 1.9.1-1.9.4 | :white_large_square: | Evitar duplicacao |
 | 2.1.4 | Implementar breadcrumbs | SEO Specialist | 1.9.2 | :white_check_mark: | Em blog/post.html |
 | 2.1.5 | Otimizar URLs (slug structure) | SEO Specialist | 1.5.4 | :white_check_mark: | Clean URLs implementadas |
@@ -421,10 +421,10 @@
 | Fase | Total Tarefas | Concluidas | Pendentes | Progresso |
 |------|---------------|------------|-----------|-----------|
 | Fase 1 | 93 | 68 | 25 | 73% |
-| Fase 2 | 48 | 4 | 44 | 8% |
+| Fase 2 | 48 | 6 | 42 | 13% |
 | Fase 3 | 26 | 0 | 26 | 0% |
 | Fase 4 | 45 | 4 | 41 | 9% |
-| **TOTAL** | **212** | **76** | **136** | **36%** |
+| **TOTAL** | **212** | **78** | **134** | **37%** |
 
 ---
 
@@ -457,14 +457,14 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 4. **1.2.7** - Exception handlers globais
 5. **1.2.8** - Logging estruturado (JSON)
 
-## Fase 2 (Iniciar SEO & Automacao)
-1. **2.1.1** - Sitemap.xml dinamico
-2. **2.1.2** - robots.txt
-3. **2.2.x** - Schema.org / Structured Data
+## Fase 2 (SEO & Automacao)
+1. **2.1.3** - Canonical URLs
+2. **2.2.x** - Schema.org / Structured Data
+3. **2.3.x** - Open Graph / Twitter Cards
 
 ---
 
-**Versao**: 2.2
-**Ultima atualizacao**: 2025-12-11
+**Versao**: 2.3
+**Ultima atualizacao**: 2025-12-12
 **Projeto**: geek.bidu.guru
-**Testes**: 211 passando
+**Testes**: 225 passando
