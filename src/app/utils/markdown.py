@@ -63,19 +63,49 @@ MARKDOWN_EXTENSION_CONFIGS = {
         "guess_lang": False,
     },
     "markdown.extensions.toc": {
-        "permalink": True,
-        "permalink_class": "toc-link",
+        "permalink": False,  # Desabilita o pilcrow (¶) nos headers
     },
 }
 
 
-def markdown_to_html(content: str, sanitize: bool = True) -> str:
+def _demote_headings(html: str) -> str:
+    """
+    Rebaixa niveis de headings em um nivel.
+
+    h1 -> h2, h2 -> h3, ..., h5 -> h6, h6 -> h6 (mantem)
+
+    Isso garante que # no markdown vire h2, ## vire h3, etc.
+    O h1 fica reservado para o titulo principal da pagina.
+    """
+    # Processa de h5 para h1 para evitar conflitos
+    # (se processasse h1->h2 primeiro, depois h2->h3 pegaria o mesmo)
+    for i in range(5, 0, -1):
+        new_level = min(i + 1, 6)  # h6 e o maximo
+        html = re.sub(
+            rf'<h{i}(\s[^>]*)?>',
+            f'<h{new_level}\\1>',
+            html
+        )
+        html = re.sub(
+            rf'</h{i}>',
+            f'</h{new_level}>',
+            html
+        )
+    return html
+
+
+def markdown_to_html(
+    content: str,
+    sanitize: bool = True,
+    demote_headings: bool = True
+) -> str:
     """
     Converte Markdown para HTML.
 
     Args:
         content: Texto em Markdown
         sanitize: Se True, sanitiza HTML para prevenir XSS
+        demote_headings: Se True, rebaixa headings (# -> h2, ## -> h3, etc)
 
     Returns:
         HTML convertido e (opcionalmente) sanitizado
@@ -89,6 +119,10 @@ def markdown_to_html(content: str, sanitize: bool = True) -> str:
         extension_configs=MARKDOWN_EXTENSION_CONFIGS,
     )
     html = md.convert(content)
+
+    # Rebaixa headings se solicitado (# -> h2, ## -> h3, etc)
+    if demote_headings:
+        html = _demote_headings(html)
 
     # Sanitiza se necessario
     if sanitize:
