@@ -99,6 +99,17 @@ BASE_DIR = Path(__file__).resolve().parent
 # Montar arquivos estaticos (caminho absoluto para funcionar em qualquer contexto)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
+# Montar diretorio de uploads externo (producao)
+# Quando UPLOAD_DIR esta configurado, os uploads sao salvos fora do codigo
+# e precisam ser servidos via rota /uploads
+if settings.upload_dir:
+    uploads_path = Path(settings.upload_dir)
+    if uploads_path.exists():
+        app.mount("/uploads", StaticFiles(directory=uploads_path), name="uploads")
+        logger.info(f"Uploads montados em /uploads -> {uploads_path}")
+    else:
+        logger.warning(f"UPLOAD_DIR configurado mas diretorio nao existe: {uploads_path}")
+
 # Templates Jinja2 com filtros customizados (markdown, format_price)
 from app.core.templates import setup_templates
 templates = setup_templates(BASE_DIR / "templates")

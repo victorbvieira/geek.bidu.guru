@@ -58,6 +58,13 @@ class Settings(BaseSettings):
     log_format: Literal["json", "text"] = "json"
 
     # -------------------------------------------------------------------------
+    # Uploads
+    # -------------------------------------------------------------------------
+    # Diretorio para uploads persistentes (em producao, monte um volume aqui)
+    # Se nao definido, usa o diretorio padrao dentro do projeto
+    upload_dir: str | None = None
+
+    # -------------------------------------------------------------------------
     # Google Analytics 4 & Search Console
     # -------------------------------------------------------------------------
     ga4_measurement_id: str | None = None  # Ex: G-XXXXXXXXXX

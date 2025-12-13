@@ -4,7 +4,8 @@ Repositorio para Product.
 
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import cast, func, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Product
@@ -204,10 +205,12 @@ class ProductRepository(BaseRepository[Product]):
         Returns:
             Lista de produtos da categoria
         """
-        # Busca produtos onde a categoria esta na lista de categorias (JSONB @> operator)
+        # Busca produtos onde a categoria esta na lista de categorias
+        # Usa operador @> do JSONB com cast explicito para evitar erro de tipo
+        category_json = cast([category_slug], JSONB)
         stmt = (
             select(Product)
-            .where(Product.categories.contains([category_slug]))
+            .where(Product.categories.op("@>")(category_json))
             .where(Product.availability == ProductAvailability.AVAILABLE)
             .order_by(Product.internal_score.desc())
             .offset(skip)
@@ -218,10 +221,12 @@ class ProductRepository(BaseRepository[Product]):
 
     async def count_by_category(self, category_slug: str) -> int:
         """Conta produtos de uma categoria."""
+        # Usa operador @> do JSONB com cast explicito para evitar erro de tipo
+        category_json = cast([category_slug], JSONB)
         stmt = (
             select(func.count())
             .select_from(Product)
-            .where(Product.categories.contains([category_slug]))
+            .where(Product.categories.op("@>")(category_json))
             .where(Product.availability == ProductAvailability.AVAILABLE)
         )
         result = await self.db.execute(stmt)

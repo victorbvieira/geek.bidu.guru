@@ -479,6 +479,7 @@ async def list_categories(
     request: Request,
     current_user: AdminUser,
     repo: CategoryRepo,
+    product_repo: ProductRepo,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     q: Optional[str] = None,
@@ -496,6 +497,11 @@ async def list_categories(
 
     total_pages = (total + per_page - 1) // per_page if total > 0 else 1
 
+    # Conta produtos por categoria (usando o slug)
+    product_counts = {}
+    for category in categories:
+        product_counts[category.slug] = await product_repo.count_by_category(category.slug)
+
     return templates.TemplateResponse(
         request=request,
         name="admin/categories/list.html",
@@ -503,6 +509,7 @@ async def list_categories(
             "title": "Categorias - Admin",
             "current_user": current_user,
             "categories": categories,
+            "product_counts": product_counts,
             "pagination": {
                 "page": page,
                 "per_page": per_page,
