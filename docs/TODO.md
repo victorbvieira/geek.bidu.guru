@@ -10,6 +10,7 @@
 
 - https://geek.bidu.guru/admin/categories
 - - adicionar paginação e pesquisa
+- - adicionar coluna com a quantidade de itens
 
 - https://geek.bidu.guru/
 - - Ajustar o espaçamento entre o titulo "navegue por categoria" e os cards de categoria
@@ -192,3 +193,13 @@ Título SEO: LEGO e Blocos Geek para Presentear | geek.bidu.guru
 Meta description (≤160): LEGO e blocos de montar: presentes criativos por tema, complexidade e preço. Curadoria para fãs e iniciantes.
 
 Imagem: categories/lego-e-blocos.webp — bloco/mini set montado em destaque, fundo escuro elegante.
+
+
+
+
+
+# Lista de melhorias identificadas em 2025-12-113
+
+## Melhorias
+
+- precisamos implementar a logica para armazenar os precos historicos de cada produto, o objetivo é monitorar para que possamos mostrar para os usuarios algo como menor valor nos ultimos x dias, futuramente podemos monstra graficos com a variacao dos precos e ate criar alertas, tambem vamos utilizar este indicador para disparar mensagens em nossas redes sociais
