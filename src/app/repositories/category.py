@@ -4,7 +4,7 @@ Repositorio para Category.
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Category
@@ -16,6 +16,84 @@ class CategoryRepository(BaseRepository[Category]):
 
     def __init__(self, db: AsyncSession):
         super().__init__(Category, db)
+
+    async def search(
+        self,
+        query: str,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[Category]:
+        """
+        Busca categorias por nome ou descricao.
+
+        Args:
+            query: Termo de busca
+            skip: Offset para paginacao
+            limit: Limite de resultados
+
+        Returns:
+            Lista de categorias que correspondem a busca
+        """
+        search_term = f"%{query}%"
+        result = await self.db.execute(
+            select(Category)
+            .where(
+                or_(
+                    Category.name.ilike(search_term),
+                    Category.slug.ilike(search_term),
+                    Category.description.ilike(search_term),
+                )
+            )
+            .order_by(Category.name)
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def count_search(self, query: str) -> int:
+        """
+        Conta total de categorias que correspondem a busca.
+
+        Args:
+            query: Termo de busca
+
+        Returns:
+            Total de categorias encontradas
+        """
+        search_term = f"%{query}%"
+        result = await self.db.execute(
+            select(func.count(Category.id)).where(
+                or_(
+                    Category.name.ilike(search_term),
+                    Category.slug.ilike(search_term),
+                    Category.description.ilike(search_term),
+                )
+            )
+        )
+        return result.scalar_one()
+
+    async def get_paginated(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[Category]:
+        """
+        Lista categorias com paginacao.
+
+        Args:
+            skip: Offset para paginacao
+            limit: Limite de resultados
+
+        Returns:
+            Lista de categorias
+        """
+        result = await self.db.execute(
+            select(Category)
+            .order_by(Category.name)
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
 
     async def get_by_slug(self, slug: str) -> Category | None:
         """Busca categoria por slug."""

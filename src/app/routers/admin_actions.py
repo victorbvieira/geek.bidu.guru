@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import (
     CategoryRepo,
     DBSession,
+    OccasionRepo,
     PostRepo,
     ProductRepo,
     UserRepo,
@@ -842,6 +843,7 @@ async def api_create_category(
         "name": name,
         "slug": slug,
         "description": data.get("description", "").strip() or None,
+        "image_url": data.get("image_url", "").strip() or None,
         "parent_id": None,
     }
 
@@ -853,6 +855,131 @@ async def api_create_category(
             "name": category.name,
             "slug": category.slug,
             "description": category.description,
+            "image_url": category.image_url,
         },
         status_code=http_status.HTTP_201_CREATED,
+    )
+
+
+# -----------------------------------------------------------------------------
+# Occasions - Create/Update/Delete
+# -----------------------------------------------------------------------------
+
+
+@router.post("/occasions", response_class=RedirectResponse)
+async def create_occasion(
+    request: Request,
+    current_user: AdminUser,
+    repo: OccasionRepo,
+    name: str = Form(...),
+    slug: str = Form(""),
+    description: str = Form(""),
+    icon: str = Form(""),
+    image_url: str = Form(""),
+    seo_title: str = Form(""),
+    seo_description: str = Form(""),
+    is_active: str = Form("on"),
+    display_order: str = Form("0"),
+):
+    """Cria nova ocasiao."""
+    # Gera slug se nao fornecido
+    occasion_slug = slug.strip() if slug else generate_slug(name)
+
+    # Verifica se slug ja existe
+    if await repo.slug_exists(occasion_slug):
+        base_slug = occasion_slug
+        counter = 1
+        while await repo.slug_exists(occasion_slug):
+            occasion_slug = f"{base_slug}-{counter}"
+            counter += 1
+
+    # Monta dados da ocasiao
+    occasion_data = {
+        "name": name.strip(),
+        "slug": occasion_slug,
+        "description": description.strip() or None,
+        "icon": icon.strip() or None,
+        "image_url": image_url.strip() or None,
+        "seo_title": seo_title.strip() or None,
+        "seo_description": seo_description.strip() or None,
+        "is_active": is_active == "on",
+        "display_order": int(display_order) if display_order else 0,
+    }
+
+    await repo.create(occasion_data)
+
+    return RedirectResponse(
+        url="/admin/occasions",
+        status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/occasions/{occasion_id}", response_class=RedirectResponse)
+async def update_occasion(
+    request: Request,
+    occasion_id: UUID,
+    current_user: AdminUser,
+    repo: OccasionRepo,
+    name: str = Form(...),
+    slug: str = Form(""),
+    description: str = Form(""),
+    icon: str = Form(""),
+    image_url: str = Form(""),
+    seo_title: str = Form(""),
+    seo_description: str = Form(""),
+    is_active: str = Form(""),
+    display_order: str = Form("0"),
+):
+    """Atualiza ocasiao existente."""
+    occasion = await repo.get(occasion_id)
+    if not occasion:
+        raise HTTPException(status_code=404, detail="Ocasiao nao encontrada")
+
+    # Gera slug se nao fornecido
+    occasion_slug = slug.strip() if slug else generate_slug(name)
+
+    # Verifica se slug ja existe (excluindo a ocasiao atual)
+    if await repo.slug_exists(occasion_slug, exclude_id=occasion_id):
+        base_slug = occasion_slug
+        counter = 1
+        while await repo.slug_exists(occasion_slug, exclude_id=occasion_id):
+            occasion_slug = f"{base_slug}-{counter}"
+            counter += 1
+
+    # Monta dados de atualizacao
+    update_data = {
+        "name": name.strip(),
+        "slug": occasion_slug,
+        "description": description.strip() or None,
+        "icon": icon.strip() or None,
+        "image_url": image_url.strip() or None,
+        "seo_title": seo_title.strip() or None,
+        "seo_description": seo_description.strip() or None,
+        "is_active": is_active == "on",
+        "display_order": int(display_order) if display_order else 0,
+    }
+
+    await repo.update(occasion, update_data)
+
+    return RedirectResponse(
+        url="/admin/occasions",
+        status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/occasions/{occasion_id}/delete", response_class=RedirectResponse)
+async def delete_occasion(
+    request: Request,
+    occasion_id: UUID,
+    current_user: AdminUser,
+    repo: OccasionRepo,
+):
+    """Exclui ocasiao."""
+    deleted = await repo.delete(occasion_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Ocasiao nao encontrada")
+
+    return RedirectResponse(
+        url="/admin/occasions",
+        status_code=http_status.HTTP_303_SEE_OTHER,
     )

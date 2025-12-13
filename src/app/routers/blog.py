@@ -368,15 +368,17 @@ async def list_categories(
 async def search_posts(
     request: Request,
     repo: PostRepo,
+    product_repo: ProductRepo,
     db: DBSession,
     q: str = "",
     page: int = 1,
     per_page: int = 12,
 ):
     """
-    Pagina de busca de posts.
+    Pagina de busca de posts e produtos.
 
-    Busca em titulo, subtitulo, conteudo e keywords.
+    Busca posts em: titulo, subtitulo, conteudo e keywords.
+    Busca produtos em: nome e descricao curta.
     """
     # Decode query string
     query = unquote_plus(q).strip()
@@ -396,7 +398,9 @@ async def search_posts(
                 "description": "Busque posts e produtos geek",
                 "query": "",
                 "posts": [],
+                "products": [],
                 "total": 0,
+                "total_products": 0,
                 "page": 1,
                 "pages": 1,
                 "has_prev": False,
@@ -417,7 +421,14 @@ async def search_posts(
     posts = await repo.search(query, skip=skip, limit=per_page)
     total = await repo.count_search(query)
 
-    # Calcula total de paginas
+    # Busca produtos (exibe apenas na primeira pagina, limite de 8)
+    products = []
+    total_products = 0
+    if page == 1:
+        products = await product_repo.search(query, skip=0, limit=8)
+        total_products = await product_repo.count_search(query)
+
+    # Calcula total de paginas (baseado em posts)
     pages = (total + per_page - 1) // per_page if total > 0 else 1
 
     return templates.TemplateResponse(
@@ -428,7 +439,9 @@ async def search_posts(
             "description": f"Resultados de busca para {query}",
             "query": query,
             "posts": posts,
+            "products": products,
             "total": total,
+            "total_products": total_products,
             "page": page,
             "per_page": per_page,
             "pages": pages,

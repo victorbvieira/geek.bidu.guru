@@ -7,6 +7,7 @@ Padrao Repository: abstrai operacoes de banco das rotas/services.
 from app.repositories.base import BaseRepository
 from app.repositories.user import UserRepository
 from app.repositories.category import CategoryRepository
+from app.repositories.occasion import OccasionRepository
 from app.repositories.post import PostRepository
 from app.repositories.product import ProductRepository
 from app.repositories.click import ClickRepository
@@ -17,6 +18,7 @@ __all__ = [
     "BaseRepository",
     "UserRepository",
     "CategoryRepository",
+    "OccasionRepository",
     "PostRepository",
     "ProductRepository",
     "ClickRepository",

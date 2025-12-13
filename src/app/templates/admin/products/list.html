@@ -142,11 +142,22 @@
         </table>
     </div>
 
+    <!-- Info de resultados -->
+    {% if pagination %}
+    <div style="padding: 0.75rem 1rem; color: var(--admin-text-muted); font-size: 0.875rem; border-top: 1px solid var(--admin-border);">
+        {% if q %}
+        {{ pagination.total }} resultado(s) para "{{ q }}"
+        {% else %}
+        {{ pagination.total }} produto(s) encontrado(s)
+        {% endif %}
+    </div>
+    {% endif %}
+
     <!-- Pagination -->
     {% if pagination and pagination.total_pages > 1 %}
     <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--admin-border);">
         {% if pagination.page > 1 %}
-        <a href="?page={{ pagination.page - 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}{% if platform %}&platform={{ platform }}{% endif %}{% if availability %}&availability={{ availability }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
         {% endif %}
 
         <span style="padding: 0.5rem 1rem; color: var(--admin-text-muted);">
@@ -154,7 +165,7 @@
         </span>
 
         {% if pagination.page < pagination.total_pages %}
-        <a href="?page={{ pagination.page + 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}{% if platform %}&platform={{ platform }}{% endif %}{% if availability %}&availability={{ availability }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
         {% endif %}
     </div>
     {% endif %}

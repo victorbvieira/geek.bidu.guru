@@ -1,21 +1,21 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Categorias{% endblock %}
+{% block title %}Ocasioes{% endblock %}
 
 {% block breadcrumb %}
 <span>/</span>
-<span class="current">Categorias</span>
+<span class="current">Ocasioes</span>
 {% endblock %}
 
 {% block header_actions %}
-<a href="/admin/categories/new" class="admin-btn admin-btn-primary">
-    + Nova Categoria
+<a href="/admin/occasions/new" class="admin-btn admin-btn-primary">
+    + Nova Ocasiao
 </a>
 {% endblock %}
 
 {% block content %}
 <div class="admin-page-header">
-    <h1 class="admin-page-title">Categorias</h1>
+    <h1 class="admin-page-title">Ocasioes</h1>
 </div>
 
 <!-- Filtros e Pesquisa -->
@@ -27,7 +27,7 @@
         </div>
         <button type="submit" class="admin-btn admin-btn-secondary">Buscar</button>
         {% if q %}
-        <a href="/admin/categories" class="admin-btn admin-btn-secondary">Limpar</a>
+        <a href="/admin/occasions" class="admin-btn admin-btn-secondary">Limpar</a>
         {% endif %}
     </form>
 </div>
@@ -38,7 +38,7 @@
     {% if q %}
     {{ pagination.total }} resultado(s) para "{{ q }}"
     {% else %}
-    {{ pagination.total }} categoria(s) encontrada(s)
+    {{ pagination.total }} ocasiao(oes) encontrada(s)
     {% endif %}
 </div>
 {% endif %}
@@ -48,37 +48,47 @@
         <table class="admin-table">
             <thead>
                 <tr>
+                    <th style="width: 50px;">Icone</th>
                     <th>Nome</th>
                     <th>Slug</th>
-                    <th>Pai</th>
-                    <th>Posts</th>
+                    <th>Ordem</th>
+                    <th>Status</th>
                     <th>Acoes</th>
                 </tr>
             </thead>
             <tbody>
-                {% for category in categories %}
+                {% for occasion in occasions %}
                 <tr>
+                    <td style="text-align: center; font-size: 1.5rem;">
+                        {{ occasion.icon or '📅' }}
+                    </td>
                     <td>
-                        <a href="/admin/categories/{{ category.id }}" style="color: var(--admin-text); font-weight: 500;">
-                            {{ category.name }}
+                        <a href="/admin/occasions/{{ occasion.id }}" style="color: var(--admin-text); font-weight: 500;">
+                            {{ occasion.name }}
                         </a>
-                        {% if category.description %}
+                        {% if occasion.description %}
                         <div style="font-size: 0.75rem; color: var(--admin-text-muted); margin-top: 0.25rem;">
-                            {{ category.description[:60] }}{% if category.description|length > 60 %}...{% endif %}
+                            {{ occasion.description[:60] }}{% if occasion.description|length > 60 %}...{% endif %}
                         </div>
                         {% endif %}
                     </td>
-                    <td style="color: var(--admin-text-muted);">{{ category.slug }}</td>
-                    <td>{{ category.parent.name if category.parent else '-' }}</td>
-                    <td>{{ category.posts | length if category.posts else 0 }}</td>
+                    <td style="color: var(--admin-text-muted);">{{ occasion.slug }}</td>
+                    <td style="text-align: center;">{{ occasion.display_order }}</td>
+                    <td>
+                        {% if occasion.is_active %}
+                        <span class="admin-badge admin-badge-success">Ativa</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-secondary">Inativa</span>
+                        {% endif %}
+                    </td>
                     <td class="actions">
-                        <a href="/admin/categories/{{ category.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
+                        <a href="/admin/occasions/{{ occasion.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
                             Editar
                         </a>
-                        <a href="/categoria/{{ category.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary" title="Visualizar">
+                        <a href="/ocasiao/{{ occasion.slug }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary" title="Visualizar">
                             Ver
                         </a>
-                        <form method="POST" action="/admin/categories/{{ category.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir categoria &quot;{{ category.name }}&quot;?')">
+                        <form method="POST" action="/admin/occasions/{{ occasion.id }}/delete" style="display: inline;" onsubmit="return confirm('Excluir ocasiao &quot;{{ occasion.name }}&quot;?')">
                             <button type="submit" class="admin-btn admin-btn-sm admin-btn-danger" title="Excluir">
                                 Excluir
                             </button>
@@ -87,13 +97,13 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
                         {% if q %}
-                        Nenhuma categoria encontrada para "{{ q }}".
-                        <a href="/admin/categories" style="color: var(--admin-primary);">Limpar busca</a>
+                        Nenhuma ocasiao encontrada para "{{ q }}".
+                        <a href="/admin/occasions" style="color: var(--admin-primary);">Limpar busca</a>
                         {% else %}
-                        Nenhuma categoria encontrada.
-                        <a href="/admin/categories/new" style="color: var(--admin-primary);">Criar primeira categoria</a>
+                        Nenhuma ocasiao encontrada.
+                        <a href="/admin/occasions/new" style="color: var(--admin-primary);">Criar primeira ocasiao</a>
                         {% endif %}
                     </td>
                 </tr>

@@ -1,0 +1,321 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ 'Editar' if occasion else 'Nova' }} Ocasiao{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/occasions">Ocasioes</a>
+<span>/</span>
+<span class="current">{{ 'Editar' if occasion else 'Nova' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">{{ 'Editar Ocasiao' if occasion else 'Nova Ocasiao' }}</h1>
+</div>
+
+<form method="POST" action="{{ '/admin/occasions/' ~ occasion.id if occasion else '/admin/occasions' }}" class="admin-form">
+    <div class="admin-form-grid">
+        <!-- Main Content -->
+        <div class="admin-form-main">
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label for="name" class="admin-form-label">Nome da Ocasiao *</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="admin-form-input"
+                        value="{{ occasion.name if occasion else '' }}"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="slug" class="admin-form-label">Slug</label>
+                    <input
+                        type="text"
+                        id="slug"
+                        name="slug"
+                        class="admin-form-input"
+                        value="{{ occasion.slug if occasion else '' }}"
+                        placeholder="gerado-automaticamente"
+                    >
+                    <div class="admin-form-hint">URL: /ocasiao/{{ occasion.slug if occasion else 'seu-slug' }}</div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="description" class="admin-form-label">Descricao</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="admin-form-textarea"
+                        rows="3"
+                        placeholder="Descricao breve da ocasiao"
+                    >{{ occasion.description if occasion else '' }}</textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="icon" class="admin-form-label">Icone (Emoji)</label>
+                    <input
+                        type="text"
+                        id="icon"
+                        name="icon"
+                        class="admin-form-input"
+                        value="{{ occasion.icon if occasion else '' }}"
+                        placeholder="Ex: 🎄 🎂 💝"
+                        style="max-width: 150px;"
+                    >
+                    <div class="admin-form-hint">Use um emoji para representar a ocasiao</div>
+                </div>
+            </div>
+
+            <!-- SEO -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">SEO</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="seo_title" class="admin-form-label">Titulo SEO</label>
+                    <input
+                        type="text"
+                        id="seo_title"
+                        name="seo_title"
+                        class="admin-form-input"
+                        value="{{ occasion.seo_title if occasion else '' }}"
+                        placeholder="Titulo para buscadores (max 60 caracteres)"
+                        maxlength="60"
+                    >
+                    <div class="admin-form-hint">
+                        <span id="seo_title_count">{{ (occasion.seo_title|length) if occasion and occasion.seo_title else 0 }}</span>/60 caracteres
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="seo_description" class="admin-form-label">Descricao SEO</label>
+                    <textarea
+                        id="seo_description"
+                        name="seo_description"
+                        class="admin-form-textarea"
+                        rows="2"
+                        placeholder="Descricao para buscadores (max 160 caracteres)"
+                        maxlength="160"
+                    >{{ occasion.seo_description if occasion else '' }}</textarea>
+                    <div class="admin-form-hint">
+                        <span id="seo_description_count">{{ (occasion.seo_description|length) if occasion and occasion.seo_description else 0 }}</span>/160 caracteres
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="admin-form-sidebar">
+            <!-- Status e Ordem -->
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label class="admin-checkbox">
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            {% if not occasion or occasion.is_active %}checked{% endif %}
+                        >
+                        <span>Ocasiao ativa</span>
+                    </label>
+                    <div class="admin-form-hint">Ocasioes inativas nao aparecem no site</div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="display_order" class="admin-form-label">Ordem de Exibicao</label>
+                    <input
+                        type="number"
+                        id="display_order"
+                        name="display_order"
+                        class="admin-form-input"
+                        value="{{ occasion.display_order if occasion else 0 }}"
+                        min="0"
+                    >
+                    <div class="admin-form-hint">Menor numero aparece primeiro</div>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
+                        {{ 'Salvar' if occasion else 'Criar Ocasiao' }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Imagem -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Imagem</h3>
+                </div>
+
+                <div class="occasion-image-upload">
+                    <div class="occasion-image-preview" id="occasion-image-preview">
+                        {% if occasion and occasion.image_url %}
+                        <img src="{{ occasion.image_url }}" alt="{{ occasion.name }}">
+                        {% else %}
+                        <div class="image-placeholder">
+                            <span>Sem imagem</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="occasion-image-controls">
+                        <input type="file" id="occasion-image-file" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;">
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="document.getElementById('occasion-image-file').click()">
+                            Upload
+                        </button>
+                        <span class="upload-status" id="occasion-upload-status"></span>
+                    </div>
+                    <input type="hidden" id="image_url" name="image_url" value="{{ occasion.image_url if occasion and occasion.image_url else '' }}">
+                    <div class="admin-form-hint">Redimensionada para 400x400 px</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.occasion-image-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.occasion-image-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--admin-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.occasion-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder {
+    color: var(--admin-text-muted);
+    font-size: 0.875rem;
+}
+
+.occasion-image-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.upload-status {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-gerar slug do nome
+const nameInput = document.getElementById('name');
+const slugInput = document.getElementById('slug');
+let slugManuallyEdited = {{ 'true' if occasion else 'false' }};
+
+function generateSlug(text) {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+}
+
+nameInput.addEventListener('input', function() {
+    if (!slugManuallyEdited) {
+        slugInput.value = generateSlug(this.value);
+    }
+});
+
+slugInput.addEventListener('input', function() {
+    if (this.value.trim() !== '') {
+        slugManuallyEdited = true;
+    }
+});
+
+// Contador de caracteres SEO
+const seoTitleInput = document.getElementById('seo_title');
+const seoTitleCount = document.getElementById('seo_title_count');
+const seoDescInput = document.getElementById('seo_description');
+const seoDescCount = document.getElementById('seo_description_count');
+
+seoTitleInput.addEventListener('input', function() {
+    seoTitleCount.textContent = this.value.length;
+});
+
+seoDescInput.addEventListener('input', function() {
+    seoDescCount.textContent = this.value.length;
+});
+
+// Upload de imagem
+const imageFileInput = document.getElementById('occasion-image-file');
+const imagePreview = document.getElementById('occasion-image-preview');
+const imageUrlInput = document.getElementById('image_url');
+const uploadStatus = document.getElementById('occasion-upload-status');
+
+imageFileInput.addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+        uploadStatus.textContent = 'Tipo nao permitido';
+        uploadStatus.style.color = 'var(--admin-danger)';
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        uploadStatus.textContent = 'Max 5MB';
+        uploadStatus.style.color = 'var(--admin-danger)';
+        return;
+    }
+
+    uploadStatus.textContent = 'Enviando...';
+    uploadStatus.style.color = 'var(--admin-text-muted)';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/admin/upload/category-image', {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            imageUrlInput.value = data.url;
+            imagePreview.innerHTML = `<img src="${data.url}" alt="Preview">`;
+            uploadStatus.textContent = '400x400 OK!';
+            uploadStatus.style.color = 'var(--admin-success)';
+        } else {
+            uploadStatus.textContent = data.detail || 'Erro';
+            uploadStatus.style.color = 'var(--admin-danger)';
+        }
+    } catch (error) {
+        uploadStatus.textContent = 'Erro de conexao';
+        uploadStatus.style.color = 'var(--admin-danger)';
+    }
+
+    imageFileInput.value = '';
+});
+</script>
+{% endblock %}

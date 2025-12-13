@@ -42,6 +42,10 @@
                         <span class="icon">📁</span>
                         <span>Categorias</span>
                     </a>
+                    <a href="/admin/occasions" class="admin-nav-item {% if active_page == 'occasions' %}active{% endif %}">
+                        <span class="icon">🎉</span>
+                        <span>Ocasioes</span>
+                    </a>
                 </div>
 
                 {% if current_user and current_user.role.value == 'admin' %}

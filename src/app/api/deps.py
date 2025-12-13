@@ -37,6 +37,7 @@ from app.repositories import (
     CategoryRepository,
     ClickRepository,
     NewsletterRepository,
+    OccasionRepository,
     PostRepository,
     ProductRepository,
     SessionRepository,
@@ -153,6 +154,19 @@ async def get_newsletter_repo(db: DBSession) -> NewsletterRepository:
     return NewsletterRepository(db)
 
 
+async def get_occasion_repo(db: DBSession) -> OccasionRepository:
+    """
+    Factory para repositório de ocasiões.
+
+    Args:
+        db: Sessão do banco injetada automaticamente
+
+    Returns:
+        Instância do OccasionRepository pronta para uso
+    """
+    return OccasionRepository(db)
+
+
 # =============================================================================
 # Type Aliases para Injeção Automática
 # =============================================================================
@@ -165,6 +179,7 @@ async def get_newsletter_repo(db: DBSession) -> NewsletterRepository:
 
 UserRepo = Annotated[UserRepository, Depends(get_user_repo)]
 CategoryRepo = Annotated[CategoryRepository, Depends(get_category_repo)]
+OccasionRepo = Annotated[OccasionRepository, Depends(get_occasion_repo)]
 PostRepo = Annotated[PostRepository, Depends(get_post_repo)]
 ProductRepo = Annotated[ProductRepository, Depends(get_product_repo)]
 ClickRepo = Annotated[ClickRepository, Depends(get_click_repo)]

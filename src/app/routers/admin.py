@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import (
     CategoryRepo,
     DBSession,
+    OccasionRepo,
     Pagination,
     PostRepo,
     ProductRepo,
@@ -396,6 +397,9 @@ async def list_products(
             "title": "Produtos - Admin",
             "current_user": current_user,
             "products": products,
+            "q": q,
+            "platform": platform,
+            "availability": availability,
             "pagination": {
                 "page": page,
                 "per_page": per_page,
@@ -464,9 +468,22 @@ async def list_categories(
     request: Request,
     current_user: AdminUser,
     repo: CategoryRepo,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    q: Optional[str] = None,
 ):
-    """Listagem de categorias."""
-    categories = await repo.get_all()
+    """Listagem de categorias com paginacao e pesquisa."""
+    skip = (page - 1) * per_page
+
+    # Buscar categorias
+    if q:
+        categories = await repo.search(q, skip=skip, limit=per_page)
+        total = await repo.count_search(q)
+    else:
+        categories = await repo.get_paginated(skip=skip, limit=per_page)
+        total = await repo.count()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
 
     return templates.TemplateResponse(
         request=request,
@@ -475,6 +492,13 @@ async def list_categories(
             "title": "Categorias - Admin",
             "current_user": current_user,
             "categories": categories,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "total_pages": total_pages,
+            },
+            "q": q or "",
         },
     )
 
@@ -627,5 +651,90 @@ async def edit_user(
             "title": f"Editar: {user.name} - Admin",
             "current_user": current_user,
             "user": user,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# Ocasioes
+# -----------------------------------------------------------------------------
+
+
+@router.get("/occasions", response_class=HTMLResponse)
+async def list_occasions(
+    request: Request,
+    current_user: AdminUser,
+    repo: OccasionRepo,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    q: Optional[str] = None,
+):
+    """Listagem de ocasioes."""
+    skip = (page - 1) * per_page
+
+    # Buscar ocasioes
+    if q:
+        occasions = await repo.search(q, skip=skip, limit=per_page)
+        total = await repo.count_search(q)
+    else:
+        occasions = await repo.get_paginated(skip=skip, limit=per_page)
+        total = await repo.count()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/occasions/list.html",
+        context={
+            "title": "Ocasioes - Admin",
+            "current_user": current_user,
+            "occasions": occasions,
+            "q": q,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "total_pages": total_pages,
+            },
+        },
+    )
+
+
+@router.get("/occasions/new", response_class=HTMLResponse)
+async def new_occasion(
+    request: Request,
+    current_user: AdminUser,
+):
+    """Formulario de nova ocasiao."""
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/occasions/form.html",
+        context={
+            "title": "Nova Ocasiao - Admin",
+            "current_user": current_user,
+            "occasion": None,
+        },
+    )
+
+
+@router.get("/occasions/{occasion_id}", response_class=HTMLResponse)
+async def edit_occasion(
+    request: Request,
+    occasion_id: UUID,
+    current_user: AdminUser,
+    repo: OccasionRepo,
+):
+    """Formulario de edicao de ocasiao."""
+    occasion = await repo.get(occasion_id)
+    if not occasion:
+        raise HTTPException(status_code=404, detail="Ocasiao nao encontrada")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/occasions/form.html",
+        context={
+            "title": f"Editar: {occasion.name} - Admin",
+            "current_user": current_user,
+            "occasion": occasion,
         },
     )

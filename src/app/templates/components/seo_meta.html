@@ -21,6 +21,15 @@
 
 {# Gera URL da imagem OG dinamica se nao fornecida #}
 {% set og_image_url = og_image %}
+
+{# Converte URL relativa para absoluta se necessario #}
+{% if og_image_url and og_image_url.startswith('/') %}
+    {% set og_image_url = base_url ~ og_image_url %}
+{% elif og_image_url and not og_image_url.startswith('http') %}
+    {% set og_image_url = base_url ~ '/' ~ og_image_url %}
+{% endif %}
+
+{# Se nao tem imagem, gera URL dinamica #}
 {% if not og_image_url %}
     {% if og_image_type == 'product' and product %}
         {% set og_image_url = base_url ~ '/og/product.png?title=' ~ (product.name | urlencode) ~ ('&price=' ~ (product.price | format_price | urlencode) if product.price else '') ~ ('&platform=' ~ product.platform.value if product.platform else '') %}
