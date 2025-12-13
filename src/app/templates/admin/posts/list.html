@@ -18,14 +18,23 @@
     <h1 class="admin-page-title">Posts</h1>
 </div>
 
-<!-- Filters -->
+<!-- Filtros e Pesquisa -->
 <div class="admin-card" style="margin-bottom: 1rem;">
     <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
-        <div class="admin-form-group" style="margin-bottom: 0; min-width: 200px;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 200px; flex: 1;">
             <label class="admin-form-label">Buscar</label>
             <input type="text" name="q" value="{{ q or '' }}" class="admin-form-input" placeholder="Titulo...">
         </div>
-        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 130px;">
+            <label class="admin-form-label">Tipo</label>
+            <select name="type" class="admin-form-select">
+                <option value="">Todos</option>
+                <option value="listicle" {% if post_type == 'listicle' %}selected{% endif %}>Listicle</option>
+                <option value="guide" {% if post_type == 'guide' %}selected{% endif %}>Guia</option>
+                <option value="product_single" {% if post_type == 'product_single' %}selected{% endif %}>Review</option>
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 130px;">
             <label class="admin-form-label">Status</label>
             <select name="status" class="admin-form-select">
                 <option value="">Todos</option>
@@ -36,9 +45,21 @@
             </select>
         </div>
         <button type="submit" class="admin-btn admin-btn-secondary">Filtrar</button>
+        {% if q or post_type or status %}
         <a href="/admin/posts" class="admin-btn admin-btn-secondary">Limpar</a>
+        {% endif %}
     </form>
 </div>
+
+<!-- Info de resultados -->
+{% if pagination %}
+<div style="margin-bottom: 1rem; color: var(--admin-text-muted); font-size: 0.875rem;">
+    {{ pagination.total }} post(s) encontrado(s)
+    {% if q %} para "{{ q }}"{% endif %}
+    {% if post_type %} do tipo "{{ post_type }}"{% endif %}
+    {% if status %} com status "{{ status }}"{% endif %}
+</div>
+{% endif %}
 
 <!-- Posts Table -->
 <div class="admin-card">
@@ -73,7 +94,13 @@
                         </div>
                     </td>
                     <td>
-                        <span class="admin-badge admin-badge-primary">{{ post.type.value }}</span>
+                        {% if post.type.value == 'listicle' %}
+                        <span class="admin-badge admin-badge-info">Lista</span>
+                        {% elif post.type.value == 'guide' %}
+                        <span class="admin-badge admin-badge-warning">Guia</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-primary">Review</span>
+                        {% endif %}
                     </td>
                     <td>
                         {% if post.status.value == 'published' %}
@@ -115,11 +142,11 @@
         </table>
     </div>
 
-    <!-- Pagination -->
+    <!-- Paginacao -->
     {% if pagination and pagination.total_pages > 1 %}
     <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--admin-border);">
         {% if pagination.page > 1 %}
-        <a href="?page={{ pagination.page - 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}{% if post_type %}&type={{ post_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
         {% endif %}
 
         <span style="padding: 0.5rem 1rem; color: var(--admin-text-muted);">
@@ -127,7 +154,7 @@
         </span>
 
         {% if pagination.page < pagination.total_pages %}
-        <a href="?page={{ pagination.page + 1 }}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}{% if post_type %}&type={{ post_type }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
         {% endif %}
     </div>
     {% endif %}

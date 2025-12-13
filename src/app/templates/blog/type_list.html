@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="type-header">
+    <div class="container">
+        <span class="type-icon">{{ page_icon }}</span>
+        <h1>{{ page_title }}</h1>
+        <p class="section-description">{{ page_subtitle }}</p>
+        {% if total > 0 %}
+        <span class="type-count">{{ total }} {{ 'artigo' if total == 1 else 'artigos' }}</span>
+        {% endif %}
+    </div>
+</section>
+
+<section class="type-list">
+    <div class="container">
+        {% if posts %}
+        <div class="posts-grid">
+            {% for post in posts %}
+            <article class="post-card">
+                {% if post.featured_image_url %}
+                <a href="/blog/{{ post.slug }}" class="post-image">
+                    <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
+                    <span class="post-type-badge">
+                        {% if post_type == 'listicle' %}
+                        Lista
+                        {% else %}
+                        Guia
+                        {% endif %}
+                    </span>
+                </a>
+                {% endif %}
+                <div class="post-content">
+                    {% if post.category %}
+                    <a href="/categoria/{{ post.category.slug }}" class="post-category">
+                        {{ post.category.name }}
+                    </a>
+                    {% endif %}
+                    <h2 class="post-title">
+                        <a href="/blog/{{ post.slug }}">{{ post.title }}</a>
+                    </h2>
+                    {% if post.subtitle %}
+                    <p class="post-excerpt">{{ post.subtitle }}</p>
+                    {% endif %}
+                    <div class="post-meta">
+                        <span class="post-date">
+                            {{ post.publish_at.strftime('%d/%m/%Y') if post.publish_at else '' }}
+                        </span>
+                        {% if post.view_count %}
+                        <span class="post-views">{{ post.view_count }} views</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <!-- Paginacao -->
+        {% if pages > 1 %}
+        <nav class="pagination" aria-label="Paginacao">
+            {% if has_prev %}
+            <a href="/{{ 'listas' if post_type == 'listicle' else 'guias' }}?page={{ page - 1 }}" class="pagination-link pagination-prev">
+                Anterior
+            </a>
+            {% endif %}
+
+            <span class="pagination-info">
+                Pagina {{ page }} de {{ pages }}
+            </span>
+
+            {% if has_next %}
+            <a href="/{{ 'listas' if post_type == 'listicle' else 'guias' }}?page={{ page + 1 }}" class="pagination-link pagination-next">
+                Proxima
+            </a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">{{ page_icon }}</span>
+            <h2>Nenhum {{ 'lista' if post_type == 'listicle' else 'guia' }} publicado ainda</h2>
+            <p>Em breve teremos conteudo incrivel para voce!</p>
+            <a href="/blog" class="empty-link">Ver todos os posts</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Chamada para outras secoes -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-grid">
+            {% if post_type == 'listicle' %}
+            <a href="/guias" class="cta-card">
+                <span class="cta-icon">📖</span>
+                <h3>Guias de Compra</h3>
+                <p>Aprenda a escolher o presente perfeito</p>
+            </a>
+            {% else %}
+            <a href="/listas" class="cta-card">
+                <span class="cta-icon">📋</span>
+                <h3>Listas</h3>
+                <p>Top 10 e selecoes especiais</p>
+            </a>
+            {% endif %}
+            <a href="/categorias" class="cta-card">
+                <span class="cta-icon">📂</span>
+                <h3>Categorias</h3>
+                <p>Navegue por tema ou interesse</p>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.type-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    padding: 3rem 0;
+    text-align: center;
+}
+
+.type-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.type-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2.5rem;
+}
+
+.type-count {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+
+.type-list {
+    padding: 3rem 0;
+}
+
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.post-card {
+    background: var(--color-bg-card);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.post-image {
+    display: block;
+    position: relative;
+}
+
+.post-image img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.post-type-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    background: var(--color-primary);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.post-content {
+    padding: 1.5rem;
+}
+
+.post-category {
+    display: inline-block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    text-decoration: none;
+    margin-bottom: 0.5rem;
+}
+
+.post-title {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
+}
+
+.post-title a {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.post-title a:hover {
+    color: var(--color-primary);
+}
+
+.post-excerpt {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    margin: 0 0 1rem;
+    line-height: 1.5;
+}
+
+.post-meta {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    display: flex;
+    gap: 1rem;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding: 1rem 0;
+}
+
+.pagination-link {
+    padding: 0.5rem 1rem;
+    background: var(--color-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.pagination-link:hover {
+    background: var(--color-primary-dark);
+}
+
+.pagination-info {
+    color: var(--color-text-muted);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-text-muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h2 {
+    margin: 0 0 0.5rem;
+    color: var(--color-text);
+}
+
+.empty-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.cta-section {
+    background: var(--color-bg-alt);
+    padding: 3rem 0;
+}
+
+.cta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.cta-card {
+    display: block;
+    background: var(--color-bg-card);
+    padding: 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.cta-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.cta-card h3 {
+    margin: 0 0 0.25rem;
+    color: var(--color-text);
+    font-size: 1.25rem;
+}
+
+.cta-card p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .type-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .posts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

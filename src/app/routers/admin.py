@@ -258,8 +258,11 @@ async def list_posts(
     per_page: int = Query(20, ge=1, le=100),
     q: Optional[str] = None,
     status_filter: Optional[str] = Query(None, alias="status"),
+    type_filter: Optional[str] = Query(None, alias="type"),
 ):
-    """Listagem de posts."""
+    """Listagem de posts com filtros por status e tipo."""
+    from app.models.post import PostType
+
     skip = (page - 1) * per_page
 
     # Filtros
@@ -267,6 +270,11 @@ async def list_posts(
     if status_filter:
         try:
             filters["status"] = PostStatus(status_filter)
+        except ValueError:
+            pass
+    if type_filter:
+        try:
+            filters["type"] = PostType(type_filter)
         except ValueError:
             pass
 
@@ -287,6 +295,9 @@ async def list_posts(
             "title": "Posts - Admin",
             "current_user": current_user,
             "posts": posts,
+            "q": q,
+            "status": status_filter,
+            "post_type": type_filter,
             "pagination": {
                 "page": page,
                 "per_page": per_page,

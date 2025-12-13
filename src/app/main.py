@@ -227,12 +227,15 @@ async def home(request: Request):
     from app.repositories.post import PostRepository
     from app.repositories.category import CategoryRepository
     from app.core.context import get_footer_context
+    from app.models.post import PostType
 
     base_url = settings.app_url.rstrip("/")
 
     # Busca produtos, posts e categorias em destaque
     featured_products = []
     featured_posts = []
+    recent_listicles = []
+    recent_guides = []
     categories = []
     footer_context = {}
 
@@ -246,6 +249,14 @@ async def home(request: Request):
 
         # Busca até 3 posts publicados recentes
         featured_posts = await post_repo.get_published(limit=3)
+
+        # Busca listicles e guias recentes para o carrossel
+        recent_listicles = await post_repo.get_published(
+            limit=4, post_type=PostType.LISTICLE
+        )
+        recent_guides = await post_repo.get_published(
+            limit=4, post_type=PostType.GUIDE
+        )
 
         # Busca categorias raiz (até 6 para exibir na home)
         all_categories = await category_repo.get_root_categories()
@@ -262,6 +273,8 @@ async def home(request: Request):
             "description": "Encontre o presente geek perfeito para quem voce ama",
             "featured_products": featured_products,
             "featured_posts": featured_posts,
+            "recent_listicles": recent_listicles,
+            "recent_guides": recent_guides,
             "categories": categories,
             # SEO
             "base_url": base_url,

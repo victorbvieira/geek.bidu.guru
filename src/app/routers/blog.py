@@ -15,7 +15,7 @@ from urllib.parse import unquote_plus
 
 from app.api.deps import CategoryRepo, PostRepo, ProductRepo, DBSession
 from app.config import settings
-from app.models.post import PostStatus
+from app.models.post import PostStatus, PostType
 from app.core.templates import setup_templates
 from app.core.context import get_footer_context
 from app.utils.markdown import (
@@ -451,6 +451,142 @@ async def search_posts(
             "base_url": base_url,
             "canonical_url": f"{base_url}/busca?q={query}",
             "noindex": True,
+            # Footer
+            **footer_context,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# Listas (Listicles)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/listas", response_class=HTMLResponse)
+async def list_listicles(
+    request: Request,
+    repo: PostRepo,
+    db: DBSession,
+    page: int = 1,
+    per_page: int = 12,
+):
+    """
+    Pagina de listagem de listicles (listas Top 10, etc).
+
+    Exibe posts do tipo LISTICLE ordenados por data de publicacao.
+    """
+    skip = (page - 1) * per_page
+
+    # Busca posts do tipo listicle
+    posts = await repo.get_published(
+        skip=skip,
+        limit=per_page,
+        post_type=PostType.LISTICLE,
+    )
+    total = await repo.count_published(post_type=PostType.LISTICLE)
+
+    # Calcula total de paginas
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
+
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/listas" if page == 1 else f"{base_url}/listas?page={page}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="blog/type_list.html",
+        context={
+            "title": "Listas - Melhores Presentes Geek",
+            "description": "Listas com os melhores presentes geek: Top 10, comparativos e selecoes especiais para quem ama cultura pop, games e tecnologia.",
+            "page_title": "Listas",
+            "page_subtitle": "Top 10, comparativos e selecoes especiais de presentes geek",
+            "page_icon": "📋",
+            "post_type": "listicle",
+            "posts": posts,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+            "has_prev": page > 1,
+            "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Listas", "url": f"{base_url}/listas"},
+            ],
+            # Footer
+            **footer_context,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# Guias de Compra
+# -----------------------------------------------------------------------------
+
+
+@router.get("/guias", response_class=HTMLResponse)
+async def list_guides(
+    request: Request,
+    repo: PostRepo,
+    db: DBSession,
+    page: int = 1,
+    per_page: int = 12,
+):
+    """
+    Pagina de listagem de guias de compra.
+
+    Exibe posts do tipo GUIDE ordenados por data de publicacao.
+    """
+    skip = (page - 1) * per_page
+
+    # Busca posts do tipo guide
+    posts = await repo.get_published(
+        skip=skip,
+        limit=per_page,
+        post_type=PostType.GUIDE,
+    )
+    total = await repo.count_published(post_type=PostType.GUIDE)
+
+    # Calcula total de paginas
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
+
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/guias" if page == 1 else f"{base_url}/guias?page={page}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="blog/type_list.html",
+        context={
+            "title": "Guias de Compra - Presentes Geek",
+            "description": "Guias completos para escolher o presente geek perfeito. Aprenda o que considerar, compare opcoes e faca a melhor escolha.",
+            "page_title": "Guias de Compra",
+            "page_subtitle": "Tudo que voce precisa saber para escolher o presente perfeito",
+            "page_icon": "📖",
+            "post_type": "guide",
+            "posts": posts,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+            "has_prev": page > 1,
+            "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Guias", "url": f"{base_url}/guias"},
+            ],
             # Footer
             **footer_context,
         },
