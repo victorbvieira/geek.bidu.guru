@@ -1077,9 +1077,8 @@ async def migrate_uploads(
 
     # 2. Atualizar URLs no banco de dados
 
-    # Products - main_image_url e images (JSONB array)
+    # Products - main_image_url
     try:
-        # Atualiza main_image_url
         result = await db.execute(
             text("""
                 UPDATE products
@@ -1088,28 +1087,28 @@ async def migrate_uploads(
             """)
         )
         report["db_products_updated"] += result.rowcount
+        logger.info(f"Products main_image_url atualizados: {result.rowcount}")
+    except Exception as e:
+        logger.error(f"Erro ao atualizar products main_image_url: {e}")
+        report["db_products_main_error"] = str(e)
+        await db.rollback()
 
-        # Atualiza array de images (JSONB)
-        # Substitui /static/uploads/ por /uploads/ em cada elemento do array
+    # Products - images (JSONB array) - usando replace direto no texto JSON
+    try:
         result = await db.execute(
             text("""
                 UPDATE products
-                SET images = (
-                    SELECT jsonb_agg(
-                        REPLACE(elem::text, '/static/uploads/', '/uploads/')::jsonb #>> '{}'
-                    )
-                    FROM jsonb_array_elements_text(images) AS elem
-                )
+                SET images = REPLACE(images::text, '/static/uploads/', '/uploads/')::jsonb
                 WHERE images IS NOT NULL
                 AND images::text LIKE '%/static/uploads/%'
             """)
         )
-        report["db_products_updated"] += result.rowcount
-
-        logger.info(f"Products atualizados: {report['db_products_updated']}")
+        report["db_products_images_updated"] = result.rowcount
+        logger.info(f"Products images array atualizados: {result.rowcount}")
     except Exception as e:
-        logger.error(f"Erro ao atualizar products: {e}")
-        report["db_products_error"] = str(e)
+        logger.error(f"Erro ao atualizar products images: {e}")
+        report["db_products_images_error"] = str(e)
+        await db.rollback()
 
     # Categories - image_url
     try:
@@ -1125,6 +1124,7 @@ async def migrate_uploads(
     except Exception as e:
         logger.error(f"Erro ao atualizar categories: {e}")
         report["db_categories_error"] = str(e)
+        await db.rollback()
 
     # Posts - featured_image_url
     try:
@@ -1140,6 +1140,7 @@ async def migrate_uploads(
     except Exception as e:
         logger.error(f"Erro ao atualizar posts: {e}")
         report["db_posts_error"] = str(e)
+        await db.rollback()
 
     # Commit das alteracoes
     await db.commit()
