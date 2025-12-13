@@ -2,6 +2,9 @@
 Servico de upload de arquivos.
 
 Gerencia upload, validacao e armazenamento de imagens.
+
+IMPORTANTE: Em producao, configure UPLOAD_DIR via variavel de ambiente
+para usar um volume persistente (ex: /app/uploads).
 """
 
 import io
@@ -12,6 +15,8 @@ from typing import BinaryIO, Optional, Tuple
 
 from fastapi import HTTPException, UploadFile, status
 from PIL import Image
+
+from app.config import settings
 
 # Tipos de arquivo permitidos
 ALLOWED_IMAGE_TYPES = {
@@ -44,7 +49,30 @@ POST_FEATURED_IMAGE_SIZE = (1200, 630)
 IMAGE_QUALITY = 85
 
 # Diretorio base de uploads
-UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
+# Em producao: use UPLOAD_DIR=/app/uploads com volume Docker persistente
+# Em desenvolvimento: usa o diretorio padrao dentro do projeto
+if settings.upload_dir:
+    UPLOAD_DIR = Path(settings.upload_dir)
+    # Em producao com diretorio externo, usa /uploads/ como prefixo de URL
+    UPLOAD_URL_PREFIX = "/uploads"
+else:
+    UPLOAD_DIR = Path(__file__).resolve().parent.parent / "static" / "uploads"
+    # Em desenvolvimento, usa /static/uploads/ (servido automaticamente pelo FastAPI)
+    UPLOAD_URL_PREFIX = "/static/uploads"
+
+
+def get_upload_url(subdir: str, filename: str) -> str:
+    """
+    Retorna a URL para acessar um arquivo de upload.
+
+    Args:
+        subdir: Subdiretorio (products, categories, posts)
+        filename: Nome do arquivo
+
+    Returns:
+        URL relativa para o arquivo
+    """
+    return f"{UPLOAD_URL_PREFIX}/{subdir}/{filename}"
 
 
 def validate_image(file: UploadFile) -> str:
@@ -118,7 +146,7 @@ async def save_product_image(file: UploadFile, resize: bool = False) -> str:
         f.write(content)
 
     # Retorna URL relativa
-    return f"/static/uploads/products/{filename}"
+    return get_upload_url("products", filename)
 
 
 def delete_product_image(image_url: str) -> bool:
@@ -131,11 +159,18 @@ def delete_product_image(image_url: str) -> bool:
     Returns:
         True se removida, False se nao encontrada
     """
-    if not image_url or not image_url.startswith("/static/uploads/"):
+    if not image_url:
+        return False
+
+    # Suporta ambos os prefixos (para migracoes)
+    if image_url.startswith("/static/uploads/"):
+        relative_path = image_url.replace("/static/uploads/", "")
+    elif image_url.startswith("/uploads/"):
+        relative_path = image_url.replace("/uploads/", "")
+    else:
         return False
 
     # Converte URL para caminho
-    relative_path = image_url.replace("/static/uploads/", "")
     file_path = UPLOAD_DIR / relative_path
 
     if file_path.exists():
@@ -238,7 +273,7 @@ async def save_category_image(file: UploadFile) -> str:
         f.write(resized_content)
 
     # Retorna URL relativa
-    return f"/static/uploads/categories/{filename}"
+    return get_upload_url("categories", filename)
 
 
 async def save_post_image(file: UploadFile) -> str:
@@ -286,7 +321,7 @@ async def save_post_image(file: UploadFile) -> str:
         f.write(resized_content)
 
     # Retorna URL relativa
-    return f"/static/uploads/posts/{filename}"
+    return get_upload_url("posts", filename)
 
 
 def delete_category_image(image_url: str) -> bool:
@@ -299,11 +334,18 @@ def delete_category_image(image_url: str) -> bool:
     Returns:
         True se removida, False se nao encontrada
     """
-    if not image_url or not image_url.startswith("/static/uploads/categories/"):
+    if not image_url:
+        return False
+
+    # Suporta ambos os prefixos (para migracoes)
+    if image_url.startswith("/static/uploads/"):
+        relative_path = image_url.replace("/static/uploads/", "")
+    elif image_url.startswith("/uploads/"):
+        relative_path = image_url.replace("/uploads/", "")
+    else:
         return False
 
     # Converte URL para caminho
-    relative_path = image_url.replace("/static/uploads/", "")
     file_path = UPLOAD_DIR / relative_path
 
     if file_path.exists():

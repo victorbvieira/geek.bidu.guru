@@ -38,6 +38,8 @@ services:
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - LOG_FORMAT=${LOG_FORMAT:-json}
+      # Uploads persistentes (volume montado em /app/uploads)
+      - UPLOAD_DIR=/app/uploads
       # APIs de Afiliados (opcional)
       - AMAZON_ACCESS_KEY=${AMAZON_ACCESS_KEY:-}
       - AMAZON_SECRET_KEY=${AMAZON_SECRET_KEY:-}

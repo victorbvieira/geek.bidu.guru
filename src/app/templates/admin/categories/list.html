@@ -51,7 +51,8 @@
                     <th>Nome</th>
                     <th>Slug</th>
                     <th>Pai</th>
-                    <th>Posts</th>
+                    <th style="text-align: center;">Posts</th>
+                    <th style="text-align: center;">Produtos</th>
                     <th>Acoes</th>
                 </tr>
             </thead>
@@ -70,7 +71,15 @@
                     </td>
                     <td style="color: var(--admin-text-muted);">{{ category.slug }}</td>
                     <td>{{ category.parent.name if category.parent else '-' }}</td>
-                    <td>{{ category.posts | length if category.posts else 0 }}</td>
+                    <td style="text-align: center;">{{ category.posts | length if category.posts else 0 }}</td>
+                    <td style="text-align: center;">
+                        {% set count = product_counts.get(category.slug, 0) %}
+                        {% if count > 0 %}
+                        <span class="admin-badge admin-badge-success">{{ count }}</span>
+                        {% else %}
+                        <span style="color: var(--admin-text-muted);">0</span>
+                        {% endif %}
+                    </td>
                     <td class="actions">
                         <a href="/admin/categories/{{ category.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
                             Editar
@@ -87,7 +96,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
                         {% if q %}
                         Nenhuma categoria encontrada para "{{ q }}".
                         <a href="/admin/categories" style="color: var(--admin-primary);">Limpar busca</a>

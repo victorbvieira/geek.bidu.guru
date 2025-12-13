@@ -44,8 +44,11 @@ services:
     environment:
       # Sobrescreve variaveis do .env se necessario
       - REDIS_URL=redis://redis:6379/0
+      # Em desenvolvimento, nao define UPLOAD_DIR para usar /static/uploads
     volumes:
       - ../src:/app/src
+      # Volume para uploads persistentes (desenvolvimento)
+      - uploads_data:/app/src/app/static/uploads
     ports:
       - "8001:8000"
     depends_on:
@@ -62,6 +65,8 @@ services:
 volumes:
   redis_data:
     name: geek_redis_data
+  uploads_data:
+    name: geek_uploads_data
 
 # -----------------------------------------------------------------------------
 # Redes

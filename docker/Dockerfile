@@ -45,8 +45,9 @@ RUN pip install --no-cache-dir /wheels/*
 # Copiar codigo fonte
 COPY src/ ./src/
 
-# Criar diretorio para uploads (persistente via volume)
-RUN mkdir -p /app/uploads
+# Criar diretorio para uploads persistentes com subdiretorios
+# Em producao, configure UPLOAD_DIR=/app/uploads e monte um volume
+RUN mkdir -p /app/uploads/products /app/uploads/categories /app/uploads/posts
 
 # Criar usuario nao-root para seguranca
 RUN useradd --create-home --shell /bin/bash appuser \
