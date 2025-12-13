@@ -13,10 +13,11 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse
 from urllib.parse import unquote_plus
 
-from app.api.deps import CategoryRepo, PostRepo, ProductRepo
+from app.api.deps import CategoryRepo, PostRepo, ProductRepo, DBSession
 from app.config import settings
 from app.models.post import PostStatus
 from app.core.templates import setup_templates
+from app.core.context import get_footer_context
 from app.utils.markdown import (
     extract_product_refs,
     markdown_to_html,
@@ -45,6 +46,7 @@ def get_base_url() -> str:
 async def list_posts(
     request: Request,
     repo: PostRepo,
+    db: DBSession,
     page: int = 1,
     per_page: int = 12,
 ):
@@ -62,6 +64,9 @@ async def list_posts(
 
     # Calcula total de paginas
     pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
 
     base_url = get_base_url()
     canonical_url = f"{base_url}/blog" if page == 1 else f"{base_url}/blog?page={page}"
@@ -87,6 +92,8 @@ async def list_posts(
                 {"name": "Home", "url": base_url},
                 {"name": "Blog", "url": f"{base_url}/blog"},
             ],
+            # Footer
+            **footer_context,
         },
     )
 
@@ -102,6 +109,7 @@ async def get_post(
     slug: str,
     repo: PostRepo,
     product_repo: ProductRepo,
+    db: DBSession,
 ):
     """
     Pagina de post individual.
@@ -163,6 +171,9 @@ async def get_post(
     seo_title = post.seo_title or post.title
     seo_description = post.seo_description or (post.subtitle or post.title)
 
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
+
     base_url = get_base_url()
     canonical_url = f"{base_url}/blog/{post.slug}"
 
@@ -202,6 +213,8 @@ async def get_post(
             "schema_type": "BlogPosting",
             "breadcrumbs": breadcrumbs,
             "seo_keywords": post.seo_focus_keyword,
+            # Footer
+            **footer_context,
         },
     )
 
@@ -217,13 +230,15 @@ async def list_by_category(
     slug: str,
     category_repo: CategoryRepo,
     post_repo: PostRepo,
+    product_repo: ProductRepo,
+    db: DBSession,
     page: int = 1,
     per_page: int = 12,
 ):
     """
     Pagina de listagem de posts por categoria.
 
-    Exibe posts publicados de uma categoria especifica.
+    Exibe posts publicados, subcategorias e produtos de uma categoria especifica.
     """
     # Busca categoria por slug
     category = await category_repo.get_by_slug(slug)
@@ -243,27 +258,45 @@ async def list_by_category(
         limit=per_page,
         category_id=category.id,
     )
-    total = await post_repo.count_published(category_id=category.id)
+    total_posts = await post_repo.count_published(category_id=category.id)
 
-    # Calcula total de paginas
-    pages = (total + per_page - 1) // per_page if total > 0 else 1
+    # Busca subcategorias (se houver)
+    subcategories = await category_repo.get_children(category.id)
+
+    # Busca produtos da categoria
+    products = await product_repo.get_by_category(category.slug, skip=0, limit=12)
+    total_products = await product_repo.count_by_category(category.slug)
+
+    # Calcula total de paginas (baseado em posts)
+    pages = (total_posts + per_page - 1) // per_page if total_posts > 0 else 1
+
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
 
     base_url = get_base_url()
     canonical_url = f"{base_url}/categoria/{category.slug}"
     if page > 1:
         canonical_url = f"{canonical_url}?page={page}"
 
+    # SEO: usa campos SEO se disponiveis
+    seo_title = getattr(category, 'seo_title', None) or category.name
+    seo_description = getattr(category, 'seo_description', None) or category.description or f"Posts sobre {category.name}"
+    og_image = getattr(category, 'image_url', None)
+
     return templates.TemplateResponse(
         request=request,
         name="blog/category.html",
         context={
-            "title": f"{category.name} - geek.bidu.guru",
-            "description": category.description or f"Posts sobre {category.name}",
+            "title": f"{seo_title} - geek.bidu.guru",
+            "description": seo_description,
             "category": category,
             "posts": posts,
+            "subcategories": subcategories,
+            "products": products,
+            "total_products": total_products,
             "page": page,
             "per_page": per_page,
-            "total": total,
+            "total": total_posts,
             "pages": pages,
             "has_prev": page > 1,
             "has_next": page < pages,
@@ -271,11 +304,14 @@ async def list_by_category(
             "base_url": base_url,
             "canonical_url": canonical_url,
             "og_type": "website",
+            "og_image": og_image,
             "breadcrumbs": [
                 {"name": "Home", "url": base_url},
                 {"name": "Categorias", "url": f"{base_url}/categorias"},
                 {"name": category.name, "url": f"{base_url}/categoria/{category.slug}"},
             ],
+            # Footer
+            **footer_context,
         },
     )
 
@@ -289,12 +325,16 @@ async def list_by_category(
 async def list_categories(
     request: Request,
     repo: CategoryRepo,
+    db: DBSession,
 ):
     """
     Pagina de listagem de todas as categorias.
     """
     # Busca categorias raiz (sem parent)
     categories = await repo.get_root_categories()
+
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
 
     base_url = get_base_url()
 
@@ -313,6 +353,8 @@ async def list_categories(
                 {"name": "Home", "url": base_url},
                 {"name": "Categorias", "url": f"{base_url}/categorias"},
             ],
+            # Footer
+            **footer_context,
         },
     )
 
@@ -326,6 +368,7 @@ async def list_categories(
 async def search_posts(
     request: Request,
     repo: PostRepo,
+    db: DBSession,
     q: str = "",
     page: int = 1,
     per_page: int = 12,
@@ -339,6 +382,9 @@ async def search_posts(
     query = unquote_plus(q).strip()
 
     base_url = get_base_url()
+
+    # Footer dinamico
+    footer_context = await get_footer_context(db)
 
     # Se nao tem query, mostra pagina de busca vazia
     if not query:
@@ -359,6 +405,8 @@ async def search_posts(
                 "base_url": base_url,
                 "canonical_url": f"{base_url}/busca",
                 "noindex": True,
+                # Footer
+                **footer_context,
             },
         )
 
@@ -390,5 +438,7 @@ async def search_posts(
             "base_url": base_url,
             "canonical_url": f"{base_url}/busca?q={query}",
             "noindex": True,
+            # Footer
+            **footer_context,
         },
     )

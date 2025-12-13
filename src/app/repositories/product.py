@@ -184,3 +184,77 @@ class ProductRepository(BaseRepository[Product]):
 
         # Retorna IDs na ordem dos slugs originais
         return [slug_to_id[slug] for slug in slugs if slug in slug_to_id]
+
+    async def get_by_category(
+        self,
+        category_slug: str,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[Product]:
+        """
+        Busca produtos que pertencem a uma categoria.
+
+        Os produtos armazenam categorias como lista de slugs em JSONB.
+
+        Args:
+            category_slug: Slug da categoria
+            skip: Offset para paginacao
+            limit: Limite de resultados
+
+        Returns:
+            Lista de produtos da categoria
+        """
+        # Busca produtos onde a categoria esta na lista de categorias (JSONB @> operator)
+        stmt = (
+            select(Product)
+            .where(Product.categories.contains([category_slug]))
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+            .order_by(Product.internal_score.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_by_category(self, category_slug: str) -> int:
+        """Conta produtos de uma categoria."""
+        stmt = (
+            select(func.count())
+            .select_from(Product)
+            .where(Product.categories.contains([category_slug]))
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()
+
+    async def platform_product_exists(
+        self,
+        platform: ProductPlatform,
+        platform_product_id: str,
+        exclude_id: UUID | None = None,
+    ) -> bool:
+        """
+        Verifica se ja existe um produto com o mesmo ID de plataforma.
+
+        Evita duplicidade de produtos da mesma plataforma.
+
+        Args:
+            platform: Plataforma do produto
+            platform_product_id: ID do produto na plataforma
+            exclude_id: ID a excluir da verificacao (para updates)
+
+        Returns:
+            True se ja existe outro produto com esse ID de plataforma
+        """
+        if not platform_product_id:
+            return False
+
+        query = select(Product).where(
+            Product.platform == platform,
+            Product.platform_product_id == platform_product_id,
+        )
+        if exclude_id:
+            query = query.where(Product.id != exclude_id)
+
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none() is not None

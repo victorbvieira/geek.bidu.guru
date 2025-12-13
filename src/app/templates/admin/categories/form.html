@@ -31,22 +31,21 @@
                             value="{{ category.name if category else '' }}"
                             class="admin-input"
                             required
-                            data-slug-source="slug"
                         >
                     </div>
 
                     <div class="admin-form-group">
-                        <label for="slug" class="admin-label">Slug *</label>
+                        <label for="slug" class="admin-label">Slug</label>
                         <input
                             type="text"
                             id="slug"
                             name="slug"
                             value="{{ category.slug if category else '' }}"
                             class="admin-input"
-                            required
                             pattern="[a-z0-9-]+"
+                            placeholder="gerado-automaticamente"
                         >
-                        <small class="admin-help-text">URL amigavel (apenas letras minusculas, numeros e hifens)</small>
+                        <small class="admin-help-text">URL amigavel - deixe vazio para gerar automaticamente</small>
                     </div>
 
                     <div class="admin-form-group">
@@ -129,6 +128,29 @@
                 </div>
                 <div class="admin-card-body">
                     <div class="admin-form-group">
+                        <label class="admin-label">Upload de Imagem</label>
+                        <div class="admin-upload-wrapper">
+                            <input
+                                type="file"
+                                id="image_file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                class="admin-file-input"
+                                style="display: none;"
+                            >
+                            <button type="button" class="admin-btn admin-btn-secondary admin-btn-block" onclick="document.getElementById('image_file').click()">
+                                Escolher Imagem
+                            </button>
+                            <small class="admin-help-text">Tamanho recomendado: 400x400 px (1:1). Max 5MB.</small>
+                        </div>
+                        <div id="upload-progress" style="display: none; margin-top: 0.5rem;">
+                            <div class="admin-progress-bar">
+                                <div class="admin-progress-fill" style="width: 0%"></div>
+                            </div>
+                            <small class="admin-help-text">Enviando...</small>
+                        </div>
+                    </div>
+
+                    <div class="admin-form-group">
                         <label for="image_url" class="admin-label">URL da Imagem</label>
                         <input
                             type="url"
@@ -138,14 +160,17 @@
                             class="admin-input"
                             placeholder="https://..."
                         >
-                        <small class="admin-help-text">Imagem de capa da categoria</small>
+                        <small class="admin-help-text">Cole uma URL ou faca upload acima</small>
                     </div>
 
-                    {% if category and category.image_url %}
-                    <div class="admin-image-preview">
-                        <img src="{{ category.image_url }}" alt="{{ category.name }}" style="max-width: 100%; border-radius: 4px;">
+                    <div id="image-preview" class="admin-image-preview" {% if not (category and category.image_url) %}style="display: none;"{% endif %}>
+                        <img
+                            id="preview-img"
+                            src="{{ category.image_url if category and category.image_url else '' }}"
+                            alt="Preview"
+                            style="max-width: 100%; border-radius: 4px;"
+                        >
                     </div>
-                    {% endif %}
                 </div>
             </div>
 
@@ -182,4 +207,98 @@
         </div>
     </div>
 </form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-preenchimento de slug a partir do nome
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+
+    if (nameInput && slugInput) {
+        // So auto-preenche se for nova categoria (slug vazio)
+        const isNewCategory = !slugInput.value;
+
+        nameInput.addEventListener('input', function() {
+            if (isNewCategory && !slugInput.dataset.manual) {
+                slugInput.value = generateSlug(this.value);
+            }
+        });
+
+        // Se usuario editar slug manualmente, para de auto-preencher
+        slugInput.addEventListener('input', function() {
+            if (this.value) {
+                this.dataset.manual = 'true';
+            } else {
+                delete this.dataset.manual;
+            }
+        });
+    }
+
+    // Upload de imagem
+    const fileInput = document.getElementById('image_file');
+    const imageUrlInput = document.getElementById('image_url');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const uploadProgress = document.getElementById('upload-progress');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file) return;
+
+            // Validar tamanho (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showMessage('Arquivo muito grande. Maximo 5MB.', 'danger');
+                return;
+            }
+
+            // Mostrar progresso
+            uploadProgress.style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/admin/upload/category-image', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Atualizar URL e preview
+                    imageUrlInput.value = data.url;
+                    previewImg.src = data.url;
+                    imagePreview.style.display = 'block';
+                    showMessage('Imagem enviada com sucesso!', 'success');
+                } else {
+                    showMessage(data.detail || 'Erro ao enviar imagem', 'danger');
+                }
+            } catch (error) {
+                showMessage('Erro de conexao ao enviar imagem', 'danger');
+                console.error('Upload error:', error);
+            } finally {
+                uploadProgress.style.display = 'none';
+                fileInput.value = ''; // Reset para permitir reupload
+            }
+        });
+    }
+
+    // Preview ao colar URL manualmente
+    if (imageUrlInput) {
+        imageUrlInput.addEventListener('change', function() {
+            const url = this.value.trim();
+            if (url) {
+                previewImg.src = url;
+                imagePreview.style.display = 'block';
+            } else {
+                imagePreview.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

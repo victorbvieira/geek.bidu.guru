@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Contato</h1>
+        <p class="header-subtitle">Fale conosco! Estamos aqui para ajudar.</p>
+    </div>
+</section>
+
+<section class="page-content">
+    <div class="container">
+        <div class="contact-grid">
+            <div class="contact-form-wrapper">
+                <h2>Envie sua mensagem</h2>
+
+                <form class="contact-form" action="/api/v1/contact" method="POST" id="contact-form">
+                    <div class="form-group">
+                        <label for="name">Seu nome *</label>
+                        <input type="text" id="name" name="name" required placeholder="Como podemos te chamar?">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Seu email *</label>
+                        <input type="email" id="email" name="email" required placeholder="seuemail@exemplo.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Assunto *</label>
+                        <select id="subject" name="subject" required>
+                            <option value="">Selecione um assunto</option>
+                            <option value="duvida">Duvida sobre o site</option>
+                            <option value="sugestao">Sugestao de produto</option>
+                            <option value="parceria">Proposta de parceria</option>
+                            <option value="problema">Reportar problema</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Mensagem *</label>
+                        <textarea id="message" name="message" rows="5" required placeholder="Como podemos ajudar?"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Enviar Mensagem</button>
+                </form>
+
+                <div id="form-success" class="form-message success" style="display: none;">
+                    Mensagem enviada com sucesso! Retornaremos em breve.
+                </div>
+
+                <div id="form-error" class="form-message error" style="display: none;">
+                    Ops! Ocorreu um erro. Tente novamente ou entre em contato por email.
+                </div>
+            </div>
+
+            <div class="contact-info">
+                <h2>Outras formas de contato</h2>
+
+                <div class="info-card">
+                    <h3>Email</h3>
+                    <p>Para duvidas gerais, sugestoes ou parcerias:</p>
+                    <a href="mailto:contato@geek.bidu.guru">contato@geek.bidu.guru</a>
+                </div>
+
+                <div class="info-card">
+                    <h3>Redes Sociais</h3>
+                    <p>Siga-nos para novidades e dicas:</p>
+                    <div class="social-links">
+                        <a href="#" target="_blank" rel="noopener">Instagram</a>
+                        <a href="#" target="_blank" rel="noopener">Twitter</a>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <h3>Tempo de Resposta</h3>
+                    <p>Normalmente respondemos em ate <strong>48 horas uteis</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.page-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2.5rem;
+}
+
+.header-subtitle {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.page-content {
+    padding: 4rem 0;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+}
+
+.contact-form-wrapper h2,
+.contact-info h2 {
+    margin-bottom: 1.5rem;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.form-message {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.form-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid #16a34a;
+}
+
+.form-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid #dc2626;
+}
+
+.info-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+}
+
+.info-card p {
+    margin: 0 0 0.5rem;
+    color: var(--text-secondary);
+}
+
+.info-card a {
+    color: var(--color-primary);
+}
+
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-links a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.social-links a:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('contact-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const successMsg = document.getElementById('form-success');
+    const errorMsg = document.getElementById('form-error');
+
+    // Esconde mensagens anteriores
+    successMsg.style.display = 'none';
+    errorMsg.style.display = 'none';
+
+    try {
+        // Por enquanto, apenas simula o envio
+        // TODO: Implementar endpoint real
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Mostra sucesso
+        form.style.display = 'none';
+        successMsg.style.display = 'block';
+
+    } catch (error) {
+        errorMsg.style.display = 'block';
+    }
+});
+</script>
+{% endblock %}

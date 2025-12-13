@@ -159,6 +159,21 @@ section {
     padding: var(--space-12) 0;
 }
 
+/* Section titles */
+.section-title {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.section-description {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-6);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 /* -----------------------------------------------------------------------------
    Header
    ----------------------------------------------------------------------------- */
@@ -306,25 +321,56 @@ section {
    ----------------------------------------------------------------------------- */
 .category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-6);
+    justify-content: center;
+}
+
+/* Responsivo para categoria grid */
+@media (max-width: 1100px) {
+    .category-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .category-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .category-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 500px) {
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-4);
+    }
 }
 
 .category-card {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-6);
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-5);
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-lg);
     transition: all var(--transition-base);
+    min-height: 140px;
+    text-align: center;
 }
 
 .category-card:hover {
     border-color: var(--color-primary-500);
     transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
 }
 
 .category-icon {
@@ -332,8 +378,8 @@ section {
 }
 
 .category-image {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: var(--border-radius);
     object-fit: cover;
 }
@@ -341,6 +387,7 @@ section {
 .category-name {
     font-weight: 600;
     color: var(--text-primary);
+    font-size: var(--font-size-sm);
 }
 
 .placeholder-card {
@@ -446,21 +493,70 @@ section {
    Responsive
    ----------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-    .main-nav,
+    .main-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        padding: var(--space-4);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .main-nav.is-open {
+        display: block;
+    }
+
+    .main-nav ul {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .main-nav a {
+        display: block;
+        padding: var(--space-3);
+        border-radius: var(--border-radius);
+    }
+
+    .main-nav a:hover {
+        background: var(--bg-card);
+    }
+
     .header-actions {
         display: none;
+    }
+
+    .site-header .container {
+        position: relative;
     }
 
     .mobile-menu-toggle {
         display: flex;
         flex-direction: column;
         gap: 4px;
+        padding: var(--space-2);
     }
 
     .mobile-menu-toggle span {
         width: 24px;
         height: 2px;
         background: var(--text-primary);
+        transition: all 0.3s;
+    }
+
+    /* Animacao do botao hamburguer quando aberto */
+    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(1) {
+        transform: rotate(45deg) translate(4px, 4px);
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .mobile-menu-toggle[aria-expanded="true"] span:nth-child(3) {
+        transform: rotate(-45deg) translate(4px, -4px);
     }
 
     .hero-cta {

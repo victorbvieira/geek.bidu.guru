@@ -47,7 +47,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     secret_key: str = "dev-secret-key-change-in-production-INSECURE"
     jwt_algorithm: str = "HS256"
-    jwt_access_token_expire_minutes: int = 30
+    # Tempo de expiracao do token JWT (padrao 24h para admin, evita logout frequente)
+    jwt_access_token_expire_minutes: int = 1440  # 24 horas
     jwt_refresh_token_expire_days: int = 7
 
     # -------------------------------------------------------------------------

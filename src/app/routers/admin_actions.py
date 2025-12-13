@@ -292,6 +292,16 @@ async def create_product(
     categories_json: str = Form("[]"),
 ):
     """Cria novo produto."""
+    platform_enum = ProductPlatform(platform)
+    platform_id = platform_product_id.strip() or None
+
+    # Valida duplicidade: mesmo produto na mesma plataforma
+    if platform_id and await repo.platform_product_exists(platform_enum, platform_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ja existe um produto com ID '{platform_id}' na plataforma {platform}",
+        )
+
     # Gera slug se nao fornecido
     product_slug = slug.strip() if slug else generate_slug(name)
 
@@ -325,10 +335,10 @@ async def create_product(
         "slug": product_slug,
         "affiliate_url_raw": affiliate_url_raw.strip(),
         "affiliate_redirect_slug": redirect_slug,
-        "platform": ProductPlatform(platform),
+        "platform": platform_enum,
         "short_description": short_description.strip() or None,
         "long_description": long_description.strip() or None,
-        "platform_product_id": platform_product_id.strip() or None,
+        "platform_product_id": platform_id,
         "price": float(price) if price else None,
         "availability": ProductAvailability(availability),
         "main_image_url": main_image,
@@ -378,6 +388,16 @@ async def update_product(
     if not product:
         raise HTTPException(status_code=404, detail="Produto nao encontrado")
 
+    platform_enum = ProductPlatform(platform)
+    platform_id = platform_product_id.strip() or None
+
+    # Valida duplicidade: mesmo produto na mesma plataforma (excluindo o atual)
+    if platform_id and await repo.platform_product_exists(platform_enum, platform_id, exclude_id=product_id):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ja existe outro produto com ID '{platform_id}' na plataforma {platform}",
+        )
+
     # Gera slug se nao fornecido
     product_slug = slug.strip() if slug else generate_slug(name)
 
@@ -403,7 +423,10 @@ async def update_product(
     main_image = images_list[0] if images_list else None
 
     # Processa lista de categorias (slugs)
-    categories_list = json.loads(categories_json) if categories_json else []
+    try:
+        categories_list = json.loads(categories_json) if categories_json else []
+    except json.JSONDecodeError:
+        categories_list = []
 
     # Monta dados de atualizacao
     update_data = {
@@ -411,10 +434,10 @@ async def update_product(
         "slug": product_slug,
         "affiliate_url_raw": affiliate_url_raw.strip(),
         "affiliate_redirect_slug": redirect_slug,
-        "platform": ProductPlatform(platform),
+        "platform": platform_enum,
         "short_description": short_description.strip() or None,
         "long_description": long_description.strip() or None,
-        "platform_product_id": platform_product_id.strip() or None,
+        "platform_product_id": platform_id,
         "price": float(price) if price else None,
         "availability": ProductAvailability(availability),
         "main_image_url": main_image,
@@ -467,18 +490,18 @@ async def create_category(
     current_user: AdminUser,
     repo: CategoryRepo,
     name: str = Form(...),
-    slug: str = Form(...),
+    slug: str = Form(""),
     description: str = Form(""),
     parent_id: str = Form(""),
-    # Campos SEO e image_url podem ser enviados mas serao ignorados
-    # ate que o modelo Category seja atualizado com esses campos
     seo_title: str = Form(""),
     seo_description: str = Form(""),
     image_url: str = Form(""),
 ):
     """Cria nova categoria."""
+    # Gera slug automaticamente se nao fornecido
+    category_slug = slug.strip() if slug.strip() else generate_slug(name)
+
     # Verifica se slug ja existe
-    category_slug = slug.strip()
     if await repo.slug_exists(category_slug):
         base_slug = category_slug
         counter = 1
@@ -486,12 +509,15 @@ async def create_category(
             category_slug = f"{base_slug}-{counter}"
             counter += 1
 
-    # Monta dados da categoria (apenas campos que existem no modelo)
+    # Monta dados da categoria com todos os campos
     category_data = {
         "name": name.strip(),
         "slug": category_slug,
         "description": description.strip() or None,
         "parent_id": UUID(parent_id) if parent_id else None,
+        "image_url": image_url.strip() or None,
+        "seo_title": seo_title.strip() or None,
+        "seo_description": seo_description.strip() or None,
     }
 
     await repo.create(category_data)
@@ -509,22 +535,22 @@ async def update_category(
     current_user: AdminUser,
     repo: CategoryRepo,
     name: str = Form(...),
-    slug: str = Form(...),
+    slug: str = Form(""),
     description: str = Form(""),
     parent_id: str = Form(""),
-    # Campos SEO e image_url podem ser enviados mas serao ignorados
-    # ate que o modelo Category seja atualizado com esses campos
-    seo_title: str = Form(""),  # noqa: ARG001
-    seo_description: str = Form(""),  # noqa: ARG001
-    image_url: str = Form(""),  # noqa: ARG001
+    seo_title: str = Form(""),
+    seo_description: str = Form(""),
+    image_url: str = Form(""),
 ):
     """Atualiza categoria existente."""
     category = await repo.get(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Categoria nao encontrada")
 
+    # Gera slug automaticamente se nao fornecido
+    category_slug = slug.strip() if slug.strip() else generate_slug(name)
+
     # Verifica se slug ja existe (excluindo a categoria atual)
-    category_slug = slug.strip()
     if await repo.slug_exists(category_slug, exclude_id=category_id):
         base_slug = category_slug
         counter = 1
@@ -537,12 +563,15 @@ async def update_category(
     if new_parent_id == category_id:
         new_parent_id = None
 
-    # Monta dados de atualizacao (apenas campos que existem no modelo)
+    # Monta dados de atualizacao com todos os campos
     update_data = {
         "name": name.strip(),
         "slug": category_slug,
         "description": description.strip() or None,
         "parent_id": new_parent_id,
+        "image_url": image_url.strip() or None,
+        "seo_title": seo_title.strip() or None,
+        "seo_description": seo_description.strip() or None,
     }
 
     await repo.update(category, update_data)

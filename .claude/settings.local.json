@@ -30,7 +30,8 @@
       "Bash(.venv/bin/pip install Pillow)",
       "Bash(.venv/bin/pip install:*)",
       "Bash(docker network create:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

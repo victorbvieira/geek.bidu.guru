@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <div class="container">
+        <h1>Sobre o geek.bidu.guru</h1>
+    </div>
+</section>
+
+<section class="page-content">
+    <div class="container">
+        <div class="content-wrapper">
+            <h2>Seu guia definitivo para presentes geek</h2>
+
+            <p>O <strong>geek.bidu.guru</strong> nasceu da paixao por cultura geek e da dificuldade que muitas pessoas enfrentam ao escolher presentes para amigos, familiares e colegas que sao fas de games, animes, HQs, tecnologia e muito mais.</p>
+
+            <p>Nossa missao e simples: <strong>ajudar voce a encontrar o presente geek perfeito</strong>, independente do orcamento ou da ocasiao.</p>
+
+            <h3>O que fazemos</h3>
+
+            <ul>
+                <li><strong>Curadoria especializada</strong> - Nossa equipe seleciona os melhores produtos de diversas plataformas (Amazon, Mercado Livre, Shopee) para garantir qualidade e variedade.</li>
+                <li><strong>Guias completos</strong> - Criamos conteudos detalhados para ajudar voce a entender o universo geek e fazer escolhas certeiras.</li>
+                <li><strong>Listas por ocasiao</strong> - Natal, aniversario, Dia dos Namorados, amigo secreto - temos sugestoes para cada momento especial.</li>
+                <li><strong>Filtros por preco</strong> - Encontre opcoes que cabem no seu bolso, desde lembrancinhas ate presentes premium.</li>
+            </ul>
+
+            <h3>Como funcionamos</h3>
+
+            <p>O geek.bidu.guru e um site de curadoria e recomendacao. Participamos de programas de afiliados das principais plataformas de e-commerce do Brasil. Isso significa que quando voce compra um produto atraves dos nossos links, recebemos uma pequena comissao - sem nenhum custo adicional para voce.</p>
+
+            <p>Essa comissao e o que nos permite manter o site no ar, produzir conteudo de qualidade e continuar ajudando pessoas a encontrar presentes incriveis.</p>
+
+            <h3>Nossa promessa</h3>
+
+            <ul>
+                <li>Recomendamos apenas produtos que acreditamos serem boas opcoes de compra</li>
+                <li>Somos transparentes sobre nossa participacao em programas de afiliados</li>
+                <li>Priorizamos a experiencia do usuario acima de tudo</li>
+                <li>Estamos sempre atualizando nossas listas e guias</li>
+            </ul>
+
+            <h3>Contato</h3>
+
+            <p>Tem duvidas, sugestoes ou quer fazer uma parceria? <a href="/contato">Entre em contato conosco</a>!</p>
+
+            <p>Obrigado por fazer parte da comunidade geek.bidu.guru!</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+.page-content {
+    padding: 4rem 0;
+}
+
+.content-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+.content-wrapper h2 {
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+}
+
+.content-wrapper h3 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.content-wrapper p {
+    margin-bottom: 1.25rem;
+}
+
+.content-wrapper ul {
+    margin: 1.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.content-wrapper li {
+    margin-bottom: 0.75rem;
+}
+
+.content-wrapper a {
+    color: var(--color-primary);
+}
+
+.content-wrapper a:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

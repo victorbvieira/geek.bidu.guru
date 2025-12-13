@@ -9,20 +9,23 @@
             <div class="footer-section">
                 <h4>Categorias</h4>
                 <ul>
-                    <li><a href="/categorias/gamer">Gamer</a></li>
-                    <li><a href="/categorias/dev">Dev</a></li>
-                    <li><a href="/categorias/otaku">Otaku</a></li>
-                    <li><a href="/categorias/star-wars">Star Wars</a></li>
+                    {% if footer_categories %}
+                        {% for cat in footer_categories %}
+                        <li><a href="/categoria/{{ cat.slug }}">{{ cat.name }}</a></li>
+                        {% endfor %}
+                    {% else %}
+                        <li><a href="/categorias">Ver todas</a></li>
+                    {% endif %}
                 </ul>
             </div>
 
             <div class="footer-section">
-                <h4>Ocasioes</h4>
+                <h4>Navegue</h4>
                 <ul>
-                    <li><a href="/ocasiao/natal">Natal</a></li>
-                    <li><a href="/ocasiao/aniversario">Aniversario</a></li>
-                    <li><a href="/ocasiao/dia-dos-namorados">Dia dos Namorados</a></li>
-                    <li><a href="/ocasiao/amigo-secreto">Amigo Secreto</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/produtos">Produtos</a></li>
+                    <li><a href="/categorias">Categorias</a></li>
+                    <li><a href="/busca">Buscar</a></li>
                 </ul>
             </div>
 

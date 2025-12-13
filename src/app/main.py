@@ -226,6 +226,7 @@ async def home(request: Request):
     from app.repositories.product import ProductRepository
     from app.repositories.post import PostRepository
     from app.repositories.category import CategoryRepository
+    from app.core.context import get_footer_context
 
     base_url = settings.app_url.rstrip("/")
 
@@ -233,6 +234,7 @@ async def home(request: Request):
     featured_products = []
     featured_posts = []
     categories = []
+    footer_context = {}
 
     async for db in get_db():
         product_repo = ProductRepository(db)
@@ -249,6 +251,9 @@ async def home(request: Request):
         all_categories = await category_repo.get_root_categories()
         categories = all_categories[:6]
 
+        # Contexto do footer (categorias dinamicas)
+        footer_context = await get_footer_context(db)
+
     return templates.TemplateResponse(
         request=request,
         name="home.html",
@@ -262,6 +267,8 @@ async def home(request: Request):
             "base_url": base_url,
             "canonical_url": base_url,
             "og_type": "website",
+            # Footer
+            **footer_context,
         },
     )
 
@@ -354,3 +361,12 @@ app.include_router(og_images_router)
 from app.routers.webhooks import router as webhooks_router
 
 app.include_router(webhooks_router)
+
+
+# -----------------------------------------------------------------------------
+# Paginas Institucionais (Sobre, Contato, Privacidade, Termos)
+# -----------------------------------------------------------------------------
+
+from app.routers.pages import router as pages_router
+
+app.include_router(pages_router)
