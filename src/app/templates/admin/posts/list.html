@@ -86,12 +86,9 @@
                         <input type="checkbox" class="row-checkbox" value="{{ post.id }}">
                     </td>
                     <td>
-                        <a href="/admin/posts/{{ post.id }}" style="color: var(--admin-text); font-weight: 500;">
+                        <a href="/admin/posts/{{ post.id }}" style="color: var(--admin-text); font-weight: 500;" title="{{ post.title }}">
                             {{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}
                         </a>
-                        <div style="font-size: 0.75rem; color: var(--admin-text-muted);">
-                            /blog/{{ post.slug }}
-                        </div>
                     </td>
                     <td>
                         {% if post.type.value == 'listicle' %}

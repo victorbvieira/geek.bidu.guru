@@ -65,7 +65,7 @@
             <!-- System Prompt -->
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h3 class="admin-card-title">System Prompt</h3>
+                    <h3 class="admin-card-title">System Prompt (Instrucoes)</h3>
                 </div>
 
                 <div class="admin-form-group">
@@ -74,11 +74,42 @@
                         id="system_prompt"
                         name="system_prompt"
                         class="admin-form-textarea admin-form-textarea-code"
-                        style="min-height: 400px; font-family: monospace; font-size: 0.875rem;"
+                        style="min-height: 300px; font-family: monospace; font-size: 0.875rem;"
                         required
                     >{{ config.system_prompt }}</textarea>
                     <div class="admin-form-hint">
                         Define como o modelo deve se comportar. Seja especifico sobre formato de saida e regras.
+                        <strong>NAO inclua dados aqui</strong> - use o User Prompt abaixo.
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Prompt Template -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">User Prompt (Template com Dados)</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="user_prompt" class="admin-form-label">Template de Dados</label>
+                    <textarea
+                        id="user_prompt"
+                        name="user_prompt"
+                        class="admin-form-textarea admin-form-textarea-code"
+                        style="min-height: 200px; font-family: monospace; font-size: 0.875rem;"
+                        placeholder="Titulo: {{title}}
+
+Subtitulo: {{subtitle}}
+
+Conteudo:
+{{content}}"
+                    >{{ config.user_prompt or '' }}</textarea>
+                    <div class="admin-form-hint">
+                        Template com placeholders que serao substituidos pelos dados reais.<br>
+                        <strong>Placeholders disponiveis:</strong><br>
+                        <code>{{title}}</code>, <code>{{subtitle}}</code>, <code>{{content}}</code>, <code>{{category}}</code>, <code>{{keywords}}</code>, <code>{{target_audience}}</code><br>
+                        <strong>Para produtos:</strong> <code>{{product_name}}</code>, <code>{{price}}</code>, <code>{{platform}}</code><br>
+                        <strong>Para ocasioes:</strong> <code>{{occasion_name}}</code>, <code>{{occasion_date}}</code>
                     </div>
                 </div>
             </div>
