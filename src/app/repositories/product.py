@@ -265,3 +265,56 @@ class ProductRepository(BaseRepository[Product]):
 
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def get_by_max_price(
+        self,
+        max_price: float,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[Product]:
+        """
+        Busca produtos disponiveis ate um preco maximo.
+
+        Args:
+            max_price: Preco maximo em reais
+            skip: Offset para paginacao
+            limit: Limite de resultados
+
+        Returns:
+            Lista de produtos com preco ate o valor especificado
+        """
+        stmt = (
+            select(Product)
+            .where(
+                Product.availability == ProductAvailability.AVAILABLE,
+                Product.price.isnot(None),
+                Product.price <= max_price,
+            )
+            .order_by(Product.price.asc(), Product.internal_score.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_by_max_price(self, max_price: float) -> int:
+        """
+        Conta produtos disponiveis ate um preco maximo.
+
+        Args:
+            max_price: Preco maximo em reais
+
+        Returns:
+            Quantidade de produtos
+        """
+        stmt = (
+            select(func.count())
+            .select_from(Product)
+            .where(
+                Product.availability == ProductAvailability.AVAILABLE,
+                Product.price.isnot(None),
+                Product.price <= max_price,
+            )
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()

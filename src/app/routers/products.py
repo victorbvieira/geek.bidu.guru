@@ -85,6 +85,176 @@ async def list_products(
 
 
 # -----------------------------------------------------------------------------
+# Filtro por Preco
+# -----------------------------------------------------------------------------
+
+
+@router.get("/categorias/preco/ate-100", response_class=HTMLResponse)
+async def products_under_100(
+    request: Request,
+    repo: ProductRepo,
+    page: int = 1,
+    per_page: int = 12,
+):
+    """
+    Pagina de produtos ate R$ 100.
+
+    Exibe produtos disponiveis com preco ate R$ 100, ordenados por preco.
+    """
+    max_price = 100.0
+    skip = (page - 1) * per_page
+
+    # Busca produtos ate R$ 100
+    products = await repo.get_by_max_price(max_price, skip=skip, limit=per_page)
+    total = await repo.count_by_max_price(max_price)
+
+    # Calcula total de paginas
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/categorias/preco/ate-100"
+    if page > 1:
+        canonical_url = f"{canonical_url}?page={page}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="products/price_filter.html",
+        context={
+            "title": "Presentes ate R$ 100 - geek.bidu.guru",
+            "description": "Encontre presentes geek incriveis por ate R$ 100. Ideias criativas que cabem no bolso!",
+            "page_title": "Presentes ate R$ 100",
+            "page_subtitle": "Ideias criativas que cabem no bolso",
+            "max_price": max_price,
+            "products": products,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+            "has_prev": page > 1,
+            "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Presentes ate R$ 100", "url": f"{base_url}/categorias/preco/ate-100"},
+            ],
+        },
+    )
+
+
+@router.get("/categorias/preco/ate-50", response_class=HTMLResponse)
+async def products_under_50(
+    request: Request,
+    repo: ProductRepo,
+    page: int = 1,
+    per_page: int = 12,
+):
+    """
+    Pagina de produtos ate R$ 50.
+
+    Exibe produtos disponiveis com preco ate R$ 50, ordenados por preco.
+    """
+    max_price = 50.0
+    skip = (page - 1) * per_page
+
+    # Busca produtos ate R$ 50
+    products = await repo.get_by_max_price(max_price, skip=skip, limit=per_page)
+    total = await repo.count_by_max_price(max_price)
+
+    # Calcula total de paginas
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/categorias/preco/ate-50"
+    if page > 1:
+        canonical_url = f"{canonical_url}?page={page}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="products/price_filter.html",
+        context={
+            "title": "Presentes ate R$ 50 - geek.bidu.guru",
+            "description": "Presentes geek baratos e criativos por ate R$ 50. Surpreenda sem gastar muito!",
+            "page_title": "Presentes ate R$ 50",
+            "page_subtitle": "Surpreenda sem gastar muito",
+            "max_price": max_price,
+            "products": products,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+            "has_prev": page > 1,
+            "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Presentes ate R$ 50", "url": f"{base_url}/categorias/preco/ate-50"},
+            ],
+        },
+    )
+
+
+@router.get("/categorias/preco/ate-200", response_class=HTMLResponse)
+async def products_under_200(
+    request: Request,
+    repo: ProductRepo,
+    page: int = 1,
+    per_page: int = 12,
+):
+    """
+    Pagina de produtos ate R$ 200.
+
+    Exibe produtos disponiveis com preco ate R$ 200, ordenados por preco.
+    """
+    max_price = 200.0
+    skip = (page - 1) * per_page
+
+    # Busca produtos ate R$ 200
+    products = await repo.get_by_max_price(max_price, skip=skip, limit=per_page)
+    total = await repo.count_by_max_price(max_price)
+
+    # Calcula total de paginas
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    base_url = get_base_url()
+    canonical_url = f"{base_url}/categorias/preco/ate-200"
+    if page > 1:
+        canonical_url = f"{canonical_url}?page={page}"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="products/price_filter.html",
+        context={
+            "title": "Presentes ate R$ 200 - geek.bidu.guru",
+            "description": "Presentes geek de qualidade por ate R$ 200. O equilibrio perfeito entre preco e qualidade!",
+            "page_title": "Presentes ate R$ 200",
+            "page_subtitle": "O equilibrio perfeito entre preco e qualidade",
+            "max_price": max_price,
+            "products": products,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+            "has_prev": page > 1,
+            "has_next": page < pages,
+            # SEO
+            "base_url": base_url,
+            "canonical_url": canonical_url,
+            "og_type": "website",
+            "breadcrumbs": [
+                {"name": "Home", "url": base_url},
+                {"name": "Presentes ate R$ 200", "url": f"{base_url}/categorias/preco/ate-200"},
+            ],
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
 # Produto Individual
 # -----------------------------------------------------------------------------
 
