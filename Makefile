@@ -113,6 +113,18 @@ type-check: ## Verifica tipos (mypy)
 	$(DOCKER_COMPOSE) exec app mypy src/app/
 
 # -----------------------------------------------------------------------------
+# Seed de Dados
+# -----------------------------------------------------------------------------
+seed: ## Popula banco com dados de exemplo (categorias e produtos)
+	cd src && python -m scripts.seed_data
+
+seed-clear: ## Limpa dados e popula novamente
+	cd src && python -m scripts.seed_data --clear
+
+seed-force: ## Popula sem confirmacao (uso em CI/CD)
+	cd src && python -m scripts.seed_data --force
+
+# -----------------------------------------------------------------------------
 # Utilitarios
 # -----------------------------------------------------------------------------
 clean: ## Remove arquivos temporarios e cache
