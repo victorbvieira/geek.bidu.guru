@@ -390,6 +390,85 @@
 {% block extra_js %}
 <script>
 // =============================================================================
+// Auto-geracao de Slugs
+// =============================================================================
+
+// Funcao para gerar slug a partir de texto
+function generateSlug(text) {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
+        .replace(/\s+/g, '-') // Substitui espacos por hifens
+        .replace(/-+/g, '-') // Remove hifens duplicados
+        .trim();
+}
+
+// Elementos dos campos
+const productNameInput = document.getElementById('name');
+const productSlugInput = document.getElementById('slug');
+const affiliateRedirectSlugInput = document.getElementById('affiliate_redirect_slug');
+const platformSelect = document.getElementById('platform');
+
+// Flags para detectar edicao manual
+let slugManuallyEdited = {{ 'true' if product else 'false' }};
+let redirectSlugManuallyEdited = {{ 'true' if product else 'false' }};
+
+// Auto-gerar slug quando o nome muda (se nao foi editado manualmente)
+if (productNameInput && productSlugInput) {
+    productNameInput.addEventListener('input', function() {
+        const slug = generateSlug(this.value);
+
+        // Atualiza slug do produto se nao foi editado manualmente
+        if (!slugManuallyEdited) {
+            productSlugInput.value = slug;
+        }
+
+        // Atualiza slug de redirecionamento se nao foi editado manualmente
+        if (!redirectSlugManuallyEdited && affiliateRedirectSlugInput) {
+            const platform = platformSelect ? platformSelect.value : 'amazon';
+            affiliateRedirectSlugInput.value = slug ? `${slug}-${platform}` : '';
+        }
+    });
+}
+
+// Atualiza slug de redirecionamento quando plataforma muda
+if (platformSelect && affiliateRedirectSlugInput) {
+    platformSelect.addEventListener('change', function() {
+        if (!redirectSlugManuallyEdited && productNameInput) {
+            const slug = generateSlug(productNameInput.value);
+            if (slug) {
+                affiliateRedirectSlugInput.value = `${slug}-${this.value}`;
+            }
+        }
+    });
+}
+
+// Marcar slug como editado manualmente quando o usuario digitar
+if (productSlugInput) {
+    productSlugInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            slugManuallyEdited = true;
+        } else {
+            slugManuallyEdited = false;
+        }
+    });
+}
+
+// Marcar slug de redirecionamento como editado manualmente
+if (affiliateRedirectSlugInput) {
+    affiliateRedirectSlugInput.addEventListener('input', function() {
+        if (this.value.trim() !== '') {
+            redirectSlugManuallyEdited = true;
+        } else {
+            redirectSlugManuallyEdited = false;
+        }
+    });
+}
+
+// =============================================================================
 // Image Gallery Handler - Multiplas Imagens
 // =============================================================================
 
@@ -578,20 +657,8 @@ var categoryNameInput = document.getElementById('new_category_name');
 var categorySlugInput = document.getElementById('new_category_slug');
 var categorySlugManuallyEdited = false;
 
-// Funcao para gerar slug a partir de texto
-function generateSlug(text) {
-    if (!text) return '';
-    return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        .replace(/[^\w\s-]/g, '') // Remove caracteres especiais
-        .replace(/\s+/g, '-') // Substitui espacos por hifens
-        .replace(/-+/g, '-') // Remove hifens duplicados
-        .trim();
-}
-
-// Auto-gerar slug quando o nome muda (se nao foi editado manualmente)
+// Auto-gerar slug da categoria quando o nome muda (se nao foi editado manualmente)
+// Nota: generateSlug() ja esta definida no inicio do script
 if (categoryNameInput) {
     categoryNameInput.addEventListener('input', function() {
         if (!categorySlugManuallyEdited && categorySlugInput) {

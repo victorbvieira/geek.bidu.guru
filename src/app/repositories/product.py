@@ -132,7 +132,7 @@ class ProductRepository(BaseRepository[Product]):
         """
         Busca produtos por termo.
 
-        Busca em: name, short_description, tags.
+        Busca em: name, short_description, platform_product_id.
         """
         search_term = f"%{query.lower()}%"
         stmt = (
@@ -140,6 +140,7 @@ class ProductRepository(BaseRepository[Product]):
             .where(
                 func.lower(Product.name).like(search_term)
                 | func.lower(Product.short_description).like(search_term)
+                | func.lower(Product.platform_product_id).like(search_term)
             )
             .order_by(Product.created_at.desc())
             .offset(skip)
@@ -157,6 +158,7 @@ class ProductRepository(BaseRepository[Product]):
             .where(
                 func.lower(Product.name).like(search_term)
                 | func.lower(Product.short_description).like(search_term)
+                | func.lower(Product.platform_product_id).like(search_term)
             )
         )
         result = await self.db.execute(stmt)
