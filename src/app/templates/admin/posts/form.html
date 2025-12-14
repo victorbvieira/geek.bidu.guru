@@ -96,10 +96,16 @@
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3 class="admin-card-title">SEO</h3>
+                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllSEO()" title="Gerar titulo e descricao com IA">
+                        🤖 Gerar com IA
+                    </button>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_title" class="admin-form-label">Titulo SEO</label>
+                    <label for="seo_title" class="admin-form-label">
+                        Titulo SEO
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateSEO('seo_title')" title="Gerar com IA">🤖</button>
+                    </label>
                     <input
                         type="text"
                         id="seo_title"
@@ -108,10 +114,14 @@
                         value="{{ post.seo_title if post else '' }}"
                         maxlength="60"
                     >
+                    <div class="admin-form-hint"><span id="seo_title_count">{{ (post.seo_title|length) if post and post.seo_title else 0 }}</span>/60 caracteres</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_description" class="admin-form-label">Descricao SEO</label>
+                    <label for="seo_description" class="admin-form-label">
+                        Descricao SEO
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateSEO('seo_description')" title="Gerar com IA">🤖</button>
+                    </label>
                     <textarea
                         id="seo_description"
                         name="seo_description"
@@ -119,6 +129,7 @@
                         style="min-height: 80px;"
                         maxlength="160"
                     >{{ post.seo_description if post else '' }}</textarea>
+                    <div class="admin-form-hint"><span id="seo_description_count">{{ (post.seo_description|length) if post and post.seo_description else 0 }}</span>/160 caracteres</div>
                 </div>
 
                 <div class="admin-form-group">
@@ -130,6 +141,10 @@
                         class="admin-form-input"
                         value="{{ post.seo_focus_keyword if post else '' }}"
                     >
+                </div>
+
+                <div id="seo-loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
+                    <span>Gerando com IA...</span>
                 </div>
             </div>
         </div>
@@ -706,6 +721,133 @@ if (featuredImageUrl) {
             featuredImagePreview.innerHTML = '<div class="image-placeholder"><span>1200x630 px</span></div>';
         }
     });
+}
+
+// =============================================================================
+// Geracao de SEO com IA
+// =============================================================================
+
+// Atualiza contadores de caracteres
+document.getElementById('seo_title').addEventListener('input', function() {
+    document.getElementById('seo_title_count').textContent = this.value.length;
+});
+
+document.getElementById('seo_description').addEventListener('input', function() {
+    document.getElementById('seo_description_count').textContent = this.value.length;
+});
+
+async function generateSEO(field) {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+
+    if (!title && !content) {
+        alert('Preencha o titulo ou conteudo antes de gerar SEO');
+        return;
+    }
+
+    const useCase = field === 'seo_title' ? 'seo_title' : 'seo_description';
+    const loadingDiv = document.getElementById('seo-loading');
+    const targetInput = document.getElementById(field);
+
+    loadingDiv.style.display = 'block';
+    targetInput.disabled = true;
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: useCase,
+                title: title,
+                content: content.substring(0, 2000)
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            targetInput.value = data.generated_content;
+            // Atualiza contador
+            const countSpan = document.getElementById(field + '_count');
+            if (countSpan) {
+                countSpan.textContent = data.generated_content.length;
+            }
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        loadingDiv.style.display = 'none';
+        targetInput.disabled = false;
+    }
+}
+
+async function generateAllSEO() {
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+
+    if (!title && !content) {
+        alert('Preencha o titulo ou conteudo antes de gerar SEO');
+        return;
+    }
+
+    const loadingDiv = document.getElementById('seo-loading');
+    const seoTitle = document.getElementById('seo_title');
+    const seoDescription = document.getElementById('seo_description');
+
+    loadingDiv.style.display = 'block';
+    seoTitle.disabled = true;
+    seoDescription.disabled = true;
+
+    try {
+        // Gera titulo e descricao em paralelo
+        const [titleResponse, descResponse] = await Promise.all([
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: 'seo_title',
+                    title: title,
+                    content: content.substring(0, 2000)
+                })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: 'seo_description',
+                    title: title,
+                    content: content.substring(0, 2000)
+                })
+            })
+        ]);
+
+        const [titleData, descData] = await Promise.all([
+            titleResponse.json(),
+            descResponse.json()
+        ]);
+
+        if (titleResponse.ok) {
+            seoTitle.value = titleData.generated_content;
+            document.getElementById('seo_title_count').textContent = titleData.generated_content.length;
+        }
+
+        if (descResponse.ok) {
+            seoDescription.value = descData.generated_content;
+            document.getElementById('seo_description_count').textContent = descData.generated_content.length;
+        }
+
+        if (!titleResponse.ok || !descResponse.ok) {
+            alert('Alguns campos nao foram gerados. Verifique a configuracao de IA.');
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        loadingDiv.style.display = 'none';
+        seoTitle.disabled = false;
+        seoDescription.disabled = false;
+    }
 }
 </script>
 {% endblock %}

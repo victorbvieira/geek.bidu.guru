@@ -13,6 +13,7 @@ from app.repositories.product import ProductRepository
 from app.repositories.click import ClickRepository
 from app.repositories.session import SessionRepository
 from app.repositories.newsletter import NewsletterRepository
+from app.repositories.ai_config import AIConfigRepository
 
 __all__ = [
     "BaseRepository",
@@ -24,4 +25,5 @@ __all__ = [
     "ClickRepository",
     "SessionRepository",
     "NewsletterRepository",
+    "AIConfigRepository",
 ]

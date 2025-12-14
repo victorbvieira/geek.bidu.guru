@@ -33,7 +33,9 @@
       "Bash(git pull:*)",
       "Bash(grep:*)",
       "Bash(brew list:*)",
-      "Bash(source ../.env)"
+      "Bash(source ../.env)",
+      "Bash(../.venv/bin/alembic upgrade:*)",
+      "Bash(../.venv/bin/alembic downgrade:*)"
     ],
     "deny": [],
     "ask": []

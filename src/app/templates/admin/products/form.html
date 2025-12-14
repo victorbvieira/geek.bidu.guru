@@ -44,23 +44,35 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="short_description" class="admin-form-label">Descricao Curta</label>
+                    <label for="short_description" class="admin-form-label">
+                        Descricao Curta
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateProductDescription('short')" title="Gerar com IA">🤖</button>
+                    </label>
                     <textarea
                         id="short_description"
                         name="short_description"
                         class="admin-form-textarea"
                         style="min-height: 80px;"
+                        maxlength="150"
                     >{{ product.short_description if product else '' }}</textarea>
+                    <div class="admin-form-hint"><span id="short_description_count">{{ (product.short_description|length) if product and product.short_description else 0 }}</span>/150 caracteres</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="long_description" class="admin-form-label">Descricao Completa</label>
+                    <label for="long_description" class="admin-form-label">
+                        Descricao Completa
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateProductDescription('long')" title="Gerar com IA">🤖</button>
+                    </label>
                     <textarea
                         id="long_description"
                         name="long_description"
                         class="admin-form-textarea"
                         style="min-height: 150px;"
                     >{{ product.long_description if product else '' }}</textarea>
+                </div>
+
+                <div id="description-loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
+                    <span>Gerando descricao com IA...</span>
                 </div>
             </div>
 
@@ -820,5 +832,74 @@ document.querySelector('form.admin-form').addEventListener('submit', function(e)
 
     document.getElementById('categories_json').value = JSON.stringify(categories);
 });
+
+// =============================================================================
+// Geracao de Descricao com IA
+// =============================================================================
+
+// Atualiza contador de caracteres da descricao curta
+const shortDescInput = document.getElementById('short_description');
+if (shortDescInput) {
+    shortDescInput.addEventListener('input', function() {
+        const countSpan = document.getElementById('short_description_count');
+        if (countSpan) {
+            countSpan.textContent = this.value.length;
+        }
+    });
+}
+
+async function generateProductDescription(type) {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        alert('Preencha o nome do produto antes de gerar a descricao');
+        return;
+    }
+
+    const loadingDiv = document.getElementById('description-loading');
+    const shortDesc = document.getElementById('short_description');
+    const longDesc = document.getElementById('long_description');
+
+    loadingDiv.style.display = 'block';
+
+    // Coleta informacoes do produto
+    const price = document.getElementById('price')?.value || '';
+    const platform = document.getElementById('platform')?.value || '';
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: 'product_description',
+                product_name: name,
+                content: `Produto: ${name}\nPreco: ${price || 'Nao informado'}\nPlataforma: ${platform || 'Nao informada'}`
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const generated = data.generated_content;
+
+            if (type === 'short') {
+                // Extrai primeira frase ou primeiros 150 caracteres
+                let shortText = generated.split('\n')[0];
+                if (shortText.length > 150) {
+                    shortText = shortText.substring(0, 147) + '...';
+                }
+                shortDesc.value = shortText;
+                document.getElementById('short_description_count').textContent = shortText.length;
+            } else {
+                longDesc.value = generated;
+            }
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        loadingDiv.style.display = 'none';
+    }
+}
 </script>
 {% endblock %}

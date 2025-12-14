@@ -114,6 +114,19 @@ from app.schemas.newsletter import (
     NewsletterUpdate,
 )
 
+# AI Config
+from app.schemas.ai_config import (
+    AIConfigBase,
+    AIConfigBrief,
+    AIConfigCreate,
+    AIConfigResponse,
+    AIConfigUpdate,
+    ProductDescriptionRequest,
+    ProductDescriptionResponse,
+    SEOGenerateRequest,
+    SEOGenerateResponse,
+)
+
 __all__ = [
     # Base
     "BaseSchema",
@@ -193,4 +206,14 @@ __all__ = [
     "NewsletterStats",
     "NewsletterBySource",
     "NewsletterByPeriod",
+    # AI Config
+    "AIConfigBase",
+    "AIConfigCreate",
+    "AIConfigUpdate",
+    "AIConfigResponse",
+    "AIConfigBrief",
+    "SEOGenerateRequest",
+    "SEOGenerateResponse",
+    "ProductDescriptionRequest",
+    "ProductDescriptionResponse",
 ]

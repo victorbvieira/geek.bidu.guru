@@ -34,6 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.repositories import (
+    AIConfigRepository,
     CategoryRepository,
     ClickRepository,
     NewsletterRepository,
@@ -167,6 +168,19 @@ async def get_occasion_repo(db: DBSession) -> OccasionRepository:
     return OccasionRepository(db)
 
 
+async def get_ai_config_repo(db: DBSession) -> AIConfigRepository:
+    """
+    Factory para repositório de configuracoes de IA.
+
+    Args:
+        db: Sessão do banco injetada automaticamente
+
+    Returns:
+        Instância do AIConfigRepository pronta para uso
+    """
+    return AIConfigRepository(db)
+
+
 # =============================================================================
 # Type Aliases para Injeção Automática
 # =============================================================================
@@ -185,6 +199,7 @@ ProductRepo = Annotated[ProductRepository, Depends(get_product_repo)]
 ClickRepo = Annotated[ClickRepository, Depends(get_click_repo)]
 SessionRepo = Annotated[SessionRepository, Depends(get_session_repo)]
 NewsletterRepo = Annotated[NewsletterRepository, Depends(get_newsletter_repo)]
+AIConfigRepo = Annotated[AIConfigRepository, Depends(get_ai_config_repo)]
 
 
 # =============================================================================

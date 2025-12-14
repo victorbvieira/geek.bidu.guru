@@ -16,6 +16,7 @@ from app.models.click import AffiliateClick
 from app.models.session import Session
 from app.models.newsletter import NewsletterSignup
 from app.models.redirect import Redirect
+from app.models.ai_config import AIConfig, AIProvider, AIUseCase
 
 __all__ = [
     # Mixins e Tipos
@@ -37,4 +38,7 @@ __all__ = [
     "Session",
     "NewsletterSignup",
     "Redirect",
+    "AIConfig",
+    "AIProvider",
+    "AIUseCase",
 ]

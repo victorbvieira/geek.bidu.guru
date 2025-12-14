@@ -17,6 +17,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
+    AIConfigRepo,
     CategoryRepo,
     DBSession,
     OccasionRepo,
@@ -781,4 +782,95 @@ async def edit_occasion(
             "occasion": occasion,
             "products": products,
         },
+    )
+
+
+# -----------------------------------------------------------------------------
+# Configuracoes de IA (apenas admin)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/ai-configs", response_class=HTMLResponse)
+async def list_ai_configs(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    repo: AIConfigRepo,
+):
+    """Listagem de configuracoes de IA."""
+    configs = await repo.get_all()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/ai-configs/list.html",
+        context={
+            "title": "Configuracoes de IA - Admin",
+            "current_user": current_user,
+            "configs": configs,
+            "active_page": "ai-configs",
+        },
+    )
+
+
+@router.get("/ai-configs/{config_id}", response_class=HTMLResponse)
+async def edit_ai_config(
+    request: Request,
+    config_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    repo: AIConfigRepo,
+):
+    """Formulario de edicao de configuracao de IA."""
+    config = await repo.get(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuracao nao encontrada")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/ai-configs/form.html",
+        context={
+            "title": f"Editar: {config.name} - Admin",
+            "current_user": current_user,
+            "config": config,
+            "active_page": "ai-configs",
+        },
+    )
+
+
+@router.post("/ai-configs/{config_id}", response_class=HTMLResponse)
+async def update_ai_config(
+    request: Request,
+    config_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    repo: AIConfigRepo,
+    name: str = Form(...),
+    description: str = Form(None),
+    provider: str = Form(...),
+    model: str = Form(...),
+    system_prompt: str = Form(...),
+    temperature: float = Form(0.7),
+    max_tokens: int = Form(500),
+    is_active: str = Form(None),
+):
+    """Atualiza configuracao de IA."""
+    config = await repo.get(config_id)
+    if not config:
+        raise HTTPException(status_code=404, detail="Configuracao nao encontrada")
+
+    # Atualiza campos
+    update_data = {
+        "name": name,
+        "description": description or None,
+        "provider": provider,
+        "model": model,
+        "system_prompt": system_prompt,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "is_active": is_active == "true",
+    }
+
+    await repo.update(config, update_data)
+
+    # Redireciona para a lista com mensagem de sucesso
+    return RedirectResponse(
+        url="/admin/ai-configs",
+        status_code=status.HTTP_303_SEE_OTHER,
     )

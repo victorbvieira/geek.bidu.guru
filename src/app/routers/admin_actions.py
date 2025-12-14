@@ -1036,3 +1036,96 @@ async def delete_occasion(
         url="/admin/occasions",
         status_code=http_status.HTTP_303_SEE_OTHER,
     )
+
+
+# -----------------------------------------------------------------------------
+# API de Geracao com IA
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/ai/generate")
+async def api_generate_ai_content(
+    request: Request,
+    current_user: AdminUser,
+    db: DBSession,
+):
+    """
+    Gera conteudo SEO usando IA.
+
+    Aceita JSON com:
+    - use_case: Tipo de geracao (seo_title, seo_description, seo_keywords, product_description)
+    - title: Titulo do conteudo (opcional)
+    - content: Conteudo para analise (opcional)
+    - keywords: Lista de palavras-chave existentes (opcional)
+    - category: Categoria do conteudo (opcional)
+    - product_name: Nome do produto (opcional)
+
+    Returns:
+        JSON com:
+        - generated_content: Conteudo gerado
+        - model_used: Modelo que gerou
+        - tokens_used: Tokens consumidos
+    """
+    from app.models.ai_config import AIUseCase
+    from app.services.ai_seo import AISEOService
+    from app.services.llm import LLMError
+
+    try:
+        data = await request.json()
+    except Exception:
+        return JSONResponse(
+            content={"detail": "JSON invalido"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Valida use_case
+    use_case_str = data.get("use_case")
+    if not use_case_str:
+        return JSONResponse(
+            content={"detail": "Campo 'use_case' e obrigatorio"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        use_case = AIUseCase(use_case_str)
+    except ValueError:
+        return JSONResponse(
+            content={"detail": f"use_case invalido: {use_case_str}"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Instancia o servico de IA
+    ai_service = AISEOService(db)
+
+    try:
+        result = await ai_service.generate(
+            use_case=use_case,
+            title=data.get("title"),
+            content=data.get("content"),
+            keywords=data.get("keywords"),
+            category=data.get("category"),
+            product_name=data.get("product_name"),
+            target_audience=data.get("target_audience"),
+        )
+
+        return JSONResponse(
+            content={
+                "generated_content": result["generated_content"],
+                "model_used": result["model_used"],
+                "tokens_used": result.get("tokens_used"),
+                "use_case": result["use_case"],
+            },
+            status_code=http_status.HTTP_200_OK,
+        )
+
+    except ValueError as e:
+        return JSONResponse(
+            content={"detail": str(e)},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    except LLMError as e:
+        return JSONResponse(
+            content={"detail": f"Erro na geracao: {str(e)}"},
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

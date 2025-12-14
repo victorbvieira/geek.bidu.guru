@@ -1,0 +1,273 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Editar {{ config.name }}{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/ai-configs">Configuracoes de IA</a>
+<span>/</span>
+<span class="current">{{ config.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Editar: {{ config.name }}</h1>
+    <p class="admin-page-subtitle">Caso de uso: <code>{{ config.use_case.value }}</code></p>
+</div>
+
+<form method="POST" action="/admin/ai-configs/{{ config.id }}" class="admin-form">
+    <div class="admin-form-grid">
+        <!-- Main Content -->
+        <div class="admin-form-main">
+            <!-- Provider & Model -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Provedor e Modelo</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="provider" class="admin-form-label">Provedor *</label>
+                    <select id="provider" name="provider" class="admin-form-select" required>
+                        <option value="openrouter" {% if config.provider.value == 'openrouter' %}selected{% endif %}>
+                            OpenRouter (recomendado - acesso a varios modelos)
+                        </option>
+                        <option value="openai" {% if config.provider.value == 'openai' %}selected{% endif %}>
+                            OpenAI (GPT-4, GPT-4o)
+                        </option>
+                        <option value="anthropic" {% if config.provider.value == 'anthropic' %}selected{% endif %}>
+                            Anthropic (Claude)
+                        </option>
+                        <option value="google" {% if config.provider.value == 'google' %}selected{% endif %}>
+                            Google (Gemini direto)
+                        </option>
+                    </select>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="model" class="admin-form-label">Modelo *</label>
+                    <input
+                        type="text"
+                        id="model"
+                        name="model"
+                        class="admin-form-input"
+                        value="{{ config.model }}"
+                        placeholder="google/gemini-2.0-flash-exp:free"
+                        required
+                    >
+                    <div class="admin-form-hint">
+                        <strong>OpenRouter:</strong> google/gemini-2.0-flash-exp:free, anthropic/claude-3-haiku<br>
+                        <strong>OpenAI:</strong> gpt-4o-mini, gpt-4o<br>
+                        <a href="https://openrouter.ai/models" target="_blank">Ver modelos disponiveis</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Prompt -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">System Prompt</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="system_prompt" class="admin-form-label">Instrucoes para o Modelo *</label>
+                    <textarea
+                        id="system_prompt"
+                        name="system_prompt"
+                        class="admin-form-textarea admin-form-textarea-code"
+                        style="min-height: 400px; font-family: monospace; font-size: 0.875rem;"
+                        required
+                    >{{ config.system_prompt }}</textarea>
+                    <div class="admin-form-hint">
+                        Define como o modelo deve se comportar. Seja especifico sobre formato de saida e regras.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="admin-form-sidebar">
+            <!-- Info -->
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label for="name" class="admin-form-label">Nome *</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="admin-form-input"
+                        value="{{ config.name }}"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="description" class="admin-form-label">Descricao</label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        class="admin-form-textarea"
+                        style="min-height: 60px;"
+                    >{{ config.description or '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Parametros</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="temperature" class="admin-form-label">Temperatura</label>
+                    <input
+                        type="number"
+                        id="temperature"
+                        name="temperature"
+                        class="admin-form-input"
+                        value="{{ config.temperature }}"
+                        step="0.1"
+                        min="0"
+                        max="2"
+                    >
+                    <div class="admin-form-hint">
+                        0 = determinista, 1 = criativo, 2 = muito criativo
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="max_tokens" class="admin-form-label">Max Tokens</label>
+                    <input
+                        type="number"
+                        id="max_tokens"
+                        name="max_tokens"
+                        class="admin-form-input"
+                        value="{{ config.max_tokens }}"
+                        min="50"
+                        max="8000"
+                    >
+                    <div class="admin-form-hint">
+                        Limite maximo de tokens na resposta
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label class="admin-checkbox-label">
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            value="true"
+                            {% if config.is_active %}checked{% endif %}
+                        >
+                        <span>Configuracao ativa</span>
+                    </label>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
+                        Salvar Alteracoes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Test -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Testar</h3>
+                </div>
+                <p class="admin-form-hint" style="margin-bottom: 1rem;">
+                    Teste a configuracao atual com um texto de exemplo.
+                </p>
+                <button type="button" class="admin-btn admin-btn-secondary admin-btn-block" onclick="openTestModal()">
+                    Testar Prompt
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Test Modal -->
+<div class="admin-modal" id="test-modal" style="display: none;">
+    <div class="admin-modal-backdrop" onclick="closeTestModal()"></div>
+    <div class="admin-modal-content" style="max-width: 600px;">
+        <div class="admin-modal-header">
+            <h3>Testar Configuracao</h3>
+            <button type="button" class="admin-modal-close" onclick="closeTestModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+            <div class="admin-form-group">
+                <label for="test_input" class="admin-form-label">Texto de Entrada</label>
+                <textarea
+                    id="test_input"
+                    class="admin-form-textarea"
+                    style="min-height: 100px;"
+                    placeholder="Digite ou cole o texto para testar..."
+                ></textarea>
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-form-label">Resultado</label>
+                <div id="test_result" class="admin-form-textarea" style="min-height: 100px; background: var(--admin-bg-tertiary); padding: 1rem; border-radius: var(--admin-radius); white-space: pre-wrap;">
+                    <span style="color: var(--admin-text-muted);">O resultado aparecera aqui...</span>
+                </div>
+            </div>
+            <div id="test_loading" style="display: none; text-align: center; padding: 1rem;">
+                <span>Gerando...</span>
+            </div>
+        </div>
+        <div class="admin-modal-footer">
+            <button type="button" class="admin-btn admin-btn-secondary" onclick="closeTestModal()">Fechar</button>
+            <button type="button" class="admin-btn admin-btn-primary" onclick="runTest()">Gerar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openTestModal() {
+    document.getElementById('test-modal').style.display = 'flex';
+    document.getElementById('test_input').focus();
+}
+
+function closeTestModal() {
+    document.getElementById('test-modal').style.display = 'none';
+}
+
+async function runTest() {
+    const input = document.getElementById('test_input').value.trim();
+    if (!input) {
+        alert('Digite um texto para testar');
+        return;
+    }
+
+    const resultDiv = document.getElementById('test_result');
+    const loadingDiv = document.getElementById('test_loading');
+
+    resultDiv.innerHTML = '';
+    loadingDiv.style.display = 'block';
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: '{{ config.use_case.value }}',
+                title: input,
+                content: input
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            resultDiv.innerHTML = `<strong>Gerado:</strong>\n${data.generated_content}\n\n<small style="color: var(--admin-text-muted);">Modelo: ${data.model_used}</small>`;
+        } else {
+            resultDiv.innerHTML = `<span style="color: var(--admin-danger);">Erro: ${data.detail}</span>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<span style="color: var(--admin-danger);">Erro de conexao: ${error.message}</span>`;
+    } finally {
+        loadingDiv.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
