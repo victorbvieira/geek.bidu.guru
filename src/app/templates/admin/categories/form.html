@@ -129,6 +129,17 @@
                 <div class="admin-card-body">
                     <div class="admin-form-group">
                         <label class="admin-label">Upload de Imagem</label>
+
+                        <!-- Preview da imagem -->
+                        <div id="image-preview" class="admin-image-preview" style="margin-bottom: 1rem; {% if not (category and category.image_url) %}display: none;{% endif %}">
+                            <img
+                                id="preview-img"
+                                src="{{ category.image_url if category and category.image_url else '' }}"
+                                alt="Preview"
+                                style="max-width: 100%; border-radius: 4px;"
+                            >
+                        </div>
+
                         <div class="admin-upload-wrapper">
                             <input
                                 type="file"
@@ -138,9 +149,9 @@
                                 style="display: none;"
                             >
                             <button type="button" class="admin-btn admin-btn-secondary admin-btn-block" onclick="document.getElementById('image_file').click()">
-                                Escolher Imagem
+                                {{ 'Trocar Imagem' if category and category.image_url else 'Escolher Imagem' }}
                             </button>
-                            <small class="admin-help-text">Tamanho recomendado: 400x400 px (1:1). Max 5MB.</small>
+                            <small class="admin-help-text">Redimensionada automaticamente para 400x400 px. Max 10MB.</small>
                         </div>
                         <div id="upload-progress" style="display: none; margin-top: 0.5rem;">
                             <div class="admin-progress-bar">
@@ -150,27 +161,13 @@
                         </div>
                     </div>
 
-                    <div class="admin-form-group">
-                        <label for="image_url" class="admin-label">URL da Imagem</label>
-                        <input
-                            type="url"
-                            id="image_url"
-                            name="image_url"
-                            value="{{ category.image_url if category and category.image_url else '' }}"
-                            class="admin-input"
-                            placeholder="https://..."
-                        >
-                        <small class="admin-help-text">Cole uma URL ou faca upload acima</small>
-                    </div>
-
-                    <div id="image-preview" class="admin-image-preview" {% if not (category and category.image_url) %}style="display: none;"{% endif %}>
-                        <img
-                            id="preview-img"
-                            src="{{ category.image_url if category and category.image_url else '' }}"
-                            alt="Preview"
-                            style="max-width: 100%; border-radius: 4px;"
-                        >
-                    </div>
+                    <!-- Hidden input para URL da imagem -->
+                    <input
+                        type="hidden"
+                        id="image_url"
+                        name="image_url"
+                        value="{{ category.image_url if category and category.image_url else '' }}"
+                    >
                 </div>
             </div>
 
@@ -248,9 +245,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = this.files[0];
             if (!file) return;
 
-            // Validar tamanho (5MB max)
-            if (file.size > 5 * 1024 * 1024) {
-                showMessage('Arquivo muito grande. Maximo 5MB.', 'danger');
+            // Validar tipo de arquivo
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showMessage('Tipo de arquivo nao permitido. Use JPG, PNG, WebP ou GIF.', 'danger');
+                return;
+            }
+
+            // Validar tamanho (10MB max - sera comprimido no servidor)
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('Arquivo muito grande. Maximo 10MB.', 'danger');
                 return;
             }
 
@@ -273,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageUrlInput.value = data.url;
                     previewImg.src = data.url;
                     imagePreview.style.display = 'block';
-                    showMessage('Imagem enviada com sucesso!', 'success');
+                    showMessage('Imagem enviada com sucesso! (400x400 px)', 'success');
                 } else {
                     showMessage(data.detail || 'Erro ao enviar imagem', 'danger');
                 }
@@ -283,19 +287,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } finally {
                 uploadProgress.style.display = 'none';
                 fileInput.value = ''; // Reset para permitir reupload
-            }
-        });
-    }
-
-    // Preview ao colar URL manualmente
-    if (imageUrlInput) {
-        imageUrlInput.addEventListener('change', function() {
-            const url = this.value.trim();
-            if (url) {
-                previewImg.src = url;
-                imagePreview.style.display = 'block';
-            } else {
-                imagePreview.style.display = 'none';
             }
         });
     }

@@ -41,8 +41,8 @@ class TestUploadConstants:
         assert "image/gif" in ALLOWED_IMAGE_TYPES
 
     def test_max_file_size(self):
-        """Tamanho maximo deve ser 5MB."""
-        assert MAX_FILE_SIZE == 5 * 1024 * 1024
+        """Tamanho maximo deve ser 10MB (comprimido automaticamente)."""
+        assert MAX_FILE_SIZE == 10 * 1024 * 1024
 
     def test_category_image_size(self):
         """Tamanho de categoria deve ser 400x400."""

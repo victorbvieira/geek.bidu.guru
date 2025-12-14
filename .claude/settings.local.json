@@ -32,7 +32,8 @@
       "Bash(docker network create:*)",
       "Bash(git pull:*)",
       "Bash(grep:*)",
-      "Bash(brew list:*)"
+      "Bash(brew list:*)",
+      "Bash(source ../.env)"
     ],
     "deny": [],
     "ask": []

@@ -760,9 +760,9 @@ async def upload_image(
     """
     Upload de imagem para produtos.
 
-    A imagem e automaticamente redimensionada para 800x800 px (1:1).
+    A imagem e automaticamente redimensionada para 800x800 px (1:1) e comprimida.
     Aceita: JPEG, PNG, WebP, GIF
-    Tamanho maximo: 5MB
+    Tamanho maximo: 10MB (comprimido automaticamente)
 
     Returns:
         JSON com URL da imagem salva
@@ -786,9 +786,9 @@ async def upload_category_image(
     """
     Upload de imagem para categorias.
 
-    A imagem e automaticamente redimensionada para 400x400 px.
+    A imagem e automaticamente redimensionada para 400x400 px e comprimida.
     Aceita: JPEG, PNG, WebP, GIF
-    Tamanho maximo: 5MB
+    Tamanho maximo: 10MB (comprimido automaticamente)
 
     Returns:
         JSON com URL da imagem salva
@@ -811,9 +811,9 @@ async def upload_post_image(
     """
     Upload de imagem de destaque para posts.
 
-    A imagem e automaticamente redimensionada para 1200x630 px (Open Graph).
+    A imagem e automaticamente redimensionada para 1200x630 px (Open Graph) e comprimida.
     Aceita: JPEG, PNG, WebP, GIF
-    Tamanho maximo: 5MB
+    Tamanho maximo: 10MB (comprimido automaticamente)
 
     Returns:
         JSON com URL da imagem salva

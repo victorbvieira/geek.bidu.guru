@@ -161,6 +161,83 @@ def pytest_sessionstart(session):
         print(f"\n⚠️ Erro ao limpar tabelas: {e}\n")
 
 
+def pytest_sessionfinish(session, exitstatus):  # noqa: ARG001
+    """
+    Hook chamado ao final da sessao de testes.
+
+    Recria o usuario admin padrao para uso manual apos os testes.
+    Credenciais: admin@geek.bidu.guru / Admin@123
+    """
+    if not session.config.getoption("--use-postgres", default=False):
+        return
+
+    from dotenv import load_dotenv
+    from sqlalchemy import create_engine, text
+    load_dotenv()
+
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        return
+
+    # Usa driver sincrono para o hook
+    sync_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+
+    try:
+        # Importa bcrypt para gerar hash da senha
+        import bcrypt
+
+        # Gera hash da senha Admin@123
+        password = "Admin@123"
+        password_hash = bcrypt.hashpw(
+            password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        engine = create_engine(sync_url)
+        with engine.begin() as conn:
+            # Verifica se usuario ja existe
+            result = conn.execute(
+                text("SELECT id FROM users WHERE email = :email"),
+                {"email": "admin@geek.bidu.guru"}
+            )
+            existing = result.fetchone()
+
+            if existing:
+                # Atualiza senha se usuario ja existe
+                conn.execute(
+                    text("""
+                        UPDATE users
+                        SET password_hash = :password_hash,
+                            is_active = true,
+                            role = 'admin'
+                        WHERE email = :email
+                    """),
+                    {"password_hash": password_hash, "email": "admin@geek.bidu.guru"}
+                )
+            else:
+                # Cria usuario admin
+                import uuid
+                conn.execute(
+                    text("""
+                        INSERT INTO users (id, name, email, password_hash, role, is_active, created_at)
+                        VALUES (:id, :name, :email, :password_hash, :role, :is_active, NOW())
+                    """),
+                    {
+                        "id": str(uuid.uuid4()),
+                        "name": "Administrador",
+                        "email": "admin@geek.bidu.guru",
+                        "password_hash": password_hash,
+                        "role": "admin",
+                        "is_active": True,
+                    }
+                )
+
+        engine.dispose()
+        print("\n👤 Usuario admin recriado: admin@geek.bidu.guru / Admin@123\n")
+    except Exception as e:
+        print(f"\n⚠️ Erro ao recriar usuario admin: {e}\n")
+
+
 @pytest_asyncio.fixture(scope="function")
 async def async_engine(use_postgres):
     """

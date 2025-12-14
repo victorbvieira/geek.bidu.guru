@@ -26,8 +26,8 @@ ALLOWED_IMAGE_TYPES = {
     "image/gif": ".gif",
 }
 
-# Tamanho maximo: 5MB
-MAX_FILE_SIZE = 5 * 1024 * 1024
+# Tamanho maximo: 10MB (sera comprimido automaticamente)
+MAX_FILE_SIZE = 10 * 1024 * 1024
 
 # =============================================================================
 # Padroes de tamanho de imagens
@@ -184,17 +184,22 @@ def resize_image(
     content: bytes,
     target_size: Tuple[int, int],
     output_format: str = "JPEG",
+    max_output_size: int = 500 * 1024,  # 500KB max por padrao
 ) -> bytes:
     """
     Redimensiona imagem mantendo proporcao e preenchendo com fundo branco.
+
+    Inclui compressao inteligente: se a imagem processada ainda for maior que
+    max_output_size, reduz a qualidade progressivamente ate atingir o limite.
 
     Args:
         content: Bytes da imagem original
         target_size: Tupla (largura, altura) do tamanho final
         output_format: Formato de saida (JPEG, PNG, WEBP)
+        max_output_size: Tamanho maximo do arquivo de saida em bytes
 
     Returns:
-        Bytes da imagem redimensionada
+        Bytes da imagem redimensionada e comprimida
     """
     # Abre imagem
     img = Image.open(io.BytesIO(content))
@@ -220,12 +225,25 @@ def resize_image(
     offset = ((target_size[0] - img.size[0]) // 2, (target_size[1] - img.size[1]) // 2)
     final_img.paste(img, offset)
 
-    # Salva em bytes
-    output = io.BytesIO()
-    final_img.save(output, format=output_format, quality=IMAGE_QUALITY, optimize=True)
-    output.seek(0)
+    # Compressao inteligente: tenta com qualidade alta primeiro
+    # Se ainda for muito grande, reduz progressivamente
+    quality = IMAGE_QUALITY
+    min_quality = 50  # Nunca abaixar de 50%
 
-    return output.read()
+    while quality >= min_quality:
+        output = io.BytesIO()
+        final_img.save(output, format=output_format, quality=quality, optimize=True)
+        output.seek(0)
+        result = output.read()
+
+        # Se o tamanho esta OK ou ja chegamos na qualidade minima, retorna
+        if len(result) <= max_output_size or quality <= min_quality:
+            return result
+
+        # Reduz qualidade em 10% e tenta novamente
+        quality -= 10
+
+    return result
 
 
 async def save_category_image(file: UploadFile) -> str:

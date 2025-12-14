@@ -24,7 +24,7 @@ ALLOWED_DOCUMENT_TYPES = {
 }
 
 # Limites de tamanho
-MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB (sera comprimido automaticamente)
 MAX_DOCUMENT_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Magic bytes para verificacao de tipo real
