@@ -19,6 +19,22 @@ class ProductRepository(BaseRepository[Product]):
     def __init__(self, db: AsyncSession):
         super().__init__(Product, db)
 
+    async def get_all_active(self) -> list[Product]:
+        """
+        Lista todos os produtos ativos (disponiveis).
+
+        Usado para selecao de produtos em formularios do admin.
+
+        Returns:
+            Lista de todos os produtos disponiveis, ordenados por nome
+        """
+        result = await self.db.execute(
+            select(Product)
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+            .order_by(Product.name)
+        )
+        return list(result.scalars().all())
+
     async def get_by_slug(self, slug: str) -> Product | None:
         """Busca produto por slug."""
         result = await self.db.execute(

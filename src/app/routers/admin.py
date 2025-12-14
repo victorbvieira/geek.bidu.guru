@@ -738,8 +738,12 @@ async def list_occasions(
 async def new_occasion(
     request: Request,
     current_user: AdminUser,
+    product_repo: ProductRepo,
 ):
     """Formulario de nova ocasiao."""
+    # Busca produtos para o modal de insercao
+    products = await product_repo.get_all_active()
+
     return templates.TemplateResponse(
         request=request,
         name="admin/occasions/form.html",
@@ -747,6 +751,7 @@ async def new_occasion(
             "title": "Nova Ocasiao - Admin",
             "current_user": current_user,
             "occasion": None,
+            "products": products,
         },
     )
 
@@ -757,11 +762,15 @@ async def edit_occasion(
     occasion_id: UUID,
     current_user: AdminUser,
     repo: OccasionRepo,
+    product_repo: ProductRepo,
 ):
     """Formulario de edicao de ocasiao."""
     occasion = await repo.get(occasion_id)
     if not occasion:
         raise HTTPException(status_code=404, detail="Ocasiao nao encontrada")
+
+    # Busca produtos para o modal de insercao
+    products = await product_repo.get_all_active()
 
     return templates.TemplateResponse(
         request=request,
@@ -770,5 +779,6 @@ async def edit_occasion(
             "title": f"Editar: {occasion.name} - Admin",
             "current_user": current_user,
             "occasion": occasion,
+            "products": products,
         },
     )

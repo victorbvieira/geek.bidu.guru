@@ -1,17 +1,17 @@
 {% extends "admin/base.html" %}
 
-{% block title %}{{ 'Editar' if occasion else 'Nova' }} Ocasiao{% endblock %}
+{% block title %}{{ 'Editar' if occasion else 'Nova' }} Ocasião{% endblock %}
 
 {% block breadcrumb %}
 <span>/</span>
-<a href="/admin/occasions">Ocasioes</a>
+<a href="/admin/occasions">Ocasiões</a>
 <span>/</span>
 <span class="current">{{ 'Editar' if occasion else 'Nova' }}</span>
 {% endblock %}
 
 {% block content %}
 <div class="admin-page-header">
-    <h1 class="admin-page-title">{{ 'Editar Ocasiao' if occasion else 'Nova Ocasiao' }}</h1>
+    <h1 class="admin-page-title">{{ 'Editar Ocasião' if occasion else 'Nova Ocasião' }}</h1>
 </div>
 
 <form method="POST" action="{{ '/admin/occasions/' ~ occasion.id if occasion else '/admin/occasions' }}" class="admin-form">
@@ -20,7 +20,7 @@
         <div class="admin-form-main">
             <div class="admin-card">
                 <div class="admin-form-group">
-                    <label for="name" class="admin-form-label">Nome da Ocasiao *</label>
+                    <label for="name" class="admin-form-label">Nome da Ocasião *</label>
                     <input
                         type="text"
                         id="name"
@@ -45,18 +45,20 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="description" class="admin-form-label">Descricao</label>
+                    <label for="description" class="admin-form-label">Descrição Curta</label>
                     <textarea
                         id="description"
                         name="description"
                         class="admin-form-textarea"
-                        rows="3"
-                        placeholder="Descricao breve da ocasiao"
+                        rows="2"
+                        placeholder="Descrição breve para listagens (max 200 caracteres)"
+                        maxlength="200"
                     >{{ occasion.description if occasion else '' }}</textarea>
+                    <div class="admin-form-hint">Exibida em cards e listagens</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="icon" class="admin-form-label">Icone (Emoji)</label>
+                    <label for="icon" class="admin-form-label">Ícone (Emoji)</label>
                     <input
                         type="text"
                         id="icon"
@@ -66,7 +68,49 @@
                         placeholder="Ex: 🎄 🎂 💝"
                         style="max-width: 150px;"
                     >
-                    <div class="admin-form-hint">Use um emoji para representar a ocasiao</div>
+                    <div class="admin-form-hint">Use um emoji para representar a ocasião</div>
+                </div>
+            </div>
+
+            <!-- Conteúdo Markdown -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Conteúdo</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="content" class="admin-form-label">Conteúdo (Markdown)</label>
+                    <div class="markdown-editor">
+                        <div class="markdown-toolbar">
+                            <button type="button" class="md-btn" data-action="bold" title="Negrito (Ctrl+B)"><strong>B</strong></button>
+                            <button type="button" class="md-btn" data-action="italic" title="Itálico (Ctrl+I)"><em>I</em></button>
+                            <button type="button" class="md-btn" data-action="heading" title="Título">H</button>
+                            <button type="button" class="md-btn" data-action="link" title="Link">🔗</button>
+                            <button type="button" class="md-btn" data-action="image" title="Imagem">🖼</button>
+                            <button type="button" class="md-btn" data-action="list" title="Lista">•</button>
+                            <button type="button" class="md-btn" data-action="olist" title="Lista numerada">1.</button>
+                            <button type="button" class="md-btn" data-action="quote" title="Citação">"</button>
+                            <button type="button" class="md-btn" data-action="code" title="Código">&lt;/&gt;</button>
+                            <span class="md-toolbar-separator"></span>
+                            <button type="button" class="md-btn md-btn-product" data-action="product" title="Inserir Produto">🛒 Produto</button>
+                            <span class="md-toolbar-separator"></span>
+                            <button type="button" class="md-btn md-btn-preview" data-action="preview" title="Preview">Preview</button>
+                        </div>
+                        <div class="markdown-panels">
+                            <textarea
+                                id="content"
+                                name="content"
+                                class="admin-form-textarea markdown-input"
+                            >{{ occasion.content if occasion else '' }}</textarea>
+                            <div class="markdown-preview" id="markdown-preview">
+                                <p class="preview-placeholder">Clique em "Preview" para visualizar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-form-hint">
+                        Suporta Markdown: **negrito**, *itálico*, # título, [link](url), ![imagem](url)<br>
+                        <strong>Produtos:</strong> Use <code>[product:slug-do-produto]</code> para inserir um card de produto no conteúdo
+                    </div>
                 </div>
             </div>
 
@@ -77,14 +121,14 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_title" class="admin-form-label">Titulo SEO</label>
+                    <label for="seo_title" class="admin-form-label">Título SEO</label>
                     <input
                         type="text"
                         id="seo_title"
                         name="seo_title"
                         class="admin-form-input"
                         value="{{ occasion.seo_title if occasion else '' }}"
-                        placeholder="Titulo para buscadores (max 60 caracteres)"
+                        placeholder="Título para buscadores (max 60 caracteres)"
                         maxlength="60"
                     >
                     <div class="admin-form-hint">
@@ -93,13 +137,13 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_description" class="admin-form-label">Descricao SEO</label>
+                    <label for="seo_description" class="admin-form-label">Descrição SEO</label>
                     <textarea
                         id="seo_description"
                         name="seo_description"
                         class="admin-form-textarea"
                         rows="2"
-                        placeholder="Descricao para buscadores (max 160 caracteres)"
+                        placeholder="Descrição para buscadores (max 160 caracteres)"
                         maxlength="160"
                     >{{ occasion.seo_description if occasion else '' }}</textarea>
                     <div class="admin-form-hint">
@@ -120,13 +164,13 @@
                             name="is_active"
                             {% if not occasion or occasion.is_active %}checked{% endif %}
                         >
-                        <span>Ocasiao ativa</span>
+                        <span>Ocasião ativa</span>
                     </label>
-                    <div class="admin-form-hint">Ocasioes inativas nao aparecem no site</div>
+                    <div class="admin-form-hint">Ocasiões inativas não aparecem no site</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="display_order" class="admin-form-label">Ordem de Exibicao</label>
+                    <label for="display_order" class="admin-form-label">Ordem de Exibição</label>
                     <input
                         type="number"
                         id="display_order"
@@ -135,13 +179,37 @@
                         value="{{ occasion.display_order if occasion else 0 }}"
                         min="0"
                     >
-                    <div class="admin-form-hint">Menor numero aparece primeiro</div>
+                    <div class="admin-form-hint">Menor número aparece primeiro</div>
                 </div>
 
                 <div class="admin-form-actions">
                     <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
-                        {{ 'Salvar' if occasion else 'Criar Ocasiao' }}
+                        {{ 'Salvar' if occasion else 'Criar Ocasião' }}
                     </button>
+                    {% if occasion %}
+                    <a href="/ocasiao/{{ occasion.slug }}" target="_blank" class="admin-btn admin-btn-secondary admin-btn-block">
+                        Ver no Site
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Próxima Revisão -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Revisão</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="next_review_date" class="admin-form-label">Próxima Revisão</label>
+                    <input
+                        type="month"
+                        id="next_review_date"
+                        name="next_review_date"
+                        class="admin-form-input"
+                        value="{{ occasion.next_review_date.strftime('%Y-%m') if occasion and occasion.next_review_date else '' }}"
+                    >
+                    <div class="admin-form-hint">Mês/ano para revisar este conteúdo</div>
                 </div>
             </div>
 
@@ -172,9 +240,79 @@
                     <div class="admin-form-hint">Redimensionada para 400x400 px</div>
                 </div>
             </div>
+
+            {% if occasion %}
+            <!-- Informações -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Informações</h3>
+                </div>
+                <div class="admin-info-list">
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Criada em:</span>
+                        <span class="admin-info-value">{{ occasion.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+                    </div>
+                    <div class="admin-info-item">
+                        <span class="admin-info-label">Atualizada em:</span>
+                        <span class="admin-info-value">{{ occasion.updated_at.strftime('%d/%m/%Y %H:%M') if occasion.updated_at else '-' }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </form>
+
+<!-- Modal de Seleção de Produto -->
+<div id="product-modal" class="product-modal" style="display: none;">
+    <div class="product-modal-backdrop" onclick="closeProductModal()"></div>
+    <div class="product-modal-content">
+        <div class="product-modal-header">
+            <h3>Inserir Produto no Conteúdo</h3>
+            <button type="button" class="product-modal-close" onclick="closeProductModal()">&times;</button>
+        </div>
+        <div class="product-modal-search">
+            <input
+                type="text"
+                id="product-search"
+                class="admin-form-input"
+                placeholder="Buscar produto por nome..."
+                oninput="filterProducts(this.value)"
+            >
+        </div>
+        <div class="product-modal-list" id="product-modal-list">
+            {% for product in products %}
+            <div class="product-modal-item" data-slug="{{ product.slug }}" data-name="{{ product.name|lower }}" onclick="insertProduct('{{ product.slug }}', '{{ product.name|e }}')">
+                <div class="product-modal-item-image">
+                    {% if product.main_image_url %}
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                    {% else %}
+                    <span class="no-image">📦</span>
+                    {% endif %}
+                </div>
+                <div class="product-modal-item-info">
+                    <span class="product-modal-item-name">{{ product.name }}</span>
+                    <span class="product-modal-item-meta">
+                        <span class="platform platform-{{ product.platform.value }}">{{ product.platform.value|title }}</span>
+                        {% if product.price %}
+                        <span class="price">R$ {{ "%.2f"|format(product.price) }}</span>
+                        {% endif %}
+                    </span>
+                    <code class="product-modal-item-slug">[product:{{ product.slug }}]</code>
+                </div>
+            </div>
+            {% else %}
+            <div class="product-modal-empty">
+                <p>Nenhum produto cadastrado.</p>
+                <a href="/admin/products/new" class="admin-btn admin-btn-primary">Criar Produto</a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="product-modal-footer">
+            <span class="product-modal-hint">Clique em um produto para inserir o shortcode na posição do cursor</span>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -216,12 +354,34 @@
 .upload-status {
     font-size: 0.75rem;
 }
+
+.admin-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-info-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+}
+
+.admin-info-label {
+    color: var(--admin-text-muted);
+}
+
+.admin-info-value {
+    color: var(--admin-text);
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// =============================================================================
 // Auto-gerar slug do nome
+// =============================================================================
 const nameInput = document.getElementById('name');
 const slugInput = document.getElementById('slug');
 let slugManuallyEdited = {{ 'true' if occasion else 'false' }};
@@ -250,7 +410,9 @@ slugInput.addEventListener('input', function() {
     }
 });
 
+// =============================================================================
 // Contador de caracteres SEO
+// =============================================================================
 const seoTitleInput = document.getElementById('seo_title');
 const seoTitleCount = document.getElementById('seo_title_count');
 const seoDescInput = document.getElementById('seo_description');
@@ -264,7 +426,9 @@ seoDescInput.addEventListener('input', function() {
     seoDescCount.textContent = this.value.length;
 });
 
+// =============================================================================
 // Upload de imagem
+// =============================================================================
 const imageFileInput = document.getElementById('occasion-image-file');
 const imagePreview = document.getElementById('occasion-image-preview');
 const imageUrlInput = document.getElementById('image_url');
@@ -276,13 +440,13 @@ imageFileInput.addEventListener('change', async function(e) {
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-        uploadStatus.textContent = 'Tipo nao permitido';
+        uploadStatus.textContent = 'Tipo não permitido';
         uploadStatus.style.color = 'var(--admin-danger)';
         return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-        uploadStatus.textContent = 'Max 5MB';
+    if (file.size > 10 * 1024 * 1024) {
+        uploadStatus.textContent = 'Max 10MB';
         uploadStatus.style.color = 'var(--admin-danger)';
         return;
     }
@@ -311,11 +475,338 @@ imageFileInput.addEventListener('change', async function(e) {
             uploadStatus.style.color = 'var(--admin-danger)';
         }
     } catch (error) {
-        uploadStatus.textContent = 'Erro de conexao';
+        uploadStatus.textContent = 'Erro de conexão';
         uploadStatus.style.color = 'var(--admin-danger)';
     }
 
     imageFileInput.value = '';
+});
+
+// =============================================================================
+// Markdown Editor com Preview
+// =============================================================================
+(function() {
+    const textarea = document.getElementById('content');
+    const preview = document.getElementById('markdown-preview');
+    const panels = document.querySelector('.markdown-panels');
+    const previewBtn = document.querySelector('[data-action="preview"]');
+    const toolbar = document.querySelector('.markdown-toolbar');
+
+    if (!textarea || !preview) return;
+
+    let previewMode = 'edit'; // 'edit', 'split', 'preview'
+    let previewTimeout = null;
+
+    // Toolbar actions
+    const actions = {
+        bold: () => wrapText('**', '**'),
+        italic: () => wrapText('*', '*'),
+        heading: () => insertAtLineStart('## '),
+        link: () => {
+            const url = prompt('URL do link:');
+            if (url) wrapText('[', `](${url})`);
+        },
+        image: () => {
+            const url = prompt('URL da imagem:');
+            if (url) insertText(`![Imagem](${url})`);
+        },
+        list: () => insertAtLineStart('- '),
+        olist: () => insertAtLineStart('1. '),
+        quote: () => insertAtLineStart('> '),
+        code: () => {
+            const selection = getSelection();
+            if (selection.includes('\n')) {
+                wrapText('\n```\n', '\n```\n');
+            } else {
+                wrapText('`', '`');
+            }
+        },
+        product: () => openProductModal(),
+        preview: () => togglePreview()
+    };
+
+    // Bind toolbar buttons
+    toolbar.querySelectorAll('.md-btn').forEach(btn => {
+        const action = btn.dataset.action;
+        if (action && actions[action]) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                actions[action]();
+                textarea.focus();
+            });
+        }
+    });
+
+    // Helper functions
+    function getSelection() {
+        return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+    }
+
+    function wrapText(before, after) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selection = textarea.value.substring(start, end);
+        const replacement = before + selection + after;
+
+        textarea.setRangeText(replacement, start, end, 'select');
+        textarea.selectionStart = start + before.length;
+        textarea.selectionEnd = end + before.length;
+    }
+
+    function insertText(text) {
+        const start = textarea.selectionStart;
+        textarea.setRangeText(text, start, start, 'end');
+    }
+
+    function insertAtLineStart(prefix) {
+        const start = textarea.selectionStart;
+        const value = textarea.value;
+
+        // Find line start
+        let lineStart = start;
+        while (lineStart > 0 && value[lineStart - 1] !== '\n') {
+            lineStart--;
+        }
+
+        // Check if already has prefix
+        const lineContent = value.substring(lineStart);
+        if (lineContent.startsWith(prefix)) {
+            return; // Already has prefix
+        }
+
+        textarea.setRangeText(prefix, lineStart, lineStart, 'end');
+    }
+
+    // Toggle preview modes
+    function togglePreview() {
+        if (previewMode === 'edit') {
+            previewMode = 'split';
+            panels.classList.add('split-view');
+            panels.classList.remove('preview-only');
+            previewBtn.classList.add('active');
+            previewBtn.textContent = 'Split';
+            updatePreview();
+        } else if (previewMode === 'split') {
+            previewMode = 'preview';
+            panels.classList.remove('split-view');
+            panels.classList.add('preview-only');
+            previewBtn.textContent = 'Editar';
+            updatePreview();
+        } else {
+            previewMode = 'edit';
+            panels.classList.remove('split-view', 'preview-only');
+            previewBtn.classList.remove('active');
+            previewBtn.textContent = 'Preview';
+        }
+    }
+
+    // Update preview content
+    async function updatePreview() {
+        if (previewMode === 'edit') return;
+
+        const content = textarea.value;
+        if (!content.trim()) {
+            preview.innerHTML = '<p class="preview-placeholder">Nenhum conteúdo para visualizar</p>';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/posts/preview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                preview.innerHTML = data.html;
+            } else {
+                preview.innerHTML = '<p class="preview-placeholder">Erro ao renderizar preview</p>';
+            }
+        } catch (error) {
+            console.error('Preview error:', error);
+            preview.innerHTML = '<p class="preview-placeholder">Erro ao renderizar preview</p>';
+        }
+    }
+
+    // Debounced preview update
+    function schedulePreviewUpdate() {
+        if (previewMode === 'edit') return;
+
+        if (previewTimeout) {
+            clearTimeout(previewTimeout);
+        }
+        previewTimeout = setTimeout(updatePreview, 500);
+    }
+
+    // Listen for content changes
+    textarea.addEventListener('input', schedulePreviewUpdate);
+
+    // Keyboard shortcuts
+    textarea.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+            switch (e.key.toLowerCase()) {
+                case 'b':
+                    e.preventDefault();
+                    actions.bold();
+                    break;
+                case 'i':
+                    e.preventDefault();
+                    actions.italic();
+                    break;
+                case 'k':
+                    e.preventDefault();
+                    actions.link();
+                    break;
+            }
+        }
+    });
+
+    // Tab handling for code blocks
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            if (e.shiftKey) {
+                // Unindent
+                const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
+                const lineContent = textarea.value.substring(lineStart);
+                if (lineContent.startsWith('    ') || lineContent.startsWith('\t')) {
+                    const removeChars = lineContent.startsWith('    ') ? 4 : 1;
+                    textarea.setRangeText('', lineStart, lineStart + removeChars, 'end');
+                }
+            } else {
+                // Indent
+                textarea.setRangeText('    ', start, end, 'end');
+            }
+        }
+    });
+})();
+
+// =============================================================================
+// Modal de Seleção de Produto para Shortcode
+// =============================================================================
+
+const productModal = document.getElementById('product-modal');
+const productSearchInput = document.getElementById('product-search');
+const productModalList = document.getElementById('product-modal-list');
+const contentTextarea = document.getElementById('content');
+
+// Guarda a posição do cursor antes de abrir o modal
+let cursorPosition = 0;
+
+function openProductModal() {
+    // Salva a posição atual do cursor
+    cursorPosition = contentTextarea.selectionStart;
+
+    // Mostra o modal
+    productModal.style.display = 'flex';
+
+    // Limpa a busca
+    productSearchInput.value = '';
+    filterProducts('');
+
+    // Foca no campo de busca
+    setTimeout(() => productSearchInput.focus(), 100);
+}
+
+function closeProductModal() {
+    productModal.style.display = 'none';
+
+    // Retorna o foco para o textarea
+    contentTextarea.focus();
+    contentTextarea.setSelectionRange(cursorPosition, cursorPosition);
+}
+
+function filterProducts(query) {
+    const items = productModalList.querySelectorAll('.product-modal-item');
+    const lowerQuery = query.toLowerCase().trim();
+
+    items.forEach(item => {
+        const name = item.dataset.name || '';
+        const slug = item.dataset.slug || '';
+
+        if (!lowerQuery || name.includes(lowerQuery) || slug.includes(lowerQuery)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+function insertProduct(slug, name) {
+    const shortcode = `[product:${slug}]`;
+
+    // Pega o conteúdo atual
+    const content = contentTextarea.value;
+
+    // Verifica se estamos no início de uma linha ou precisamos de quebra
+    let prefix = '';
+    let suffix = '\n';
+
+    // Se não estamos no início do conteúdo
+    if (cursorPosition > 0) {
+        const charBefore = content[cursorPosition - 1];
+        // Se o caractere anterior não é uma quebra de linha, adiciona duas
+        if (charBefore !== '\n') {
+            prefix = '\n\n';
+        } else if (cursorPosition > 1 && content[cursorPosition - 2] !== '\n') {
+            // Se tem apenas uma quebra, adiciona mais uma
+            prefix = '\n';
+        }
+    }
+
+    // Verifica se precisamos de quebra depois
+    if (cursorPosition < content.length) {
+        const charAfter = content[cursorPosition];
+        if (charAfter !== '\n') {
+            suffix = '\n\n';
+        }
+    }
+
+    // Insere o shortcode
+    const insertion = prefix + shortcode + suffix;
+    const newContent = content.slice(0, cursorPosition) + insertion + content.slice(cursorPosition);
+
+    contentTextarea.value = newContent;
+
+    // Atualiza posição do cursor para depois do shortcode
+    const newPosition = cursorPosition + insertion.length;
+    contentTextarea.setSelectionRange(newPosition, newPosition);
+
+    // Fecha o modal
+    closeProductModal();
+
+    // Dispara evento de input para atualizar preview
+    contentTextarea.dispatchEvent(new Event('input'));
+
+    // Feedback visual
+    showInsertFeedback(name);
+}
+
+function showInsertFeedback(productName) {
+    // Cria elemento de feedback
+    const feedback = document.createElement('div');
+    feedback.className = 'insert-feedback';
+    feedback.textContent = `Produto "${productName}" inserido!`;
+    document.body.appendChild(feedback);
+
+    // Remove após animação
+    setTimeout(() => {
+        feedback.classList.add('fade-out');
+        setTimeout(() => feedback.remove(), 300);
+    }, 2000);
+}
+
+// Fecha modal com ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && productModal.style.display === 'flex') {
+        closeProductModal();
+    }
 });
 </script>
 {% endblock %}

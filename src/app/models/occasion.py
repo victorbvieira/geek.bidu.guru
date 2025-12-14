@@ -12,9 +12,10 @@ Ocasioes representam momentos especiais para presentear:
 Produtos e posts podem ser associados a multiplas ocasioes.
 """
 
+from datetime import date
 from typing import Optional
 
-from sqlalchemy import Boolean, Index, Integer, String, Text
+from sqlalchemy import Boolean, Date, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -29,13 +30,15 @@ class Occasion(Base, UUIDMixin, TimestampMixin):
         id: UUID primary key
         name: Nome da ocasiao (ex: "Natal", "Aniversario")
         slug: Slug unico para URL
-        description: Descricao da ocasiao
+        description: Descricao curta da ocasiao (para listagens)
+        content: Conteudo completo em Markdown (como posts)
         icon: Emoji ou icone da ocasiao
         image_url: URL da imagem de capa
         seo_title: Titulo para SEO (meta title)
         seo_description: Descricao para SEO (meta description)
         is_active: Se a ocasiao esta ativa
         display_order: Ordem de exibicao
+        next_review_date: Data da proxima revisao (mes/ano)
         created_at: Data de criacao
         updated_at: Data de atualizacao
     """
@@ -46,6 +49,7 @@ class Occasion(Base, UUIDMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     icon: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
 
     # Imagem e SEO
@@ -57,10 +61,14 @@ class Occasion(Base, UUIDMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
+    # Proxima revisao (primeiro dia do mes para simplificar)
+    next_review_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+
     # Indices
     __table_args__ = (
         Index("idx_occasions_slug", "slug"),
         Index("idx_occasions_active_order", "is_active", "display_order"),
+        Index("idx_occasions_next_review", "next_review_date"),
     )
 
     def __repr__(self) -> str:

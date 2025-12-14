@@ -899,6 +899,18 @@ async def api_create_category(
 # -----------------------------------------------------------------------------
 
 
+def parse_month_to_date(month_str: str):
+    """Converte string YYYY-MM para date (primeiro dia do mes)."""
+    from datetime import date
+    if not month_str:
+        return None
+    try:
+        year, month = month_str.split("-")
+        return date(int(year), int(month), 1)
+    except (ValueError, AttributeError):
+        return None
+
+
 @router.post("/occasions", response_class=RedirectResponse)
 async def create_occasion(
     request: Request,
@@ -907,12 +919,14 @@ async def create_occasion(
     name: str = Form(...),
     slug: str = Form(""),
     description: str = Form(""),
+    content: str = Form(""),
     icon: str = Form(""),
     image_url: str = Form(""),
     seo_title: str = Form(""),
     seo_description: str = Form(""),
     is_active: str = Form("on"),
     display_order: str = Form("0"),
+    next_review_date: str = Form(""),
 ):
     """Cria nova ocasiao."""
     # Gera slug se nao fornecido
@@ -931,12 +945,14 @@ async def create_occasion(
         "name": name.strip(),
         "slug": occasion_slug,
         "description": description.strip() or None,
+        "content": content.strip() or None,
         "icon": icon.strip() or None,
         "image_url": image_url.strip() or None,
         "seo_title": seo_title.strip() or None,
         "seo_description": seo_description.strip() or None,
         "is_active": is_active == "on",
         "display_order": int(display_order) if display_order else 0,
+        "next_review_date": parse_month_to_date(next_review_date),
     }
 
     await repo.create(occasion_data)
@@ -956,12 +972,14 @@ async def update_occasion(
     name: str = Form(...),
     slug: str = Form(""),
     description: str = Form(""),
+    content: str = Form(""),
     icon: str = Form(""),
     image_url: str = Form(""),
     seo_title: str = Form(""),
     seo_description: str = Form(""),
     is_active: str = Form(""),
     display_order: str = Form("0"),
+    next_review_date: str = Form(""),
 ):
     """Atualiza ocasiao existente."""
     occasion = await repo.get(occasion_id)
@@ -984,12 +1002,14 @@ async def update_occasion(
         "name": name.strip(),
         "slug": occasion_slug,
         "description": description.strip() or None,
+        "content": content.strip() or None,
         "icon": icon.strip() or None,
         "image_url": image_url.strip() or None,
         "seo_title": seo_title.strip() or None,
         "seo_description": seo_description.strip() or None,
         "is_active": is_active == "on",
         "display_order": int(display_order) if display_order else 0,
+        "next_review_date": parse_month_to_date(next_review_date),
     }
 
     await repo.update(occasion, update_data)

@@ -5,20 +5,28 @@
     <div class="container">
         <div class="error-content">
             <div class="error-icon">404</div>
-            <h1>Pagina nao encontrada</h1>
+            <h1>Página não encontrada</h1>
             <p class="error-message">
-                Ops! A pagina que voce procura nao existe ou foi movida.
+                Ops! A página que você procura não existe ou foi movida.
             </p>
             <div class="error-actions">
                 <a href="/" class="btn btn-primary">Voltar para Home</a>
                 <a href="/blog" class="btn btn-secondary">Ver Blog</a>
             </div>
             <div class="error-suggestions">
-                <p>Talvez voce esteja procurando:</p>
+                <p>Talvez você esteja procurando:</p>
                 <ul>
-                    <li><a href="/blog">Ultimos posts do blog</a></li>
+                    <li><a href="/blog">Últimos posts do blog</a></li>
                     <li><a href="/categorias">Categorias de produtos</a></li>
                 </ul>
+            </div>
+            <div class="error-footer">
+                <p class="affiliate-disclaimer">
+                    Como Associado Amazon, ganho com compras qualificadas.
+                </p>
+                <p class="copyright">
+                    &copy; 2025 geek.bidu.guru
+                </p>
             </div>
         </div>
     </div>
@@ -104,6 +112,23 @@
 
 .error-suggestions a:hover {
     text-decoration: underline;
+}
+
+.error-footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.error-footer .affiliate-disclaimer {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.error-footer .copyright {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
 }
 </style>
 {% endblock %}
