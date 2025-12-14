@@ -135,8 +135,9 @@ class TestSSRRoutes:
         assert response.status_code == 404
 
     @pytest.mark.asyncio
+    @pytest.mark.postgresql
     async def test_category_page(self, client, category_data):
-        """Pagina de categoria deve funcionar."""
+        """Pagina de categoria deve funcionar. Requer PostgreSQL (JSONB)."""
         # Arrange - Cria categoria
         await client.post("/api/v1/categories", json=category_data)
 
@@ -149,8 +150,9 @@ class TestSSRRoutes:
         assert category_data["name"] in response.text
 
     @pytest.mark.asyncio
+    @pytest.mark.postgresql
     async def test_category_with_posts(self, client, category_data, post_data):
-        """Categoria deve exibir posts vinculados."""
+        """Categoria deve exibir posts vinculados. Requer PostgreSQL (JSONB)."""
         from datetime import datetime, timedelta, UTC
 
         # Arrange - Cria categoria

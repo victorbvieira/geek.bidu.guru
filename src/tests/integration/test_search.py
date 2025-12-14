@@ -37,7 +37,7 @@ class TestSearch:
         response = await client.get("/busca?q=xyzabc123naoexiste")
 
         assert response.status_code == 200
-        assert "Nenhum resultado" in response.text
+        assert "Nenhum post encontrado" in response.text
 
     @pytest.mark.asyncio
     async def test_search_with_results(self, client, post_data):
@@ -95,7 +95,7 @@ class TestSearch:
 
         # Assert - Nao deve encontrar (post em draft)
         assert response.status_code == 200
-        assert "Nenhum resultado" in response.text
+        assert "Nenhum post encontrado" in response.text
 
     # -------------------------------------------------------------------------
     # Paginacao

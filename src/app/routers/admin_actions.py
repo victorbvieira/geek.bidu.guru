@@ -420,14 +420,47 @@ async def update_product(
             counter += 1
 
     # Processa lista de imagens
-    images_list = json.loads(images) if images else []
-    main_image = images_list[0] if images_list else None
+    # Mantem imagens existentes se o campo vier vazio ou invalido
+    try:
+        images_list = json.loads(images) if images and images.strip() else None
+    except json.JSONDecodeError:
+        images_list = None
+
+    # Se nao recebeu lista valida, mantem as imagens existentes do produto
+    if images_list is None:
+        images_list = product.images or []
+
+    main_image = images_list[0] if images_list else product.main_image_url
 
     # Processa lista de categorias (slugs)
     try:
-        categories_list = json.loads(categories_json) if categories_json else []
+        categories_list = json.loads(categories_json) if categories_json and categories_json.strip() else []
     except json.JSONDecodeError:
         categories_list = []
+
+    # Processa preco (pode vir como string vazia ou "None")
+    price_value = None
+    if price and price.strip() and price.strip().lower() != "none":
+        try:
+            price_value = float(price)
+        except ValueError:
+            price_value = None
+
+    # Processa rating
+    rating_value = None
+    if rating and rating.strip() and rating.strip().lower() != "none":
+        try:
+            rating_value = float(rating)
+        except ValueError:
+            rating_value = None
+
+    # Processa review_count
+    review_count_value = 0
+    if review_count and review_count.strip():
+        try:
+            review_count_value = int(review_count)
+        except ValueError:
+            review_count_value = 0
 
     # Monta dados de atualizacao
     update_data = {
@@ -439,13 +472,13 @@ async def update_product(
         "short_description": short_description.strip() or None,
         "long_description": long_description.strip() or None,
         "platform_product_id": platform_id,
-        "price": float(price) if price else None,
+        "price": price_value,
         "availability": ProductAvailability(availability),
         "main_image_url": main_image,
         "images": images_list,
         "categories": categories_list,
-        "rating": float(rating) if rating else None,
-        "review_count": int(review_count) if review_count else 0,
+        "rating": rating_value,
+        "review_count": review_count_value,
         "tags": parse_tags(tags),
     }
 

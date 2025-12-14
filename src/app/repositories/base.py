@@ -205,13 +205,12 @@ class BaseRepository(Generic[ModelType]):
         """
         Atualiza um registro existente.
 
-        Aplica apenas os campos presentes no dicionário e com valor não-None.
-        Isso permite atualizações parciais (PATCH-like).
+        Aplica todos os campos presentes no dicionário, incluindo valores None.
+        Isso permite limpar campos opcionais quando necessario.
 
         Args:
             db_obj: Instância do modelo a ser atualizada
             obj_in: Dicionário com campos a atualizar.
-                    Campos com valor None são ignorados.
 
         Returns:
             Instância atualizada e persistida
@@ -221,8 +220,8 @@ class BaseRepository(Generic[ModelType]):
             updated_user = await repo.update(user, {"name": "Novo Nome"})
         """
         for field, value in obj_in.items():
-            # Ignora campos inexistentes e valores None
-            if hasattr(db_obj, field) and value is not None:
+            # Aplica todos os campos presentes no dicionario
+            if hasattr(db_obj, field):
                 setattr(db_obj, field, value)
         await self.db.commit()
         await self.db.refresh(db_obj)

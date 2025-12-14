@@ -31,7 +31,8 @@
       "Bash(.venv/bin/pip install:*)",
       "Bash(docker network create:*)",
       "Bash(git pull:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(brew list:*)"
     ],
     "deny": [],
     "ask": []

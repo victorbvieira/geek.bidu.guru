@@ -266,16 +266,28 @@ class TestBaseRepository:
         assert updated.email == original_email  # Inalterado
 
     @pytest.mark.asyncio
-    async def test_update_deve_ignorar_valores_none(self, user_repo, sample_user):
-        """Deve ignorar campos com valor None."""
+    async def test_update_nao_deve_ignorar_campos_presentes(self, user_repo, sample_user):
+        """
+        Deve aplicar todos os campos presentes no dicionario.
+
+        NOTA: O metodo update() aplica todos os campos do dicionario,
+        incluindo valores None quando o campo permite. Campos NOT NULL
+        devem receber valores validos.
+        """
         # Arrange
         original_name = sample_user.name
 
-        # Act
-        updated = await user_repo.update(sample_user, {"name": None})
+        # Act - Passa dicionario vazio (sem campos para atualizar)
+        updated = await user_repo.update(sample_user, {})
 
-        # Assert
+        # Assert - Nada deve mudar quando nao passamos campos
         assert updated.name == original_name
+
+        # Act - Atualiza com valor especifico
+        updated2 = await user_repo.update(sample_user, {"name": "Nome Modificado"})
+
+        # Assert - Campo deve ser atualizado
+        assert updated2.name == "Nome Modificado"
 
     # -------------------------------------------------------------------------
     # Testes de DELETE
