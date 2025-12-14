@@ -129,6 +129,10 @@ class AIConfig(Base, UUIDMixin, TimestampMixin):
     # System prompt (instrucoes para o modelo)
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
 
+    # User prompt template (com placeholders como {{title}}, {{content}}, etc.)
+    # Se preenchido, sera usado para montar o user_prompt com os dados
+    user_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     # Parametros de geracao
     temperature: Mapped[float] = mapped_column(Float, nullable=False, default=0.7)
     max_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=500)

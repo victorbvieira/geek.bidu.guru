@@ -148,10 +148,6 @@
                     <div class="admin-form-hint"><span id="seo_description_count">{{ (post.seo_description|length) if post and post.seo_description else 0 }}</span>/160 caracteres</div>
                 </div>
 
-                <div id="seo-loading" style="display: none; text-align: center; padding: 1rem; color: var(--admin-text-muted);">
-                    <div class="ai-spinner"></div>
-                    <span>Gerando com IA...</span>
-                </div>
             </div>
         </div>
 
@@ -274,10 +270,6 @@
                         placeholder="tag1, tag2, tag3"
                     >
                     <div class="admin-form-hint">Separadas por virgula</div>
-                    <div id="tags_loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
-                        <div class="ai-spinner"></div>
-                        <span>Gerando...</span>
-                    </div>
                 </div>
             </div>
 
@@ -337,6 +329,16 @@
         </div>
     </div>
 </form>
+
+<!-- Modal de Loading IA (bloqueia interacao) -->
+<div id="ai-loading-modal" class="ai-loading-modal">
+    <div class="ai-loading-backdrop"></div>
+    <div class="ai-loading-content">
+        <div class="ai-loading-spinner"></div>
+        <div class="ai-loading-text">Gerando com IA...</div>
+        <div class="ai-loading-subtext">Aguarde, isso pode levar alguns segundos</div>
+    </div>
+</div>
 
 <!-- Modal de Selecao de Produto -->
 <div id="product-modal" class="product-modal" style="display: none;">
@@ -848,6 +850,23 @@ let localCompletionTokens = {{ post.ai_completion_tokens if post else 0 }};
 let localCostUsd = {{ post.ai_cost_usd|float if post else 0 }};
 let localGenerationsCount = {{ post.ai_generations_count if post else 0 }};
 
+// Controle do modal de loading global
+const aiLoadingModal = document.getElementById('ai-loading-modal');
+
+function showAILoading(text = 'Gerando com IA...') {
+    if (!aiLoadingModal) return;
+    const textEl = aiLoadingModal.querySelector('.ai-loading-text');
+    if (textEl) textEl.textContent = text;
+    aiLoadingModal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Impede scroll
+}
+
+function hideAILoading() {
+    if (!aiLoadingModal) return;
+    aiLoadingModal.classList.remove('active');
+    document.body.style.overflow = ''; // Restaura scroll
+}
+
 // Atualiza exibicao de custos na pagina em tempo real
 function updateCostDisplay(tokensUsed, promptTokens, completionTokens, costUsd) {
     localTokensUsed += tokensUsed || 0;
@@ -890,11 +909,15 @@ async function generateSEO(field) {
     }
 
     const useCase = fieldToUseCase[field] || field;
-    const loadingDiv = document.getElementById('seo-loading');
     const targetInput = document.getElementById(field);
 
-    loadingDiv.style.display = 'flex';
-    targetInput.disabled = true;
+    // Mostra modal de loading global
+    const fieldLabels = {
+        'seo_focus_keyword': 'Gerando palavra-chave...',
+        'seo_title': 'Gerando titulo SEO...',
+        'seo_description': 'Gerando descricao SEO...'
+    };
+    showAILoading(fieldLabels[field] || 'Gerando com IA...');
 
     try {
         const response = await fetch('/admin/api/ai/generate', {
@@ -904,7 +927,7 @@ async function generateSEO(field) {
                 use_case: useCase,
                 title: title,
                 subtitle: subtitle,
-                content: content.substring(0, 2000)
+                content: content.substring(0, 5000)
             })
         });
 
@@ -919,13 +942,12 @@ async function generateSEO(field) {
                     use_case: fallbackUseCase[useCase],
                     title: title,
                     subtitle: subtitle,
-                    content: content.substring(0, 2000)
+                    content: content.substring(0, 5000)
                 })
             });
             data = await fallbackResponse.json();
             if (fallbackResponse.ok) {
                 processGeneratedContent(field, data.generated_content, targetInput);
-                // Atualiza UI e salva custos de IA incrementalmente
                 updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
                 await updatePostAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
                 return;
@@ -934,7 +956,6 @@ async function generateSEO(field) {
 
         if (response.ok) {
             processGeneratedContent(field, data.generated_content, targetInput);
-            // Atualiza UI e salva custos de IA incrementalmente
             updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
             await updatePostAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
         } else {
@@ -943,8 +964,7 @@ async function generateSEO(field) {
     } catch (error) {
         alert('Erro de conexao: ' + error.message);
     } finally {
-        loadingDiv.style.display = 'none';
-        targetInput.disabled = false;
+        hideAILoading();
     }
 }
 
@@ -975,11 +995,10 @@ async function generateTags() {
         return;
     }
 
-    const loadingDiv = document.getElementById('tags_loading');
     const tagsInput = document.getElementById('tags');
 
-    loadingDiv.style.display = 'flex';
-    tagsInput.disabled = true;
+    // Mostra modal de loading global
+    showAILoading('Gerando tags...');
 
     try {
         const response = await fetch('/admin/api/ai/generate', {
@@ -989,52 +1008,39 @@ async function generateTags() {
                 use_case: 'post_tags',
                 title: title,
                 subtitle: subtitle,
-                content: content.substring(0, 2000)
+                content: content.substring(0, 5000)
             })
         });
 
         const data = await response.json();
 
         if (response.ok) {
-            // Log para debug
-            console.log('Resposta tags IA:', data);
-            console.log('generated_content:', data.generated_content);
-
             // Limpa e formata as tags
             let rawContent = data.generated_content || '';
             let tags = rawContent
                 .replace(/^(tags?|sugestoes?|palavras?-?chave)[:.\s-]*/i, '')
                 .split(/[,\n]/)
-                .map(t => t.trim().toLowerCase().replace(/^[-•*\d.)\s]+/, ''))  // Remove prefixos de lista
+                .map(t => t.trim().toLowerCase().replace(/^[-•*\d.)\s]+/, ''))
                 .filter(t => t && !t.startsWith('#') && t.length > 1)
                 .slice(0, 5)
                 .join(', ');
 
-            console.log('Tags processadas:', tags);
-
             // Se nao conseguiu processar, usa o conteudo original
             if (!tags && rawContent.trim()) {
                 tags = rawContent.trim().toLowerCase();
-                console.log('Usando conteudo original como tag:', tags);
             }
 
             tagsInput.value = tags;
-            // Atualiza UI e salva custos de IA incrementalmente
             updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
             await updatePostAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
         } else {
-            // Loga erro completo no console para facilitar debug
-            console.error('Erro ao gerar tags:', data);
             const errorMsg = data.detail || 'Erro desconhecido';
-            const fullError = data.traceback ? `${errorMsg}\n\nTraceback:\n${data.traceback}` : errorMsg;
-            alert('Erro ao gerar tags: ' + errorMsg + '\n\n(Veja console para detalhes)');
+            alert('Erro ao gerar tags: ' + errorMsg);
         }
     } catch (error) {
-        console.error('Erro de conexao:', error);
         alert('Erro de conexao: ' + error.message);
     } finally {
-        loadingDiv.style.display = 'none';
-        tagsInput.disabled = false;
+        hideAILoading();
     }
 }
 
@@ -1048,29 +1054,22 @@ async function generateAllSEO() {
         return;
     }
 
-    const loadingDiv = document.getElementById('seo-loading');
-    const tagsLoading = document.getElementById('tags_loading');
     const seoKeyword = document.getElementById('seo_focus_keyword');
     const seoTitle = document.getElementById('seo_title');
     const seoDescription = document.getElementById('seo_description');
     const tagsInput = document.getElementById('tags');
 
-    loadingDiv.style.display = 'flex';
-    tagsLoading.style.display = 'flex';
-    seoKeyword.disabled = true;
-    seoTitle.disabled = true;
-    seoDescription.disabled = true;
-    tagsInput.disabled = true;
+    // Mostra modal de loading global
+    showAILoading('Gerando SEO completo...');
 
     const requestBody = {
         title: title,
         subtitle: subtitle,
-        content: content.substring(0, 2000)
+        content: content.substring(0, 5000)
     };
 
     try {
         // Gera keyword, titulo, descricao e tags em paralelo
-        // Usa os novos use_cases especificos para Post
         const [keywordResponse, titleResponse, descResponse, tagsResponse] = await Promise.all([
             fetch('/admin/api/ai/generate', {
                 method: 'POST',
@@ -1102,7 +1101,6 @@ async function generateAllSEO() {
         ]);
 
         if (keywordResponse.ok) {
-            // Pega apenas a primeira keyword
             let keyword = keywordData.generated_content
                 .replace(/^(palavras?-?chave|keywords?|foco|principal)[:.\s-]*/i, '')
                 .split(/[,\n]/)[0]
@@ -1121,10 +1119,6 @@ async function generateAllSEO() {
         }
 
         if (tagsResponse.ok) {
-            // Log para debug
-            console.log('Tags generateAllSEO:', tagsData.generated_content);
-
-            // Limpa e formata as tags
             let rawContent = tagsData.generated_content || '';
             let tags = rawContent
                 .replace(/^(tags?|sugestoes?|palavras?-?chave)[:.\s-]*/i, '')
@@ -1134,16 +1128,14 @@ async function generateAllSEO() {
                 .slice(0, 5)
                 .join(', ');
 
-            // Se nao conseguiu processar, usa o conteudo original
             if (!tags && rawContent.trim()) {
                 tags = rawContent.trim().toLowerCase();
             }
 
             tagsInput.value = tags;
-            console.log('Tags processadas generateAllSEO:', tags);
         }
 
-        // Salva custos de cada geracao individualmente e atualiza UI
+        // Salva custos de cada geracao individualmente
         if (keywordResponse.ok) {
             updateCostDisplay(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
             await updatePostAICost(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
@@ -1167,12 +1159,7 @@ async function generateAllSEO() {
     } catch (error) {
         alert('Erro de conexao: ' + error.message);
     } finally {
-        loadingDiv.style.display = 'none';
-        tagsLoading.style.display = 'none';
-        seoKeyword.disabled = false;
-        seoTitle.disabled = false;
-        seoDescription.disabled = false;
-        tagsInput.disabled = false;
+        hideAILoading();
     }
 }
 </script>

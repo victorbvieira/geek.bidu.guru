@@ -8,7 +8,6 @@ Usa LiteLLM para compatibilidade com multiplos provedores.
 """
 
 import logging
-import re
 from decimal import Decimal
 from typing import Any
 
@@ -90,13 +89,22 @@ class AISEOService:
         self,
         use_case: AIUseCase,
         *,
+        # Campos comuns
         title: str | None = None,
         subtitle: str | None = None,
         content: str | None = None,
         keywords: list[str] | None = None,
         category: str | None = None,
-        product_name: str | None = None,
         target_audience: str | None = None,
+        # Campos para Product
+        product_name: str | None = None,
+        price: str | None = None,
+        platform: str | None = None,
+        # Campos para Occasion
+        occasion_name: str | None = None,
+        occasion_date: str | None = None,
+        # Campos extras (para extensibilidade)
+        extra_context: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """
         Gera conteudo SEO usando a configuracao do caso de uso.
@@ -108,8 +116,13 @@ class AISEOService:
             content: Conteudo completo para analise
             keywords: Palavras-chave existentes
             category: Categoria do conteudo
-            product_name: Nome do produto (se aplicavel)
             target_audience: Publico-alvo
+            product_name: Nome do produto
+            price: Preco do produto
+            platform: Plataforma do produto (amazon, ml, shopee)
+            occasion_name: Nome da ocasiao (Natal, Dia dos Pais, etc.)
+            occasion_date: Data da ocasiao
+            extra_context: Campos extras para placeholders customizados
 
         Returns:
             Dicionario com:
@@ -128,48 +141,29 @@ class AISEOService:
                 f"Nenhuma configuracao ativa encontrada para: {use_case.value}"
             )
 
-        # NOVA ABORDAGEM: system_prompt = instrucoes, user_prompt = dados
-        # Se o prompt tem placeholders, extraimos a parte de instrucoes para system
-        # e montamos o user_prompt com os dados
+        # System prompt vem direto do banco (somente instrucoes)
+        system_prompt = config.system_prompt
 
-        has_placeholders = "{{title}}" in config.system_prompt or "{{content}}" in config.system_prompt
-
-        if has_placeholders:
-            # Remove os placeholders do system_prompt (mantem apenas instrucoes)
-            # O system_prompt original fica como instrucao geral
-            system_prompt = config.system_prompt
-
-            # Remove a secao de CONTEXTO DO POST do system_prompt
-            # pois ela vai no user_prompt agora
-            # Remove bloco de CONTEXTO ate a proxima secao (REGRAS, etc)
-            system_prompt = re.sub(
-                r'CONTEXTO DO POST:.*?(?=\n\n[A-Z]|\nREGRAS|\nRESPONDA|\Z)',
-                '',
-                system_prompt,
-                flags=re.DOTALL | re.IGNORECASE
-            ).strip()
-
-            # Monta user_prompt com os dados do conteudo
-            user_parts = []
-            if title:
-                user_parts.append(f"Titulo: {title}")
-            if subtitle:
-                user_parts.append(f"Subtitulo: {subtitle}")
-            if content:
-                # Limita conteudo para nao exceder tokens
-                content_text = content[:2000] if len(content) > 2000 else content
-                user_parts.append(f"Conteudo:\n{content_text}")
-            if category:
-                user_parts.append(f"Categoria: {category}")
-            if keywords:
-                user_parts.append(f"Keywords atuais: {', '.join(keywords)}")
-            if product_name:
-                user_parts.append(f"Produto: {product_name}")
-
-            user_prompt = "\n\n".join(user_parts) if user_parts else "Gere o conteudo."
+        # User prompt: usa o template do banco ou constroi dinamicamente
+        if config.user_prompt:
+            # Usa o template do banco e substitui placeholders
+            user_prompt = self._replace_placeholders(
+                config.user_prompt,
+                title=title,
+                subtitle=subtitle,
+                content=content,
+                keywords=keywords,
+                category=category,
+                product_name=product_name,
+                price=price,
+                platform=platform,
+                occasion_name=occasion_name,
+                occasion_date=occasion_date,
+                target_audience=target_audience,
+                extra_context=extra_context,
+            )
         else:
-            # Prompt antigo sem placeholders - mantem comportamento original
-            system_prompt = config.system_prompt
+            # Fallback: constroi user_prompt dinamicamente (retrocompatibilidade)
             user_prompt = self._build_user_prompt(
                 use_case=use_case,
                 title=title,
@@ -231,12 +225,22 @@ class AISEOService:
         self,
         template: str,
         *,
+        # Campos comuns
         title: str | None = None,
         subtitle: str | None = None,
         content: str | None = None,
         keywords: list[str] | None = None,
         category: str | None = None,
+        target_audience: str | None = None,
+        # Campos para Product
         product_name: str | None = None,
+        price: str | None = None,
+        platform: str | None = None,
+        # Campos para Occasion
+        occasion_name: str | None = None,
+        occasion_date: str | None = None,
+        # Campos extras
+        extra_context: dict[str, str] | None = None,
     ) -> str:
         """
         Substitui placeholders no template por valores reais.
@@ -247,23 +251,54 @@ class AISEOService:
         - {{content}}: Conteudo completo (limitado a 2000 chars)
         - {{keywords}}: Palavras-chave separadas por virgula
         - {{category}}: Categoria
+        - {{target_audience}}: Publico-alvo
         - {{product_name}}: Nome do produto
+        - {{price}}: Preco do produto
+        - {{platform}}: Plataforma (amazon, ml, shopee)
+        - {{occasion_name}}: Nome da ocasiao
+        - {{occasion_date}}: Data da ocasiao
+        - {{campo_extra}}: Qualquer campo em extra_context
         """
         result = template
 
-        # Substitui cada placeholder
-        result = result.replace("{{title}}", title or "(sem titulo)")
-        result = result.replace("{{subtitle}}", subtitle or "(sem subtitulo)")
+        # Campos comuns
+        result = result.replace("{{title}}", title or "")
+        result = result.replace("{{subtitle}}", subtitle or "")
+        result = result.replace("{{category}}", category or "")
+        result = result.replace("{{target_audience}}", target_audience or "")
+        result = result.replace("{{keywords}}", ", ".join(keywords) if keywords else "")
 
-        # Limita conteudo para nao exceder tokens
-        content_text = content[:2000] if content and len(content) > 2000 else (content or "(sem conteudo)")
+        # Limita conteudo para nao exceder tokens (5000 chars ~= 1250 tokens)
+        content_text = content[:5000] if content and len(content) > 5000 else (content or "")
         result = result.replace("{{content}}", content_text)
 
-        result = result.replace("{{keywords}}", ", ".join(keywords) if keywords else "(sem keywords)")
-        result = result.replace("{{category}}", category or "(sem categoria)")
-        result = result.replace("{{product_name}}", product_name or "(sem produto)")
+        # Campos de Product
+        result = result.replace("{{product_name}}", product_name or "")
+        result = result.replace("{{price}}", price or "")
+        result = result.replace("{{platform}}", platform or "")
 
-        return result
+        # Campos de Occasion
+        result = result.replace("{{occasion_name}}", occasion_name or "")
+        result = result.replace("{{occasion_date}}", occasion_date or "")
+
+        # Campos extras customizados
+        if extra_context:
+            for key, value in extra_context.items():
+                result = result.replace(f"{{{{{key}}}}}", value or "")
+
+        # Remove linhas que ficaram apenas com labels sem valor
+        # Ex: "Titulo: " sem valor -> remove a linha
+        lines = result.split("\n")
+        cleaned_lines = []
+        for line in lines:
+            # Se a linha termina com ": " e nao tem mais nada, pula
+            stripped = line.strip()
+            if stripped and not stripped.endswith(":"):
+                cleaned_lines.append(line)
+            elif stripped and not stripped.endswith(": "):
+                cleaned_lines.append(line)
+
+        return "\n".join(cleaned_lines).strip()
 
     def _build_user_prompt(
         self,
@@ -310,8 +345,8 @@ class AISEOService:
 
         # Adiciona o conteudo se fornecido
         if content:
-            # Limita o conteudo para nao exceder tokens
-            max_content = content[:2000] if len(content) > 2000 else content
+            # Limita o conteudo para nao exceder tokens (5000 chars ~= 1250 tokens)
+            max_content = content[:5000] if len(content) > 5000 else content
             parts.append(f"\nConteudo:\n{max_content}")
 
         # Adiciona metadata adicional
