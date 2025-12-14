@@ -10,6 +10,8 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from decimal import Decimal
+
 from sqlalchemy import (
     Boolean,
     DateTime,
@@ -17,6 +19,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
 )
@@ -129,6 +132,28 @@ class Post(Base, UUIDMixin, TimestampMixin):
     # Metricas (desnormalizadas para performance)
     view_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     click_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
+    # Custos de IA (para calcular ROI)
+    ai_tokens_used: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Total de tokens consumidos em geracoes de IA",
+    )
+    ai_prompt_tokens: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Tokens de entrada (prompt) consumidos em geracoes de IA",
+    )
+    ai_completion_tokens: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Tokens de saida (completion) consumidos em geracoes de IA",
+    )
+    ai_cost_usd: Mapped[Decimal] = mapped_column(
+        Numeric(precision=10, scale=6), default=Decimal("0"), server_default="0",
+        comment="Custo total em USD das geracoes de IA",
+    )
+    ai_generations_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Numero de vezes que IA foi usada para gerar conteudo",
+    )
 
     # Relacionamentos
     category: Mapped[Optional["Category"]] = relationship(

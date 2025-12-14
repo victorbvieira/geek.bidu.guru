@@ -36,7 +36,10 @@
       "Bash(source ../.env)",
       "Bash(../.venv/bin/alembic upgrade:*)",
       "Bash(../.venv/bin/alembic downgrade:*)",
-      "Bash(../.venv/bin/alembic current:*)"
+      "Bash(../.venv/bin/alembic current:*)",
+      "Bash(docker exec:*)",
+      "Bash(source:*)",
+      "Bash(/opt/homebrew/bin/psql:*)"
     ],
     "deny": [],
     "ask": []

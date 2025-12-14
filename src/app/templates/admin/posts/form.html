@@ -281,6 +281,59 @@
                 </div>
             </div>
 
+            <!-- Custos de IA -->
+            {% if post %}
+            <div class="admin-card" id="ai-costs-card" style="background: var(--admin-bg-tertiary);">
+                <h4 style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; text-align: center; margin-bottom: 0.75rem;">
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-prompt-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-warning);">
+                            {{ "{:,}".format(post.ai_prompt_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Entrada</div>
+                    </div>
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-completion-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-info);">
+                            {{ "{:,}".format(post.ai_completion_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Saida</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; text-align: center;">
+                    <div>
+                        <div id="ai-tokens-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-primary);">
+                            {{ "{:,}".format(post.ai_tokens_used) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Total</div>
+                    </div>
+                    <div>
+                        <div id="ai-cost-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-success);">
+                            ${{ "%.6f"|format(post.ai_cost_usd|float) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Custo</div>
+                    </div>
+                    <div>
+                        <div id="ai-generations-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-text);">
+                            {{ post.ai_generations_count }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Chamadas</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Novo post - custos serao exibidos apos salvar -->
+            <div class="admin-card" style="background: var(--admin-bg-tertiary); opacity: 0.6;">
+                <h4 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--admin-text-muted); margin: 0;">
+                    Salve o post para acompanhar custos de IA
+                </p>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 </form>
@@ -765,6 +818,67 @@ const fallbackUseCase = {
     'post_seo_keyword': 'seo_keywords'
 };
 
+// ID do post atual (para salvar custos de IA)
+const postId = '{{ post.id if post else "" }}';
+
+// Funcao para atualizar custos de IA do post (incremental)
+async function updatePostAICost(tokensUsed, promptTokens, completionTokens, costUsd) {
+    if (!postId) return; // Novo post, nao tem ID ainda
+
+    try {
+        await fetch(`/admin/api/posts/${postId}/ai-cost`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tokens_used: tokensUsed,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                cost_usd: costUsd
+            })
+        });
+    } catch (error) {
+        console.error('Erro ao salvar custos de IA:', error);
+    }
+}
+
+// Variaveis para acumular custos localmente (atualiza UI em tempo real)
+let localTokensUsed = {{ post.ai_tokens_used if post else 0 }};
+let localPromptTokens = {{ post.ai_prompt_tokens if post else 0 }};
+let localCompletionTokens = {{ post.ai_completion_tokens if post else 0 }};
+let localCostUsd = {{ post.ai_cost_usd|float if post else 0 }};
+let localGenerationsCount = {{ post.ai_generations_count if post else 0 }};
+
+// Atualiza exibicao de custos na pagina em tempo real
+function updateCostDisplay(tokensUsed, promptTokens, completionTokens, costUsd) {
+    localTokensUsed += tokensUsed || 0;
+    localPromptTokens += promptTokens || 0;
+    localCompletionTokens += completionTokens || 0;
+    localCostUsd += costUsd || 0;
+    localGenerationsCount += 1;
+
+    const tokensDisplay = document.getElementById('ai-tokens-display');
+    const promptDisplay = document.getElementById('ai-prompt-tokens-display');
+    const completionDisplay = document.getElementById('ai-completion-tokens-display');
+    const costDisplay = document.getElementById('ai-cost-display');
+    const genDisplay = document.getElementById('ai-generations-display');
+
+    if (tokensDisplay) {
+        tokensDisplay.textContent = localTokensUsed.toLocaleString('pt-BR');
+    }
+    if (promptDisplay) {
+        promptDisplay.textContent = localPromptTokens.toLocaleString('pt-BR');
+    }
+    if (completionDisplay) {
+        completionDisplay.textContent = localCompletionTokens.toLocaleString('pt-BR');
+    }
+    if (costDisplay) {
+        costDisplay.textContent = '$' + localCostUsd.toFixed(6);
+    }
+    if (genDisplay) {
+        genDisplay.textContent = localGenerationsCount;
+    }
+}
+
 async function generateSEO(field) {
     const title = document.getElementById('title').value.trim();
     const subtitle = document.getElementById('subtitle').value.trim();
@@ -811,12 +925,18 @@ async function generateSEO(field) {
             data = await fallbackResponse.json();
             if (fallbackResponse.ok) {
                 processGeneratedContent(field, data.generated_content, targetInput);
+                // Atualiza UI e salva custos de IA incrementalmente
+                updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+                await updatePostAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
                 return;
             }
         }
 
         if (response.ok) {
             processGeneratedContent(field, data.generated_content, targetInput);
+            // Atualiza UI e salva custos de IA incrementalmente
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updatePostAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
         } else {
             alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
         }
@@ -876,20 +996,41 @@ async function generateTags() {
         const data = await response.json();
 
         if (response.ok) {
+            // Log para debug
+            console.log('Resposta tags IA:', data);
+            console.log('generated_content:', data.generated_content);
+
             // Limpa e formata as tags
-            let tags = data.generated_content
-                .replace(/^(tags?|sugestoes?)[:.\s-]*/i, '')
+            let rawContent = data.generated_content || '';
+            let tags = rawContent
+                .replace(/^(tags?|sugestoes?|palavras?-?chave)[:.\s-]*/i, '')
                 .split(/[,\n]/)
-                .map(t => t.trim().toLowerCase())
-                .filter(t => t && !t.startsWith('#'))
+                .map(t => t.trim().toLowerCase().replace(/^[-•*\d.)\s]+/, ''))  // Remove prefixos de lista
+                .filter(t => t && !t.startsWith('#') && t.length > 1)
                 .slice(0, 5)
                 .join(', ');
 
+            console.log('Tags processadas:', tags);
+
+            // Se nao conseguiu processar, usa o conteudo original
+            if (!tags && rawContent.trim()) {
+                tags = rawContent.trim().toLowerCase();
+                console.log('Usando conteudo original como tag:', tags);
+            }
+
             tagsInput.value = tags;
+            // Atualiza UI e salva custos de IA incrementalmente
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updatePostAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
         } else {
-            alert('Erro ao gerar tags: ' + (data.detail || 'Erro desconhecido'));
+            // Loga erro completo no console para facilitar debug
+            console.error('Erro ao gerar tags:', data);
+            const errorMsg = data.detail || 'Erro desconhecido';
+            const fullError = data.traceback ? `${errorMsg}\n\nTraceback:\n${data.traceback}` : errorMsg;
+            alert('Erro ao gerar tags: ' + errorMsg + '\n\n(Veja console para detalhes)');
         }
     } catch (error) {
+        console.error('Erro de conexao:', error);
         alert('Erro de conexao: ' + error.message);
     } finally {
         loadingDiv.style.display = 'none';
@@ -980,15 +1121,44 @@ async function generateAllSEO() {
         }
 
         if (tagsResponse.ok) {
+            // Log para debug
+            console.log('Tags generateAllSEO:', tagsData.generated_content);
+
             // Limpa e formata as tags
-            let tags = tagsData.generated_content
-                .replace(/^(tags?|sugestoes?)[:.\s-]*/i, '')
+            let rawContent = tagsData.generated_content || '';
+            let tags = rawContent
+                .replace(/^(tags?|sugestoes?|palavras?-?chave)[:.\s-]*/i, '')
                 .split(/[,\n]/)
-                .map(t => t.trim().toLowerCase())
-                .filter(t => t && !t.startsWith('#'))
+                .map(t => t.trim().toLowerCase().replace(/^[-•*\d.)\s]+/, ''))
+                .filter(t => t && !t.startsWith('#') && t.length > 1)
                 .slice(0, 5)
                 .join(', ');
+
+            // Se nao conseguiu processar, usa o conteudo original
+            if (!tags && rawContent.trim()) {
+                tags = rawContent.trim().toLowerCase();
+            }
+
             tagsInput.value = tags;
+            console.log('Tags processadas generateAllSEO:', tags);
+        }
+
+        // Salva custos de cada geracao individualmente e atualiza UI
+        if (keywordResponse.ok) {
+            updateCostDisplay(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
+            await updatePostAICost(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
+        }
+        if (titleResponse.ok) {
+            updateCostDisplay(titleData.tokens_used || 0, titleData.prompt_tokens || 0, titleData.completion_tokens || 0, titleData.cost_usd || 0);
+            await updatePostAICost(titleData.tokens_used || 0, titleData.prompt_tokens || 0, titleData.completion_tokens || 0, titleData.cost_usd || 0);
+        }
+        if (descResponse.ok) {
+            updateCostDisplay(descData.tokens_used || 0, descData.prompt_tokens || 0, descData.completion_tokens || 0, descData.cost_usd || 0);
+            await updatePostAICost(descData.tokens_used || 0, descData.prompt_tokens || 0, descData.completion_tokens || 0, descData.cost_usd || 0);
+        }
+        if (tagsResponse.ok) {
+            updateCostDisplay(tagsData.tokens_used || 0, tagsData.prompt_tokens || 0, tagsData.completion_tokens || 0, tagsData.cost_usd || 0);
+            await updatePostAICost(tagsData.tokens_used || 0, tagsData.prompt_tokens || 0, tagsData.completion_tokens || 0, tagsData.cost_usd || 0);
         }
 
         if (!keywordResponse.ok || !titleResponse.ok || !descResponse.ok || !tagsResponse.ok) {

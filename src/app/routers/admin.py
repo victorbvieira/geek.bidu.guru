@@ -795,9 +795,22 @@ async def list_ai_configs(
     request: Request,
     current_user: Annotated[User, Depends(require_admin_role)],
     repo: AIConfigRepo,
+    entity: str | None = None,
+    use_case: str | None = None,
 ):
-    """Listagem de configuracoes de IA."""
+    """Listagem de configuracoes de IA com filtros opcionais."""
     configs = await repo.get_all()
+
+    # Aplica filtros se fornecidos
+    if entity:
+        configs = [c for c in configs if c.entity and c.entity.value == entity]
+    if use_case:
+        configs = [c for c in configs if c.use_case and c.use_case.value == use_case]
+
+    # Coleta valores unicos para os filtros
+    from app.models.ai_config import AIEntity, AIUseCase
+    entities = [e.value for e in AIEntity]
+    use_cases = [uc.value for uc in AIUseCase]
 
     return templates.TemplateResponse(
         request=request,
@@ -807,6 +820,10 @@ async def list_ai_configs(
             "current_user": current_user,
             "configs": configs,
             "active_page": "ai-configs",
+            "entities": entities,
+            "use_cases": use_cases,
+            "selected_entity": entity,
+            "selected_use_case": use_case,
         },
     )
 
@@ -873,4 +890,71 @@ async def update_ai_config(
     return RedirectResponse(
         url="/admin/ai-configs",
         status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+# -----------------------------------------------------------------------------
+# AI Logs (Historico de chamadas LLM)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/ai-logs", response_class=HTMLResponse)
+async def list_ai_logs(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    db: DBSession,
+    use_case: str | None = None,
+    success: str | None = None,
+):
+    """
+    Listagem de logs de chamadas ao LLM com filtros.
+
+    Args:
+        use_case: Filtra por caso de uso
+        success: Filtra por status (1=sucesso, 0=erro)
+    """
+    from app.repositories.ai_log import AILogRepository
+    from app.models.ai_config import AIUseCase
+
+    repo = AILogRepository(db)
+
+    # Converte success string para bool
+    success_filter = None
+    if success == "1":
+        success_filter = True
+    elif success == "0":
+        success_filter = False
+
+    # Busca logs com filtros
+    logs = await repo.get_all(
+        limit=50,
+        use_case=use_case or None,
+        success=success_filter,
+    )
+
+    # Estatisticas
+    total_logs = await repo.count()
+    success_count = await repo.count(success=True)
+    error_count = await repo.count(success=False)
+    total_cost = await repo.get_total_cost()
+
+    # Lista de use_cases para o filtro
+    use_cases = [uc.value for uc in AIUseCase]
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/ai-logs/list.html",
+        context={
+            "title": "Logs de IA - Admin",
+            "current_user": current_user,
+            "logs": logs,
+            "active_page": "ai-logs",
+            "use_cases": use_cases,
+            "selected_use_case": use_case,
+            "selected_success": success,
+            "total_logs": total_logs,
+            "success_count": success_count,
+            "error_count": error_count,
+            "total_cost": total_cost,
+        },
     )

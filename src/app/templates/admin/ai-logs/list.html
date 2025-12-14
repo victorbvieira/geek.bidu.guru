@@ -1,0 +1,327 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Logs de IA{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Logs de IA</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div class="admin-page-header-left">
+        <h1 class="admin-page-title">Logs de IA</h1>
+        <p class="admin-page-subtitle">Historico de chamadas ao LLM para debug e auditoria</p>
+    </div>
+</div>
+
+<!-- Estatisticas Resumo -->
+<div class="admin-stats" style="margin-bottom: 1.5rem;">
+    <div class="admin-stat-card">
+        <span class="admin-stat-icon">📊</span>
+        <div>
+            <div class="admin-stat-value">{{ total_logs }}</div>
+            <div class="admin-stat-label">Total Chamadas</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <span class="admin-stat-icon">✅</span>
+        <div>
+            <div class="admin-stat-value" style="color: var(--admin-success);">{{ success_count }}</div>
+            <div class="admin-stat-label">Sucesso</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <span class="admin-stat-icon">❌</span>
+        <div>
+            <div class="admin-stat-value" style="color: var(--admin-danger);">{{ error_count }}</div>
+            <div class="admin-stat-label">Erros</div>
+        </div>
+    </div>
+    <div class="admin-stat-card">
+        <span class="admin-stat-icon">💰</span>
+        <div>
+            <div class="admin-stat-value">${{ "%.4f"|format(total_cost|float) }}</div>
+            <div class="admin-stat-label">Custo Total</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="admin-card" style="margin-bottom: 1.5rem;">
+    <form method="GET" action="/admin/ai-logs" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label for="use_case" class="admin-form-label">Caso de Uso</label>
+            <select id="use_case" name="use_case" class="admin-form-select">
+                <option value="">Todos</option>
+                {% for uc in use_cases %}
+                <option value="{{ uc }}" {% if selected_use_case == uc %}selected{% endif %}>
+                    {{ uc }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 120px;">
+            <label for="success" class="admin-form-label">Status</label>
+            <select id="success" name="success" class="admin-form-select">
+                <option value="">Todos</option>
+                <option value="1" {% if selected_success == '1' %}selected{% endif %}>Sucesso</option>
+                <option value="0" {% if selected_success == '0' %}selected{% endif %}>Erro</option>
+            </select>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-primary">Filtrar</button>
+        {% if selected_use_case or selected_success %}
+        <a href="/admin/ai-logs" class="admin-btn admin-btn-secondary">Limpar</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Lista de Logs -->
+<div class="admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Caso de Uso</th>
+                <th>Modelo</th>
+                <th>Tokens</th>
+                <th>Custo</th>
+                <th>Latencia</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>
+                    <span title="{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}">
+                        {{ log.created_at.strftime('%d/%m %H:%M') }}
+                    </span>
+                </td>
+                <td>
+                    <code class="admin-code">{{ log.use_case }}</code>
+                </td>
+                <td>
+                    <span class="admin-badge admin-badge-secondary">{{ log.provider }}</span>
+                    <br>
+                    <small>{{ log.model[:25] }}{% if log.model|length > 25 %}...{% endif %}</small>
+                </td>
+                <td>
+                    {% if log.total_tokens %}
+                    <span title="Entrada: {{ log.prompt_tokens or 0 }} / Saida: {{ log.completion_tokens or 0 }}">
+                        {{ "{:,}".format(log.total_tokens) }}
+                    </span>
+                    {% else %}
+                    <span style="color: var(--admin-text-muted);">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.cost_usd %}
+                    ${{ "%.6f"|format(log.cost_usd|float) }}
+                    {% else %}
+                    <span style="color: var(--admin-text-muted);">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.latency_ms %}
+                    {{ log.latency_ms }}ms
+                    {% else %}
+                    <span style="color: var(--admin-text-muted);">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.success %}
+                    <span class="admin-badge admin-badge-success">OK</span>
+                    {% else %}
+                    <span class="admin-badge admin-badge-danger">Erro</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="showLogDetail('{{ log.id }}')">
+                        Ver
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="admin-empty-state">
+                    Nenhum log encontrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginacao simples -->
+{% if logs|length >= 50 %}
+<div style="margin-top: 1rem; text-align: center; color: var(--admin-text-muted);">
+    Mostrando os 50 logs mais recentes.
+</div>
+{% endif %}
+
+<!-- Modal de Detalhes -->
+<div id="log-detail-modal" class="product-modal" style="display: none;">
+    <div class="product-modal-backdrop" onclick="closeLogDetail()"></div>
+    <div class="product-modal-content" style="max-width: 900px; max-height: 90vh; overflow: auto;">
+        <div class="product-modal-header">
+            <h3>Detalhes do Log</h3>
+            <button type="button" class="product-modal-close" onclick="closeLogDetail()">&times;</button>
+        </div>
+        <div id="log-detail-content" style="padding: 1rem;">
+            <div class="ai-spinner"></div>
+            <span>Carregando...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dados dos logs para exibicao detalhada
+const logsData = {
+    {% for log in logs %}
+    '{{ log.id }}': {
+        created_at: '{{ log.created_at.strftime("%Y-%m-%d %H:%M:%S") }}',
+        use_case: '{{ log.use_case }}',
+        entity_type: '{{ log.entity_type or "" }}',
+        entity_id: '{{ log.entity_id or "" }}',
+        provider: '{{ log.provider }}',
+        model: '{{ log.model }}',
+        temperature: {{ log.temperature or 'null' }},
+        max_tokens: {{ log.max_tokens or 'null' }},
+        system_prompt: {{ log.system_prompt|tojson if log.system_prompt else 'null' }},
+        user_prompt: {{ log.user_prompt|tojson if log.user_prompt else 'null' }},
+        response_content: {{ log.response_content|tojson if log.response_content else 'null' }},
+        finish_reason: '{{ log.finish_reason or "" }}',
+        prompt_tokens: {{ log.prompt_tokens or 'null' }},
+        completion_tokens: {{ log.completion_tokens or 'null' }},
+        total_tokens: {{ log.total_tokens or 'null' }},
+        cost_usd: {{ log.cost_usd|float if log.cost_usd else 'null' }},
+        latency_ms: {{ log.latency_ms or 'null' }},
+        success: {{ 'true' if log.success else 'false' }},
+        error_message: {{ log.error_message|tojson if log.error_message else 'null' }}
+    },
+    {% endfor %}
+};
+
+function showLogDetail(logId) {
+    const log = logsData[logId];
+    if (!log) return;
+
+    const content = document.getElementById('log-detail-content');
+    const modal = document.getElementById('log-detail-modal');
+
+    // Monta HTML do detalhe
+    let html = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+                <strong>Data/Hora:</strong> ${log.created_at}
+            </div>
+            <div>
+                <strong>Caso de Uso:</strong> <code>${log.use_case}</code>
+            </div>
+            <div>
+                <strong>Provider:</strong> ${log.provider}
+            </div>
+            <div>
+                <strong>Modelo:</strong> ${log.model}
+            </div>
+            <div>
+                <strong>Temperature:</strong> ${log.temperature || '-'}
+            </div>
+            <div>
+                <strong>Max Tokens:</strong> ${log.max_tokens || '-'}
+            </div>
+            <div>
+                <strong>Tokens:</strong>
+                ${log.total_tokens ? `${log.total_tokens.toLocaleString()} (${log.prompt_tokens || 0} in / ${log.completion_tokens || 0} out)` : '-'}
+            </div>
+            <div>
+                <strong>Custo:</strong> ${log.cost_usd ? '$' + log.cost_usd.toFixed(6) : '-'}
+            </div>
+            <div>
+                <strong>Latencia:</strong> ${log.latency_ms ? log.latency_ms + 'ms' : '-'}
+            </div>
+            <div>
+                <strong>Status:</strong>
+                <span class="admin-badge admin-badge-${log.success ? 'success' : 'danger'}">
+                    ${log.success ? 'OK' : 'Erro'}
+                </span>
+            </div>
+        </div>
+    `;
+
+    // Entity info
+    if (log.entity_type || log.entity_id) {
+        html += `
+            <div style="margin-bottom: 1rem; padding: 0.5rem; background: var(--admin-bg-tertiary); border-radius: 4px;">
+                <strong>Entidade:</strong> ${log.entity_type || '-'}
+                ${log.entity_id ? `<code style="font-size: 0.75rem;">${log.entity_id}</code>` : ''}
+            </div>
+        `;
+    }
+
+    // System Prompt
+    if (log.system_prompt) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>System Prompt:</strong>
+                <pre style="background: var(--admin-bg-tertiary); padding: 1rem; border-radius: 4px; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow: auto; font-size: 0.8rem;">${escapeHtml(log.system_prompt)}</pre>
+            </div>
+        `;
+    }
+
+    // User Prompt
+    if (log.user_prompt) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>User Prompt:</strong>
+                <pre style="background: var(--admin-bg-tertiary); padding: 1rem; border-radius: 4px; white-space: pre-wrap; word-break: break-word; max-height: 150px; overflow: auto; font-size: 0.8rem;">${escapeHtml(log.user_prompt)}</pre>
+            </div>
+        `;
+    }
+
+    // Response ou Error
+    if (log.success && log.response_content) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>Resposta (${log.finish_reason || 'unknown'}):</strong>
+                <pre style="background: var(--admin-success-bg, rgba(34, 197, 94, 0.1)); padding: 1rem; border-radius: 4px; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow: auto; font-size: 0.8rem; border: 1px solid var(--admin-success);">${escapeHtml(log.response_content)}</pre>
+            </div>
+        `;
+    }
+
+    if (!log.success && log.error_message) {
+        html += `
+            <div style="margin-bottom: 1rem;">
+                <strong>Erro:</strong>
+                <pre style="background: var(--admin-danger-bg, rgba(239, 68, 68, 0.1)); padding: 1rem; border-radius: 4px; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow: auto; font-size: 0.8rem; border: 1px solid var(--admin-danger);">${escapeHtml(log.error_message)}</pre>
+            </div>
+        `;
+    }
+
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+function closeLogDetail() {
+    document.getElementById('log-detail-modal').style.display = 'none';
+}
+
+// Escape HTML para evitar XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Fecha modal com ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLogDetail();
+    }
+});
+</script>
+{% endblock %}

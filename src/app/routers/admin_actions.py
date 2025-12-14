@@ -6,6 +6,7 @@ Processa formularios de criacao, edicao e exclusao de:
 """
 
 import json
+import logging
 from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
@@ -29,6 +30,9 @@ from app.models.post import PostStatus, PostType
 from app.models.product import ProductAvailability, ProductPlatform
 from app.models.user import UserRole
 from app.routers.admin import require_admin_user, require_admin_role
+
+# Logger para este modulo
+logger = logging.getLogger(__name__)
 
 # Router para acoes do admin
 router = APIRouter(prefix="/admin", tags=["admin-actions"])
@@ -1067,6 +1071,8 @@ async def api_generate_ai_content(
     - keywords: Lista de palavras-chave existentes (opcional)
     - category: Categoria do conteudo (opcional)
     - product_name: Nome do produto (opcional)
+    - entity_type: Tipo da entidade para log (opcional, ex: post, category)
+    - entity_id: UUID da entidade para log (opcional)
 
     Returns:
         JSON com:
@@ -1074,7 +1080,12 @@ async def api_generate_ai_content(
         - model_used: Modelo que gerou
         - tokens_used: Tokens consumidos
     """
+    import time
+    import traceback
+    from decimal import Decimal
+
     from app.models.ai_config import AIUseCase
+    from app.repositories.ai_log import AILogRepository
     from app.services.ai_seo import AISEOService
     from app.services.llm import LLMError
 
@@ -1102,8 +1113,17 @@ async def api_generate_ai_content(
             status_code=http_status.HTTP_400_BAD_REQUEST,
         )
 
-    # Instancia o servico de IA
+    # Instancia servicos
     ai_service = AISEOService(db)
+    log_repo = AILogRepository(db)
+
+    # Extrai dados para logging
+    entity_type = data.get("entity_type")
+    entity_id_str = data.get("entity_id")
+    entity_id = UUID(entity_id_str) if entity_id_str else None
+
+    # Mede latencia
+    start_time = time.time()
 
     try:
         result = await ai_service.generate(
@@ -1117,24 +1137,191 @@ async def api_generate_ai_content(
             target_audience=data.get("target_audience"),
         )
 
+        # Calcula latencia em ms
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        # Salva log de sucesso
+        await log_repo.create(
+            use_case=use_case_str,
+            provider=result.get("_provider", "unknown"),
+            model=result["model_used"],
+            user_prompt=result.get("_user_prompt", ""),
+            entity_type=entity_type,
+            entity_id=entity_id,
+            system_prompt=result.get("_system_prompt"),
+            temperature=result.get("_temperature"),
+            max_tokens=result.get("_max_tokens"),
+            response_content=result["generated_content"],
+            finish_reason=result.get("finish_reason"),
+            prompt_tokens=result.get("prompt_tokens"),
+            completion_tokens=result.get("completion_tokens"),
+            total_tokens=result.get("tokens_used"),
+            cost_usd=Decimal(str(result.get("cost_usd", 0))),
+            latency_ms=latency_ms,
+            success=True,
+            user_id=current_user.id,
+        )
+
         return JSONResponse(
             content={
                 "generated_content": result["generated_content"],
                 "model_used": result["model_used"],
-                "tokens_used": result.get("tokens_used"),
+                "tokens_used": result.get("tokens_used", 0),
+                "prompt_tokens": result.get("prompt_tokens", 0),
+                "completion_tokens": result.get("completion_tokens", 0),
+                "cost_usd": result.get("cost_usd", 0),
                 "use_case": result["use_case"],
             },
             status_code=http_status.HTTP_200_OK,
         )
 
     except ValueError as e:
+        # Calcula latencia em ms
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        # Salva log de erro de validacao
+        await log_repo.create(
+            use_case=use_case_str,
+            provider="unknown",
+            model="unknown",
+            user_prompt=str(data),
+            entity_type=entity_type,
+            entity_id=entity_id,
+            latency_ms=latency_ms,
+            success=False,
+            error_message=str(e),
+            user_id=current_user.id,
+        )
+
         return JSONResponse(
             content={"detail": str(e)},
             status_code=http_status.HTTP_400_BAD_REQUEST,
         )
 
     except LLMError as e:
+        # Log completo do erro para debug
+        error_traceback = traceback.format_exc()
+        logger.error(f"LLMError: {e}\n{error_traceback}")
+
+        # Calcula latencia em ms
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        # Salva log de erro LLM
+        await log_repo.create(
+            use_case=use_case_str,
+            provider="unknown",
+            model="unknown",
+            user_prompt=str(data),
+            entity_type=entity_type,
+            entity_id=entity_id,
+            latency_ms=latency_ms,
+            success=False,
+            error_message=f"{str(e)}\n\n{error_traceback}",
+            user_id=current_user.id,
+        )
+
         return JSONResponse(
-            content={"detail": f"Erro na geracao: {str(e)}"},
+            content={
+                "detail": f"Erro na geracao: {str(e)}",
+                "error_type": type(e).__name__,
+                "traceback": error_traceback,
+            },
             status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+    except Exception as e:
+        # Captura qualquer outro erro inesperado
+        error_traceback = traceback.format_exc()
+        logger.error(f"Erro inesperado na geracao AI: {e}\n{error_traceback}")
+
+        # Calcula latencia em ms
+        latency_ms = int((time.time() - start_time) * 1000)
+
+        # Salva log de erro inesperado
+        await log_repo.create(
+            use_case=use_case_str,
+            provider="unknown",
+            model="unknown",
+            user_prompt=str(data),
+            entity_type=entity_type,
+            entity_id=entity_id,
+            latency_ms=latency_ms,
+            success=False,
+            error_message=f"{str(e)}\n\n{error_traceback}",
+            user_id=current_user.id,
+        )
+
+        return JSONResponse(
+            content={
+                "detail": f"Erro inesperado: {str(e)}",
+                "error_type": type(e).__name__,
+                "traceback": error_traceback,
+            },
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+# -----------------------------------------------------------------------------
+# API: Atualizar custos de IA do Post
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/posts/{post_id}/ai-cost", response_class=JSONResponse)
+async def api_update_post_ai_cost(
+    request: Request,
+    post_id: UUID,
+    current_user: AdminUser,
+    repo: PostRepo,
+):
+    """
+    Atualiza os custos de IA de um post (incremental).
+
+    Body JSON:
+        - tokens_used: int - Total de tokens usados
+        - prompt_tokens: int - Tokens de entrada (prompt)
+        - completion_tokens: int - Tokens de saida (completion)
+        - cost_usd: float - Custo em USD
+
+    Os valores sao SOMADOS aos valores existentes no post.
+    """
+    data = await request.json()
+
+    post = await repo.get(post_id)
+    if not post:
+        return JSONResponse(
+            content={"detail": "Post nao encontrado"},
+            status_code=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    tokens_used = data.get("tokens_used", 0)
+    prompt_tokens = data.get("prompt_tokens", 0)
+    completion_tokens = data.get("completion_tokens", 0)
+    cost_usd = data.get("cost_usd", 0)
+
+    # Atualiza incrementalmente
+    from decimal import Decimal
+    new_tokens = post.ai_tokens_used + tokens_used
+    new_prompt = post.ai_prompt_tokens + prompt_tokens
+    new_completion = post.ai_completion_tokens + completion_tokens
+    new_cost = post.ai_cost_usd + Decimal(str(cost_usd))
+    new_count = post.ai_generations_count + 1
+
+    await repo.update(post, {
+        "ai_tokens_used": new_tokens,
+        "ai_prompt_tokens": new_prompt,
+        "ai_completion_tokens": new_completion,
+        "ai_cost_usd": new_cost,
+        "ai_generations_count": new_count,
+    })
+
+    return JSONResponse(
+        content={
+            "success": True,
+            "ai_tokens_used": new_tokens,
+            "ai_prompt_tokens": new_prompt,
+            "ai_completion_tokens": new_completion,
+            "ai_cost_usd": float(new_cost),
+            "ai_generations_count": new_count,
+        },
+        status_code=http_status.HTTP_200_OK,
+    )

@@ -8,6 +8,8 @@ Usa LiteLLM para compatibilidade com multiplos provedores.
 """
 
 import logging
+import re
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +19,53 @@ from app.repositories.ai_config import AIConfigRepository
 from app.services.llm import LLMService, LLMError, get_api_key_for_model
 
 logger = logging.getLogger(__name__)
+
+
+# Precos por 1M tokens (em USD) - atualizado em Dez/2025
+# https://openai.com/api/pricing/
+MODEL_PRICING = {
+    # OpenAI GPT-5 Family
+    "gpt-5-nano": {"input": 0.05, "output": 0.40},
+    "gpt-5-mini": {"input": 0.15, "output": 0.60},
+    "gpt-5": {"input": 2.50, "output": 10.00},
+    # OpenAI Legacy
+    "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+    "gpt-4o": {"input": 2.50, "output": 10.00},
+    "gpt-4-turbo": {"input": 10.00, "output": 30.00},
+    "gpt-3.5-turbo": {"input": 0.50, "output": 1.50},
+    # Gemini (via OpenRouter ou direto)
+    "gemini-1.5-flash": {"input": 0.075, "output": 0.30},
+    "gemini-1.5-pro": {"input": 1.25, "output": 5.00},
+    "gemini-2.0-flash": {"input": 0.10, "output": 0.40},
+    # Claude (via OpenRouter)
+    "claude-3-haiku": {"input": 0.25, "output": 1.25},
+    "claude-3-sonnet": {"input": 3.00, "output": 15.00},
+}
+
+
+def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> Decimal:
+    """
+    Calcula o custo em USD baseado no modelo e tokens usados.
+
+    Args:
+        model: Nome do modelo (ex: gpt-4o-mini)
+        prompt_tokens: Tokens do prompt (input)
+        completion_tokens: Tokens da resposta (output)
+
+    Returns:
+        Custo total em USD (Decimal com 6 casas)
+    """
+    # Normaliza nome do modelo (remove prefixos como openrouter/, gemini/)
+    model_key = model.split("/")[-1].split(":")[0]
+
+    # Busca preco do modelo ou usa um default conservador
+    pricing = MODEL_PRICING.get(model_key, {"input": 1.00, "output": 3.00})
+
+    # Calcula custo (precos sao por 1M tokens)
+    input_cost = (prompt_tokens / 1_000_000) * pricing["input"]
+    output_cost = (completion_tokens / 1_000_000) * pricing["output"]
+
+    return Decimal(str(round(input_cost + output_cost, 6)))
 
 
 class AISEOService:
@@ -79,24 +128,48 @@ class AISEOService:
                 f"Nenhuma configuracao ativa encontrada para: {use_case.value}"
             )
 
-        # Substitui placeholders no system_prompt se existirem
-        system_prompt = self._replace_placeholders(
-            config.system_prompt,
-            title=title,
-            subtitle=subtitle,
-            content=content,
-            keywords=keywords,
-            category=category,
-            product_name=product_name,
-        )
+        # NOVA ABORDAGEM: system_prompt = instrucoes, user_prompt = dados
+        # Se o prompt tem placeholders, extraimos a parte de instrucoes para system
+        # e montamos o user_prompt com os dados
 
-        # Para prompts com placeholders, o user_prompt pode ser simples
-        # Para prompts antigos (sem placeholders), monta o prompt completo
-        if "{{title}}" in config.system_prompt or "{{content}}" in config.system_prompt:
-            # Prompt novo com placeholders - ja incorporou contexto no system_prompt
-            user_prompt = "Gere o conteudo conforme as instrucoes acima."
+        has_placeholders = "{{title}}" in config.system_prompt or "{{content}}" in config.system_prompt
+
+        if has_placeholders:
+            # Remove os placeholders do system_prompt (mantem apenas instrucoes)
+            # O system_prompt original fica como instrucao geral
+            system_prompt = config.system_prompt
+
+            # Remove a secao de CONTEXTO DO POST do system_prompt
+            # pois ela vai no user_prompt agora
+            # Remove bloco de CONTEXTO ate a proxima secao (REGRAS, etc)
+            system_prompt = re.sub(
+                r'CONTEXTO DO POST:.*?(?=\n\n[A-Z]|\nREGRAS|\nRESPONDA|\Z)',
+                '',
+                system_prompt,
+                flags=re.DOTALL | re.IGNORECASE
+            ).strip()
+
+            # Monta user_prompt com os dados do conteudo
+            user_parts = []
+            if title:
+                user_parts.append(f"Titulo: {title}")
+            if subtitle:
+                user_parts.append(f"Subtitulo: {subtitle}")
+            if content:
+                # Limita conteudo para nao exceder tokens
+                content_text = content[:2000] if len(content) > 2000 else content
+                user_parts.append(f"Conteudo:\n{content_text}")
+            if category:
+                user_parts.append(f"Categoria: {category}")
+            if keywords:
+                user_parts.append(f"Keywords atuais: {', '.join(keywords)}")
+            if product_name:
+                user_parts.append(f"Produto: {product_name}")
+
+            user_prompt = "\n\n".join(user_parts) if user_parts else "Gere o conteudo."
         else:
-            # Prompt antigo - monta user_prompt com contexto
+            # Prompt antigo sem placeholders - mantem comportamento original
+            system_prompt = config.system_prompt
             user_prompt = self._build_user_prompt(
                 use_case=use_case,
                 title=title,
@@ -121,11 +194,33 @@ class AISEOService:
                 system=system_prompt,
             )
 
+            # Extrai informacoes de uso de tokens
+            tokens_used = 0
+            prompt_tokens = 0
+            completion_tokens = 0
+            cost_usd = Decimal("0")
+
+            if response.usage:
+                prompt_tokens = response.usage.get("prompt_tokens", 0)
+                completion_tokens = response.usage.get("completion_tokens", 0)
+                tokens_used = response.usage.get("total_tokens", 0)
+                cost_usd = calculate_cost(response.model, prompt_tokens, completion_tokens)
+
             return {
                 "generated_content": response.content.strip(),
                 "model_used": response.model,
-                "tokens_used": response.usage.get("total_tokens") if response.usage else None,
+                "tokens_used": tokens_used,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "cost_usd": float(cost_usd),
                 "use_case": use_case.value,
+                "finish_reason": response.finish_reason,
+                # Dados para logging (prefixo _ indica campo interno)
+                "_system_prompt": system_prompt,
+                "_user_prompt": user_prompt,
+                "_provider": config.provider.value,
+                "_temperature": config.temperature,
+                "_max_tokens": config.max_tokens,
             }
 
         except LLMError as e:

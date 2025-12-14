@@ -221,13 +221,25 @@ class LLMService:
             api_key = get_api_key_for_model(use_model)
 
             # Monta kwargs da chamada
+            tokens_value = max_tokens or self.max_tokens
+            is_gpt5 = "gpt-5" in use_model or "gpt-4.1" in use_model
+
             call_kwargs = {
                 "model": use_model,
                 "messages": messages,
-                "temperature": temperature if temperature is not None else self.temperature,
-                "max_tokens": max_tokens or self.max_tokens,
                 "timeout": self.timeout,
             }
+
+            # GPT-5-nano so aceita temperature=1 (default), nao enviar o parametro
+            # https://platform.openai.com/docs/models/gpt-5-nano
+            if not is_gpt5:
+                call_kwargs["temperature"] = temperature if temperature is not None else self.temperature
+
+            # GPT-5 e modelos mais novos usam max_completion_tokens em vez de max_tokens
+            if is_gpt5:
+                call_kwargs["max_completion_tokens"] = tokens_value
+            else:
+                call_kwargs["max_tokens"] = tokens_value
 
             # Adiciona API key se necessario (ex: OpenRouter)
             if api_key:
@@ -235,8 +247,16 @@ class LLMService:
 
             response = await acompletion(**call_kwargs)
 
+            # Log para debug da resposta
+            raw_content = response.choices[0].message.content
+            logger.info(f"LLM Response - model: {response.model}, finish_reason: {response.choices[0].finish_reason}")
+            logger.info(f"LLM Response - raw_content type: {type(raw_content)}, value: {repr(raw_content)[:200]}")
+
+            # Trata caso de content None
+            content = raw_content if raw_content is not None else ""
+
             return LLMResponse(
-                content=response.choices[0].message.content,
+                content=content,
                 model=response.model,
                 usage={
                     "prompt_tokens": response.usage.prompt_tokens,

@@ -20,14 +20,46 @@
     <div style="display: flex; align-items: center; gap: 1rem;">
         <span style="font-size: 2rem;">🤖</span>
         <div>
-            <strong>Google Gemini 2.0 Flash</strong> via OpenRouter
+            <strong>OpenAI GPT-5 Nano</strong>
             <br>
             <small style="color: var(--admin-text-muted);">
-                Modelo gratuito, rapido e eficiente para tarefas de SEO.
-                <a href="https://openrouter.ai/models" target="_blank" style="color: var(--admin-primary);">Ver outros modelos</a>
+                Modelo ultra-rapido e economico ($0.05/1M input, $0.40/1M output).
+                <a href="https://platform.openai.com/docs/models/gpt-5-nano" target="_blank" style="color: var(--admin-primary);">Ver documentacao</a>
             </small>
         </div>
     </div>
+</div>
+
+<!-- Filtros -->
+<div class="admin-card" style="margin-bottom: 1.5rem;">
+    <form method="GET" action="/admin/ai-configs" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label for="entity" class="admin-form-label">Entidade</label>
+            <select id="entity" name="entity" class="admin-form-select">
+                <option value="">Todas</option>
+                {% for entity in entities %}
+                <option value="{{ entity }}" {% if selected_entity == entity %}selected{% endif %}>
+                    {{ entity|title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 200px;">
+            <label for="use_case" class="admin-form-label">Caso de Uso</label>
+            <select id="use_case" name="use_case" class="admin-form-select">
+                <option value="">Todos</option>
+                {% for uc in use_cases %}
+                <option value="{{ uc }}" {% if selected_use_case == uc %}selected{% endif %}>
+                    {{ uc }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-primary">Filtrar</button>
+        {% if selected_entity or selected_use_case %}
+        <a href="/admin/ai-configs" class="admin-btn admin-btn-secondary">Limpar</a>
+        {% endif %}
+    </form>
 </div>
 
 <!-- Lista de Configs -->
