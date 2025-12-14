@@ -54,6 +54,14 @@ class AIUseCase(str, enum.Enum):
     POST_SEO_DESCRIPTION = "post_seo_description"
     POST_TAGS = "post_tags"
 
+    # SEO especifico para Occasion
+    OCCASION_SEO_ALL = "occasion_seo_all"
+    OCCASION_SEO_KEYWORD = "occasion_seo_keyword"
+    OCCASION_SEO_TITLE = "occasion_seo_title"
+    OCCASION_SEO_DESCRIPTION = "occasion_seo_description"
+    OCCASION_CONTENT = "occasion_content"
+    OCCASION_TAGS = "occasion_tags"
+
     # Geracao de conteudo
     POST_CONTENT = "post_content"
     PRODUCT_DESCRIPTION = "product_description"

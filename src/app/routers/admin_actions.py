@@ -1325,3 +1325,69 @@ async def api_update_post_ai_cost(
         },
         status_code=http_status.HTTP_200_OK,
     )
+
+
+# -----------------------------------------------------------------------------
+# API: Atualizar custos de IA da Occasion
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/occasions/{occasion_id}/ai-cost", response_class=JSONResponse)
+async def api_update_occasion_ai_cost(
+    request: Request,
+    occasion_id: UUID,
+    current_user: AdminUser,
+    repo: OccasionRepo,
+):
+    """
+    Atualiza os custos de IA de uma ocasiao (incremental).
+
+    Body JSON:
+        - tokens_used: int - Total de tokens usados
+        - prompt_tokens: int - Tokens de entrada (prompt)
+        - completion_tokens: int - Tokens de saida (completion)
+        - cost_usd: float - Custo em USD
+
+    Os valores sao SOMADOS aos valores existentes na ocasiao.
+    """
+    data = await request.json()
+
+    occasion = await repo.get(occasion_id)
+    if not occasion:
+        return JSONResponse(
+            content={"detail": "Ocasiao nao encontrada"},
+            status_code=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    tokens_used = data.get("tokens_used", 0)
+    prompt_tokens = data.get("prompt_tokens", 0)
+    completion_tokens = data.get("completion_tokens", 0)
+    cost_usd = data.get("cost_usd", 0)
+
+    # Atualiza incrementalmente
+    from decimal import Decimal
+    new_tokens = occasion.ai_tokens_used + tokens_used
+    new_prompt = occasion.ai_prompt_tokens + prompt_tokens
+    new_completion = occasion.ai_completion_tokens + completion_tokens
+    new_cost = occasion.ai_cost_usd + Decimal(str(cost_usd))
+    new_count = occasion.ai_generations_count + 1
+
+    await repo.update(occasion, {
+        "ai_tokens_used": new_tokens,
+        "ai_prompt_tokens": new_prompt,
+        "ai_completion_tokens": new_completion,
+        "ai_cost_usd": new_cost,
+        "ai_generations_count": new_count,
+    })
+
+    return JSONResponse(
+        content={
+            "success": True,
+            "ai_tokens_used": new_tokens,
+            "ai_prompt_tokens": new_prompt,
+            "ai_completion_tokens": new_completion,
+            "ai_cost_usd": float(new_cost),
+            "ai_generations_count": new_count,
+        },
+        status_code=http_status.HTTP_200_OK,
+    )

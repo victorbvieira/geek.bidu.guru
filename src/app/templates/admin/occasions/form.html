@@ -1,17 +1,17 @@
 {% extends "admin/base.html" %}
 
-{% block title %}{{ 'Editar' if occasion else 'Nova' }} Ocasião{% endblock %}
+{% block title %}{{ 'Editar' if occasion else 'Nova' }} Ocasiao{% endblock %}
 
 {% block breadcrumb %}
 <span>/</span>
-<a href="/admin/occasions">Ocasiões</a>
+<a href="/admin/occasions">Ocasioes</a>
 <span>/</span>
 <span class="current">{{ 'Editar' if occasion else 'Nova' }}</span>
 {% endblock %}
 
 {% block content %}
 <div class="admin-page-header">
-    <h1 class="admin-page-title">{{ 'Editar Ocasião' if occasion else 'Nova Ocasião' }}</h1>
+    <h1 class="admin-page-title">{{ 'Editar Ocasiao' if occasion else 'Nova Ocasiao' }}</h1>
 </div>
 
 <form method="POST" action="{{ '/admin/occasions/' ~ occasion.id if occasion else '/admin/occasions' }}" class="admin-form">
@@ -20,7 +20,7 @@
         <div class="admin-form-main">
             <div class="admin-card">
                 <div class="admin-form-group">
-                    <label for="name" class="admin-form-label">Nome da Ocasião *</label>
+                    <label for="name" class="admin-form-label">Nome da Ocasiao *</label>
                     <input
                         type="text"
                         id="name"
@@ -45,20 +45,20 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="description" class="admin-form-label">Descrição Curta</label>
+                    <label for="description" class="admin-form-label">Descricao Curta</label>
                     <textarea
                         id="description"
                         name="description"
                         class="admin-form-textarea"
                         rows="2"
-                        placeholder="Descrição breve para listagens (max 200 caracteres)"
+                        placeholder="Descricao breve para listagens (max 200 caracteres)"
                         maxlength="200"
                     >{{ occasion.description if occasion else '' }}</textarea>
                     <div class="admin-form-hint">Exibida em cards e listagens</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="icon" class="admin-form-label">Ícone (Emoji)</label>
+                    <label for="icon" class="admin-form-label">Icone (Emoji)</label>
                     <input
                         type="text"
                         id="icon"
@@ -68,29 +68,29 @@
                         placeholder="Ex: 🎄 🎂 💝"
                         style="max-width: 150px;"
                     >
-                    <div class="admin-form-hint">Use um emoji para representar a ocasião</div>
+                    <div class="admin-form-hint">Use um emoji para representar a ocasiao</div>
                 </div>
             </div>
 
-            <!-- Conteúdo Markdown -->
+            <!-- Conteudo Markdown -->
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h3 class="admin-card-title">Conteúdo</h3>
+                    <h3 class="admin-card-title">Conteudo</h3>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="content" class="admin-form-label">Conteúdo (Markdown)</label>
+                    <label for="content" class="admin-form-label">Conteudo (Markdown)</label>
                     <div class="markdown-editor">
                         <div class="markdown-toolbar">
                             <button type="button" class="md-btn" data-action="bold" title="Negrito (Ctrl+B)"><strong>B</strong></button>
-                            <button type="button" class="md-btn" data-action="italic" title="Itálico (Ctrl+I)"><em>I</em></button>
-                            <button type="button" class="md-btn" data-action="heading" title="Título">H</button>
+                            <button type="button" class="md-btn" data-action="italic" title="Italico (Ctrl+I)"><em>I</em></button>
+                            <button type="button" class="md-btn" data-action="heading" title="Titulo">H</button>
                             <button type="button" class="md-btn" data-action="link" title="Link">🔗</button>
                             <button type="button" class="md-btn" data-action="image" title="Imagem">🖼</button>
                             <button type="button" class="md-btn" data-action="list" title="Lista">•</button>
                             <button type="button" class="md-btn" data-action="olist" title="Lista numerada">1.</button>
-                            <button type="button" class="md-btn" data-action="quote" title="Citação">"</button>
-                            <button type="button" class="md-btn" data-action="code" title="Código">&lt;/&gt;</button>
+                            <button type="button" class="md-btn" data-action="quote" title="Citacao">"</button>
+                            <button type="button" class="md-btn" data-action="code" title="Codigo">&lt;/&gt;</button>
                             <span class="md-toolbar-separator"></span>
                             <button type="button" class="md-btn md-btn-product" data-action="product" title="Inserir Produto">🛒 Produto</button>
                             <span class="md-toolbar-separator"></span>
@@ -108,8 +108,8 @@
                         </div>
                     </div>
                     <div class="admin-form-hint">
-                        Suporta Markdown: **negrito**, *itálico*, # título, [link](url), ![imagem](url)<br>
-                        <strong>Produtos:</strong> Use <code>[product:slug-do-produto]</code> para inserir um card de produto no conteúdo
+                        Suporta Markdown: **negrito**, *italico*, # titulo, [link](url), ![imagem](url)<br>
+                        <strong>Produtos:</strong> Use <code>[product:slug-do-produto]</code> para inserir um card de produto no conteudo
                     </div>
                 </div>
             </div>
@@ -118,81 +118,57 @@
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3 class="admin-card-title">SEO</h3>
-                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllSEO()">
+                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllSEO()" title="Gerar todos os campos SEO com IA">
                         🤖 Gerar Tudo
                     </button>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_focus_keyword" class="admin-form-label">Palavra-chave Foco</label>
-                    <div class="admin-input-with-btn">
-                        <input
-                            type="text"
-                            id="seo_focus_keyword"
-                            name="seo_focus_keyword"
-                            class="admin-form-input"
-                            value="{{ occasion.seo_focus_keyword if occasion else '' }}"
-                            placeholder="Palavra-chave principal (ex: presentes de natal)"
-                            maxlength="100"
-                        >
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ai" onclick="generateSEO('seo_focus_keyword')" title="Gerar com IA">
-                            🤖
-                        </button>
-                    </div>
-                    <div class="admin-form-hint">Keyword principal para otimizar o conteudo</div>
-                    <div id="seo_focus_keyword_loading" class="ai-loading" style="display: none;">
-                        <div class="ai-spinner"></div>
-                        <span>Gerando...</span>
-                    </div>
+                    <label for="seo_focus_keyword" class="admin-form-label">
+                        Palavra-chave foco
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateSEO('seo_focus_keyword')" title="Gerar com IA">🤖</button>
+                    </label>
+                    <input
+                        type="text"
+                        id="seo_focus_keyword"
+                        name="seo_focus_keyword"
+                        class="admin-form-input"
+                        value="{{ occasion.seo_focus_keyword if occasion else '' }}"
+                        placeholder="Ex: presentes de natal geek"
+                        maxlength="100"
+                    >
+                    <div class="admin-form-hint">Palavra-chave principal para otimizacao SEO</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_title" class="admin-form-label">Título SEO</label>
-                    <div class="admin-input-with-btn">
-                        <input
-                            type="text"
-                            id="seo_title"
-                            name="seo_title"
-                            class="admin-form-input"
-                            value="{{ occasion.seo_title if occasion else '' }}"
-                            placeholder="Título para buscadores (max 60 caracteres)"
-                            maxlength="60"
-                        >
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ai" onclick="generateSEO('seo_title')" title="Gerar com IA">
-                            🤖
-                        </button>
-                    </div>
-                    <div class="admin-form-hint">
-                        <span id="seo_title_count">{{ (occasion.seo_title|length) if occasion and occasion.seo_title else 0 }}</span>/60 caracteres
-                    </div>
-                    <div id="seo_title_loading" class="ai-loading" style="display: none;">
-                        <div class="ai-spinner"></div>
-                        <span>Gerando...</span>
-                    </div>
+                    <label for="seo_title" class="admin-form-label">
+                        Titulo SEO
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateSEO('seo_title')" title="Gerar com IA">🤖</button>
+                    </label>
+                    <input
+                        type="text"
+                        id="seo_title"
+                        name="seo_title"
+                        class="admin-form-input"
+                        value="{{ occasion.seo_title if occasion else '' }}"
+                        maxlength="60"
+                    >
+                    <div class="admin-form-hint"><span id="seo_title_count">{{ (occasion.seo_title|length) if occasion and occasion.seo_title else 0 }}</span>/60 caracteres</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="seo_description" class="admin-form-label">Descrição SEO</label>
-                    <div class="admin-input-with-btn">
-                        <textarea
-                            id="seo_description"
-                            name="seo_description"
-                            class="admin-form-textarea"
-                            rows="2"
-                            placeholder="Descrição para buscadores (max 160 caracteres)"
-                            maxlength="160"
-                        >{{ occasion.seo_description if occasion else '' }}</textarea>
-                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ai" onclick="generateSEO('seo_description')" title="Gerar com IA">
-                            🤖
-                        </button>
-                    </div>
-                    <div class="admin-form-hint">
-                        <span id="seo_description_count">{{ (occasion.seo_description|length) if occasion and occasion.seo_description else 0 }}</span>/160 caracteres
-                    </div>
-                    <div id="seo_description_loading" class="ai-loading" style="display: none;">
-                        <div class="ai-spinner"></div>
-                        <span>Gerando...</span>
-                    </div>
+                    <label for="seo_description" class="admin-form-label">
+                        Descricao SEO
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateSEO('seo_description')" title="Gerar com IA">🤖</button>
+                    </label>
+                    <textarea
+                        id="seo_description"
+                        name="seo_description"
+                        class="admin-form-textarea"
+                        style="min-height: 80px;"
+                        maxlength="160"
+                    >{{ occasion.seo_description if occasion else '' }}</textarea>
+                    <div class="admin-form-hint"><span id="seo_description_count">{{ (occasion.seo_description|length) if occasion and occasion.seo_description else 0 }}</span>/160 caracteres</div>
                 </div>
             </div>
         </div>
@@ -208,13 +184,13 @@
                             name="is_active"
                             {% if not occasion or occasion.is_active %}checked{% endif %}
                         >
-                        <span>Ocasião ativa</span>
+                        <span>Ocasiao ativa</span>
                     </label>
-                    <div class="admin-form-hint">Ocasiões inativas não aparecem no site</div>
+                    <div class="admin-form-hint">Ocasioes inativas nao aparecem no site</div>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="display_order" class="admin-form-label">Ordem de Exibição</label>
+                    <label for="display_order" class="admin-form-label">Ordem de Exibicao</label>
                     <input
                         type="number"
                         id="display_order"
@@ -223,29 +199,29 @@
                         value="{{ occasion.display_order if occasion else 0 }}"
                         min="0"
                     >
-                    <div class="admin-form-hint">Menor número aparece primeiro</div>
+                    <div class="admin-form-hint">Menor numero aparece primeiro</div>
                 </div>
 
-                <div class="admin-form-actions">
-                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
-                        {{ 'Salvar' if occasion else 'Criar Ocasião' }}
+                <div class="admin-form-actions" style="flex-direction: row;">
+                    <button type="submit" class="admin-btn admin-btn-primary" style="flex: 1;">
+                        {{ 'Salvar' if occasion else 'Criar Ocasiao' }}
                     </button>
                     {% if occasion %}
-                    <a href="/ocasiao/{{ occasion.slug }}" target="_blank" class="admin-btn admin-btn-secondary admin-btn-block">
-                        Ver no Site
+                    <a href="/ocasiao/{{ occasion.slug }}" target="_blank" class="admin-btn admin-btn-secondary">
+                        Ver
                     </a>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Próxima Revisão -->
+            <!-- Proxima Revisao -->
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h3 class="admin-card-title">Revisão</h3>
+                    <h3 class="admin-card-title">Revisao</h3>
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="next_review_date" class="admin-form-label">Próxima Revisão</label>
+                    <label for="next_review_date" class="admin-form-label">Proxima Revisao</label>
                     <input
                         type="month"
                         id="next_review_date"
@@ -253,7 +229,7 @@
                         class="admin-form-input"
                         value="{{ occasion.next_review_date.strftime('%Y-%m') if occasion and occasion.next_review_date else '' }}"
                     >
-                    <div class="admin-form-hint">Mês/ano para revisar este conteúdo</div>
+                    <div class="admin-form-hint">Mes/ano para revisar este conteudo</div>
                 </div>
             </div>
 
@@ -285,11 +261,83 @@
                 </div>
             </div>
 
+            <!-- Tags -->
+            <div class="admin-card">
+                <div class="admin-form-group" style="margin-bottom: 0;">
+                    <label for="tags" class="admin-form-label">
+                        Tags
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateTags()" title="Gerar com IA">🤖</button>
+                    </label>
+                    <input
+                        type="text"
+                        id="tags"
+                        name="tags"
+                        class="admin-form-input"
+                        value="{{ occasion.tags | join(', ') if occasion and occasion.tags else '' }}"
+                        placeholder="tag1, tag2, tag3"
+                    >
+                    <div class="admin-form-hint">Separadas por virgula</div>
+                </div>
+            </div>
+
+            <!-- Custos de IA -->
             {% if occasion %}
-            <!-- Informações -->
+            <div class="admin-card" id="ai-costs-card" style="background: var(--admin-bg-tertiary);">
+                <h4 style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; text-align: center; margin-bottom: 0.75rem;">
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-prompt-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-warning);">
+                            {{ "{:,}".format(occasion.ai_prompt_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Entrada</div>
+                    </div>
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-completion-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-info);">
+                            {{ "{:,}".format(occasion.ai_completion_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Saida</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; text-align: center;">
+                    <div>
+                        <div id="ai-tokens-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-primary);">
+                            {{ "{:,}".format(occasion.ai_tokens_used) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Total</div>
+                    </div>
+                    <div>
+                        <div id="ai-cost-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-success);">
+                            ${{ "%.6f"|format(occasion.ai_cost_usd|float) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Custo</div>
+                    </div>
+                    <div>
+                        <div id="ai-generations-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-text);">
+                            {{ occasion.ai_generations_count }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Chamadas</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Nova ocasiao - custos serao exibidos apos salvar -->
+            <div class="admin-card" style="background: var(--admin-bg-tertiary); opacity: 0.6;">
+                <h4 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--admin-text-muted); margin: 0;">
+                    Salve a ocasiao para acompanhar custos de IA
+                </p>
+            </div>
+            {% endif %}
+
+            {% if occasion %}
+            <!-- Informacoes -->
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h3 class="admin-card-title">Informações</h3>
+                    <h3 class="admin-card-title">Informacoes</h3>
                 </div>
                 <div class="admin-info-list">
                     <div class="admin-info-item">
@@ -307,12 +355,22 @@
     </div>
 </form>
 
-<!-- Modal de Seleção de Produto -->
+<!-- Modal de Loading IA (bloqueia interacao) -->
+<div id="ai-loading-modal" class="ai-loading-modal">
+    <div class="ai-loading-backdrop"></div>
+    <div class="ai-loading-content">
+        <div class="ai-loading-spinner"></div>
+        <div class="ai-loading-text">Gerando com IA...</div>
+        <div class="ai-loading-subtext">Aguarde, isso pode levar alguns segundos</div>
+    </div>
+</div>
+
+<!-- Modal de Selecao de Produto -->
 <div id="product-modal" class="product-modal" style="display: none;">
     <div class="product-modal-backdrop" onclick="closeProductModal()"></div>
     <div class="product-modal-content">
         <div class="product-modal-header">
-            <h3>Inserir Produto no Conteúdo</h3>
+            <h3>Inserir Produto no Conteudo</h3>
             <button type="button" class="product-modal-close" onclick="closeProductModal()">&times;</button>
         </div>
         <div class="product-modal-search">
@@ -353,112 +411,28 @@
             {% endfor %}
         </div>
         <div class="product-modal-footer">
-            <span class="product-modal-hint">Clique em um produto para inserir o shortcode na posição do cursor</span>
+            <span class="product-modal-hint">Clique em um produto para inserir o shortcode na posicao do cursor</span>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-.occasion-image-upload {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.occasion-image-preview {
-    width: 100%;
-    aspect-ratio: 1;
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--admin-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.occasion-image-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.image-placeholder {
-    color: var(--admin-text-muted);
-    font-size: 0.875rem;
-}
-
-.occasion-image-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.upload-status {
-    font-size: 0.75rem;
-}
-
-.admin-info-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.admin-info-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.875rem;
-}
-
-.admin-info-label {
-    color: var(--admin-text-muted);
-}
-
-.admin-info-value {
-    color: var(--admin-text);
-}
-
-/* Input com botao de IA */
-.admin-input-with-btn {
-    display: flex;
-    gap: 0.5rem;
-    align-items: flex-start;
-}
-
-.admin-input-with-btn .admin-form-input,
-.admin-input-with-btn .admin-form-textarea {
-    flex: 1;
-}
-
-.admin-btn-ai {
-    flex-shrink: 0;
-    padding: 0.5rem 0.75rem;
-    background: var(--admin-bg);
-    border: 1px solid var(--admin-border);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.admin-btn-ai:hover {
-    background: var(--admin-primary);
-    border-color: var(--admin-primary);
-}
-
-/* Loading de IA */
-.ai-loading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--admin-text-muted);
-}
-</style>
-{% endblock %}
-
 {% block extra_js %}
 <script>
+// =============================================================================
+// Variaveis globais
+// =============================================================================
+
+// ID da ocasiao atual (para salvar custos de IA)
+const occasionId = '{{ occasion.id if occasion else "" }}';
+
+// Variaveis para acumular custos localmente (atualiza UI em tempo real)
+let localTokensUsed = {{ occasion.ai_tokens_used if occasion else 0 }};
+let localPromptTokens = {{ occasion.ai_prompt_tokens if occasion else 0 }};
+let localCompletionTokens = {{ occasion.ai_completion_tokens if occasion else 0 }};
+let localCostUsd = {{ occasion.ai_cost_usd|float if occasion else 0 }};
+let localGenerationsCount = {{ occasion.ai_generations_count if occasion else 0 }};
+
 // =============================================================================
 // Auto-gerar slug do nome
 // =============================================================================
@@ -493,17 +467,12 @@ slugInput.addEventListener('input', function() {
 // =============================================================================
 // Contador de caracteres SEO
 // =============================================================================
-const seoTitleInput = document.getElementById('seo_title');
-const seoTitleCount = document.getElementById('seo_title_count');
-const seoDescInput = document.getElementById('seo_description');
-const seoDescCount = document.getElementById('seo_description_count');
-
-seoTitleInput.addEventListener('input', function() {
-    seoTitleCount.textContent = this.value.length;
+document.getElementById('seo_title').addEventListener('input', function() {
+    document.getElementById('seo_title_count').textContent = this.value.length;
 });
 
-seoDescInput.addEventListener('input', function() {
-    seoDescCount.textContent = this.value.length;
+document.getElementById('seo_description').addEventListener('input', function() {
+    document.getElementById('seo_description_count').textContent = this.value.length;
 });
 
 // =============================================================================
@@ -520,7 +489,7 @@ imageFileInput.addEventListener('change', async function(e) {
 
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
-        uploadStatus.textContent = 'Tipo não permitido';
+        uploadStatus.textContent = 'Tipo nao permitido';
         uploadStatus.style.color = 'var(--admin-danger)';
         return;
     }
@@ -555,7 +524,7 @@ imageFileInput.addEventListener('change', async function(e) {
             uploadStatus.style.color = 'var(--admin-danger)';
         }
     } catch (error) {
-        uploadStatus.textContent = 'Erro de conexão';
+        uploadStatus.textContent = 'Erro de conexao';
         uploadStatus.style.color = 'var(--admin-danger)';
     }
 
@@ -574,10 +543,9 @@ imageFileInput.addEventListener('change', async function(e) {
 
     if (!textarea || !preview) return;
 
-    let previewMode = 'edit'; // 'edit', 'split', 'preview'
+    let previewMode = 'edit';
     let previewTimeout = null;
 
-    // Toolbar actions
     const actions = {
         bold: () => wrapText('**', '**'),
         italic: () => wrapText('*', '*'),
@@ -605,7 +573,6 @@ imageFileInput.addEventListener('change', async function(e) {
         preview: () => togglePreview()
     };
 
-    // Bind toolbar buttons
     toolbar.querySelectorAll('.md-btn').forEach(btn => {
         const action = btn.dataset.action;
         if (action && actions[action]) {
@@ -617,7 +584,6 @@ imageFileInput.addEventListener('change', async function(e) {
         }
     });
 
-    // Helper functions
     function getSelection() {
         return textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
     }
@@ -642,22 +608,19 @@ imageFileInput.addEventListener('change', async function(e) {
         const start = textarea.selectionStart;
         const value = textarea.value;
 
-        // Find line start
         let lineStart = start;
         while (lineStart > 0 && value[lineStart - 1] !== '\n') {
             lineStart--;
         }
 
-        // Check if already has prefix
         const lineContent = value.substring(lineStart);
         if (lineContent.startsWith(prefix)) {
-            return; // Already has prefix
+            return;
         }
 
         textarea.setRangeText(prefix, lineStart, lineStart, 'end');
     }
 
-    // Toggle preview modes
     function togglePreview() {
         if (previewMode === 'edit') {
             previewMode = 'split';
@@ -680,22 +643,19 @@ imageFileInput.addEventListener('change', async function(e) {
         }
     }
 
-    // Update preview content
     async function updatePreview() {
         if (previewMode === 'edit') return;
 
         const content = textarea.value;
         if (!content.trim()) {
-            preview.innerHTML = '<p class="preview-placeholder">Nenhum conteúdo para visualizar</p>';
+            preview.innerHTML = '<p class="preview-placeholder">Nenhum conteudo para visualizar</p>';
             return;
         }
 
         try {
             const response = await fetch('/api/v1/posts/preview', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
             });
 
@@ -711,7 +671,6 @@ imageFileInput.addEventListener('change', async function(e) {
         }
     }
 
-    // Debounced preview update
     function schedulePreviewUpdate() {
         if (previewMode === 'edit') return;
 
@@ -721,10 +680,8 @@ imageFileInput.addEventListener('change', async function(e) {
         previewTimeout = setTimeout(updatePreview, 500);
     }
 
-    // Listen for content changes
     textarea.addEventListener('input', schedulePreviewUpdate);
 
-    // Keyboard shortcuts
     textarea.addEventListener('keydown', (e) => {
         if (e.ctrlKey || e.metaKey) {
             switch (e.key.toLowerCase()) {
@@ -744,7 +701,6 @@ imageFileInput.addEventListener('change', async function(e) {
         }
     });
 
-    // Tab handling for code blocks
     textarea.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -752,7 +708,6 @@ imageFileInput.addEventListener('change', async function(e) {
             const end = textarea.selectionEnd;
 
             if (e.shiftKey) {
-                // Unindent
                 const lineStart = textarea.value.lastIndexOf('\n', start - 1) + 1;
                 const lineContent = textarea.value.substring(lineStart);
                 if (lineContent.startsWith('    ') || lineContent.startsWith('\t')) {
@@ -760,7 +715,6 @@ imageFileInput.addEventListener('change', async function(e) {
                     textarea.setRangeText('', lineStart, lineStart + removeChars, 'end');
                 }
             } else {
-                // Indent
                 textarea.setRangeText('    ', start, end, 'end');
             }
         }
@@ -768,36 +722,24 @@ imageFileInput.addEventListener('change', async function(e) {
 })();
 
 // =============================================================================
-// Modal de Seleção de Produto para Shortcode
+// Modal de Selecao de Produto
 // =============================================================================
-
 const productModal = document.getElementById('product-modal');
 const productSearchInput = document.getElementById('product-search');
 const productModalList = document.getElementById('product-modal-list');
 const contentTextarea = document.getElementById('content');
-
-// Guarda a posição do cursor antes de abrir o modal
 let cursorPosition = 0;
 
 function openProductModal() {
-    // Salva a posição atual do cursor
     cursorPosition = contentTextarea.selectionStart;
-
-    // Mostra o modal
     productModal.style.display = 'flex';
-
-    // Limpa a busca
     productSearchInput.value = '';
     filterProducts('');
-
-    // Foca no campo de busca
     setTimeout(() => productSearchInput.focus(), 100);
 }
 
 function closeProductModal() {
     productModal.style.display = 'none';
-
-    // Retorna o foco para o textarea
     contentTextarea.focus();
     contentTextarea.setSelectionRange(cursorPosition, cursorPosition);
 }
@@ -820,27 +762,20 @@ function filterProducts(query) {
 
 function insertProduct(slug, name) {
     const shortcode = `[product:${slug}]`;
-
-    // Pega o conteúdo atual
     const content = contentTextarea.value;
 
-    // Verifica se estamos no início de uma linha ou precisamos de quebra
     let prefix = '';
     let suffix = '\n';
 
-    // Se não estamos no início do conteúdo
     if (cursorPosition > 0) {
         const charBefore = content[cursorPosition - 1];
-        // Se o caractere anterior não é uma quebra de linha, adiciona duas
         if (charBefore !== '\n') {
             prefix = '\n\n';
         } else if (cursorPosition > 1 && content[cursorPosition - 2] !== '\n') {
-            // Se tem apenas uma quebra, adiciona mais uma
             prefix = '\n';
         }
     }
 
-    // Verifica se precisamos de quebra depois
     if (cursorPosition < content.length) {
         const charAfter = content[cursorPosition];
         if (charAfter !== '\n') {
@@ -848,41 +783,31 @@ function insertProduct(slug, name) {
         }
     }
 
-    // Insere o shortcode
     const insertion = prefix + shortcode + suffix;
     const newContent = content.slice(0, cursorPosition) + insertion + content.slice(cursorPosition);
 
     contentTextarea.value = newContent;
 
-    // Atualiza posição do cursor para depois do shortcode
     const newPosition = cursorPosition + insertion.length;
     contentTextarea.setSelectionRange(newPosition, newPosition);
 
-    // Fecha o modal
     closeProductModal();
-
-    // Dispara evento de input para atualizar preview
     contentTextarea.dispatchEvent(new Event('input'));
-
-    // Feedback visual
     showInsertFeedback(name);
 }
 
 function showInsertFeedback(productName) {
-    // Cria elemento de feedback
     const feedback = document.createElement('div');
     feedback.className = 'insert-feedback';
     feedback.textContent = `Produto "${productName}" inserido!`;
     document.body.appendChild(feedback);
 
-    // Remove após animação
     setTimeout(() => {
         feedback.classList.add('fade-out');
         setTimeout(() => feedback.remove(), 300);
     }, 2000);
 }
 
-// Fecha modal com ESC
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && productModal.style.display === 'flex') {
         closeProductModal();
@@ -890,95 +815,316 @@ document.addEventListener('keydown', (e) => {
 });
 
 // =============================================================================
+// Modal de Loading IA
+// =============================================================================
+const aiLoadingModal = document.getElementById('ai-loading-modal');
+
+function showAILoading(text = 'Gerando com IA...') {
+    if (!aiLoadingModal) return;
+    const textEl = aiLoadingModal.querySelector('.ai-loading-text');
+    if (textEl) textEl.textContent = text;
+    aiLoadingModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideAILoading() {
+    if (!aiLoadingModal) return;
+    aiLoadingModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// =============================================================================
+// Atualizar custos de IA
+// =============================================================================
+async function updateOccasionAICost(tokensUsed, promptTokens, completionTokens, costUsd) {
+    if (!occasionId) return;
+
+    try {
+        await fetch(`/admin/api/occasions/${occasionId}/ai-cost`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tokens_used: tokensUsed,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                cost_usd: costUsd
+            })
+        });
+    } catch (error) {
+        console.error('Erro ao salvar custos de IA:', error);
+    }
+}
+
+function updateCostDisplay(tokensUsed, promptTokens, completionTokens, costUsd) {
+    localTokensUsed += tokensUsed || 0;
+    localPromptTokens += promptTokens || 0;
+    localCompletionTokens += completionTokens || 0;
+    localCostUsd += costUsd || 0;
+    localGenerationsCount += 1;
+
+    const tokensDisplay = document.getElementById('ai-tokens-display');
+    const promptDisplay = document.getElementById('ai-prompt-tokens-display');
+    const completionDisplay = document.getElementById('ai-completion-tokens-display');
+    const costDisplay = document.getElementById('ai-cost-display');
+    const genDisplay = document.getElementById('ai-generations-display');
+
+    if (tokensDisplay) tokensDisplay.textContent = localTokensUsed.toLocaleString('pt-BR');
+    if (promptDisplay) promptDisplay.textContent = localPromptTokens.toLocaleString('pt-BR');
+    if (completionDisplay) completionDisplay.textContent = localCompletionTokens.toLocaleString('pt-BR');
+    if (costDisplay) costDisplay.textContent = '$' + localCostUsd.toFixed(6);
+    if (genDisplay) genDisplay.textContent = localGenerationsCount;
+}
+
+// =============================================================================
 // Geracao de SEO com IA
 // =============================================================================
+const fieldToUseCase = {
+    'seo_title': 'occasion_seo_title',
+    'seo_description': 'occasion_seo_description',
+    'seo_focus_keyword': 'occasion_seo_keyword'
+};
 
-/**
- * Gera conteudo SEO usando a API de IA.
- * @param {string} fieldType - Tipo do campo: 'seo_focus_keyword', 'seo_title' ou 'seo_description'
- */
-async function generateSEO(fieldType) {
-    const nameInput = document.getElementById('name');
-    const descriptionInput = document.getElementById('description');
-    const targetInput = document.getElementById(fieldType);
-    const loadingDiv = document.getElementById(fieldType + '_loading');
+const fallbackUseCase = {
+    'occasion_seo_title': 'seo_title',
+    'occasion_seo_description': 'seo_description',
+    'occasion_seo_keyword': 'seo_keywords'
+};
 
-    // Valida se tem nome preenchido
-    if (!nameInput.value.trim()) {
-        alert('Preencha o nome da ocasiao antes de gerar SEO.');
-        nameInput.focus();
+async function generateSEO(field) {
+    const name = document.getElementById('name').value.trim();
+    const content = document.getElementById('content').value.trim();
+
+    if (!name) {
+        alert('Preencha o nome da ocasiao antes de gerar SEO');
         return;
     }
 
-    // Mapeia o campo para o use_case da API
-    const useCaseMap = {
-        'seo_focus_keyword': 'seo_keywords',
-        'seo_title': 'seo_title',
-        'seo_description': 'seo_description'
-    };
-    const useCase = useCaseMap[fieldType];
+    const useCase = fieldToUseCase[field] || field;
+    const targetInput = document.getElementById(field);
 
-    // Mostra loading
-    loadingDiv.style.display = 'flex';
-    targetInput.disabled = true;
+    const fieldLabels = {
+        'seo_focus_keyword': 'Gerando palavra-chave...',
+        'seo_title': 'Gerando titulo SEO...',
+        'seo_description': 'Gerando descricao SEO...'
+    };
+    showAILoading(fieldLabels[field] || 'Gerando com IA...');
 
     try {
         const response = await fetch('/admin/api/ai/generate', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 use_case: useCase,
-                title: nameInput.value.trim(),
-                content: descriptionInput.value.trim()
+                title: name,
+                content: content.substring(0, 5000)
+            })
+        });
+
+        let data = await response.json();
+
+        // Fallback para use_case generico
+        if (!response.ok && fallbackUseCase[useCase]) {
+            const fallbackResponse = await fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: fallbackUseCase[useCase],
+                    title: name,
+                    content: content.substring(0, 5000)
+                })
+            });
+            data = await fallbackResponse.json();
+            if (fallbackResponse.ok) {
+                processGeneratedContent(field, data.generated_content, targetInput);
+                updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+                await updateOccasionAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+                return;
+            }
+        }
+
+        if (response.ok) {
+            processGeneratedContent(field, data.generated_content, targetInput);
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updateOccasionAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        hideAILoading();
+    }
+}
+
+function processGeneratedContent(field, generatedContent, targetInput) {
+    if (field === 'seo_focus_keyword') {
+        generatedContent = generatedContent
+            .replace(/^(palavras?-?chave|keywords?|foco|principal)[:.\s-]*/i, '')
+            .split(/[,\n]/)[0]
+            .trim();
+    }
+    targetInput.value = generatedContent;
+    const countSpan = document.getElementById(field + '_count');
+    if (countSpan) {
+        countSpan.textContent = generatedContent.length;
+    }
+}
+
+async function generateAllSEO() {
+    const name = document.getElementById('name').value.trim();
+
+    if (!name) {
+        alert('Preencha o nome da ocasiao antes de gerar SEO');
+        return;
+    }
+
+    const content = document.getElementById('content').value.trim();
+    const seoKeyword = document.getElementById('seo_focus_keyword');
+    const seoTitle = document.getElementById('seo_title');
+    const seoDescription = document.getElementById('seo_description');
+    const tagsInput = document.getElementById('tags');
+
+    showAILoading('Gerando SEO completo...');
+
+    const requestBody = {
+        title: name,
+        content: content.substring(0, 5000)
+    };
+
+    try {
+        const [keywordResponse, titleResponse, descResponse, tagsResponse] = await Promise.all([
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'occasion_seo_keyword' })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'occasion_seo_title' })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'occasion_seo_description' })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'occasion_tags' })
+            })
+        ]);
+
+        const [keywordData, titleData, descData, tagsData] = await Promise.all([
+            keywordResponse.json(),
+            titleResponse.json(),
+            descResponse.json(),
+            tagsResponse.json()
+        ]);
+
+        if (keywordResponse.ok) {
+            let keyword = keywordData.generated_content
+                .replace(/^(palavras?-?chave|keywords?|foco|principal)[:.\s-]*/i, '')
+                .split(/[,\n]/)[0]
+                .trim();
+            seoKeyword.value = keyword;
+        }
+
+        if (titleResponse.ok) {
+            seoTitle.value = titleData.generated_content;
+            document.getElementById('seo_title_count').textContent = titleData.generated_content.length;
+        }
+
+        if (descResponse.ok) {
+            seoDescription.value = descData.generated_content;
+            document.getElementById('seo_description_count').textContent = descData.generated_content.length;
+        }
+
+        if (tagsResponse.ok) {
+            let tags = tagsData.generated_content
+                .replace(/^(tags?|sugest[oõ]es?)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase())
+                .filter(t => t.length > 0)
+                .join(', ');
+            tagsInput.value = tags;
+        }
+
+        // Salva custos
+        if (keywordResponse.ok) {
+            updateCostDisplay(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
+            await updateOccasionAICost(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
+        }
+        if (titleResponse.ok) {
+            updateCostDisplay(titleData.tokens_used || 0, titleData.prompt_tokens || 0, titleData.completion_tokens || 0, titleData.cost_usd || 0);
+            await updateOccasionAICost(titleData.tokens_used || 0, titleData.prompt_tokens || 0, titleData.completion_tokens || 0, titleData.cost_usd || 0);
+        }
+        if (descResponse.ok) {
+            updateCostDisplay(descData.tokens_used || 0, descData.prompt_tokens || 0, descData.completion_tokens || 0, descData.cost_usd || 0);
+            await updateOccasionAICost(descData.tokens_used || 0, descData.prompt_tokens || 0, descData.completion_tokens || 0, descData.cost_usd || 0);
+        }
+        if (tagsResponse.ok) {
+            updateCostDisplay(tagsData.tokens_used || 0, tagsData.prompt_tokens || 0, tagsData.completion_tokens || 0, tagsData.cost_usd || 0);
+            await updateOccasionAICost(tagsData.tokens_used || 0, tagsData.prompt_tokens || 0, tagsData.completion_tokens || 0, tagsData.cost_usd || 0);
+        }
+
+        if (!keywordResponse.ok || !titleResponse.ok || !descResponse.ok || !tagsResponse.ok) {
+            alert('Alguns campos nao foram gerados. Verifique a configuracao de IA.');
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        hideAILoading();
+    }
+}
+
+// =============================================================================
+// Geracao de Tags com IA
+// =============================================================================
+async function generateTags() {
+    const name = document.getElementById('name').value.trim();
+    const content = document.getElementById('content').value.trim();
+
+    if (!name) {
+        alert('Preencha o nome da ocasiao antes de gerar tags');
+        return;
+    }
+
+    const tagsInput = document.getElementById('tags');
+
+    showAILoading('Gerando tags...');
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: 'occasion_tags',
+                title: name,
+                content: content.substring(0, 5000)
             })
         });
 
         const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(data.detail || 'Erro ao gerar conteudo');
+        if (response.ok) {
+            // Limpa e formata as tags
+            let tags = data.generated_content
+                .replace(/^(tags?|sugest[oõ]es?)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase())
+                .filter(t => t.length > 0)
+                .join(', ');
+            tagsInput.value = tags;
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updateOccasionAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
         }
-
-        // Processa o resultado
-        let generatedContent = data.generated_content || '';
-
-        // Para keywords, pega apenas a primeira se vier lista
-        if (fieldType === 'seo_focus_keyword') {
-            generatedContent = generatedContent.split(',')[0].trim();
-            generatedContent = generatedContent.split('\n')[0].trim();
-        }
-
-        // Remove aspas extras se houver
-        generatedContent = generatedContent.replace(/^["']|["']$/g, '').trim();
-
-        // Preenche o campo
-        targetInput.value = generatedContent;
-
-        // Dispara evento de input para atualizar contadores
-        targetInput.dispatchEvent(new Event('input'));
-
     } catch (error) {
-        console.error('Erro na geracao:', error);
-        alert('Erro ao gerar: ' + error.message);
+        alert('Erro de conexao: ' + error.message);
     } finally {
-        loadingDiv.style.display = 'none';
-        targetInput.disabled = false;
-    }
-}
-
-/**
- * Gera todos os campos SEO em sequencia.
- */
-async function generateAllSEO() {
-    const fields = ['seo_focus_keyword', 'seo_title', 'seo_description'];
-
-    for (const field of fields) {
-        await generateSEO(field);
-        // Pequeno delay entre chamadas para evitar rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500));
+        hideAILoading();
     }
 }
 </script>

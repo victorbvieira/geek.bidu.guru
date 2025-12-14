@@ -13,13 +13,14 @@ Produtos e posts podem ser associados a multiplas ocasioes.
 """
 
 from datetime import date
+from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, Index, Integer, String, Text
+from sqlalchemy import Boolean, Date, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
-from app.models.base import TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 
 
 class Occasion(Base, UUIDMixin, TimestampMixin):
@@ -65,11 +66,37 @@ class Occasion(Base, UUIDMixin, TimestampMixin):
     # Proxima revisao (primeiro dia do mes para simplificar)
     next_review_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
+    # Tags (array JSON - usa JSONBType para compatibilidade com SQLite em testes)
+    tags: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
+
+    # Custos de IA (para calcular ROI)
+    ai_tokens_used: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Total de tokens consumidos em geracoes de IA",
+    )
+    ai_prompt_tokens: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Tokens de entrada (prompt) consumidos em geracoes de IA",
+    )
+    ai_completion_tokens: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Tokens de saida (completion) consumidos em geracoes de IA",
+    )
+    ai_cost_usd: Mapped[Decimal] = mapped_column(
+        Numeric(precision=10, scale=6), default=Decimal("0"), server_default="0",
+        comment="Custo total em USD das geracoes de IA",
+    )
+    ai_generations_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Numero de vezes que IA foi usada para gerar conteudo",
+    )
+
     # Indices
     __table_args__ = (
         Index("idx_occasions_slug", "slug"),
         Index("idx_occasions_active_order", "is_active", "display_order"),
         Index("idx_occasions_next_review", "next_review_date"),
+        Index("idx_occasions_tags", "tags", postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:
