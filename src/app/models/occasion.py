@@ -54,6 +54,7 @@ class Occasion(Base, UUIDMixin, TimestampMixin):
 
     # Imagem e SEO
     image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    seo_focus_keyword: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     seo_title: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
     seo_description: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
 

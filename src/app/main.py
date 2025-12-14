@@ -360,7 +360,26 @@ app.include_router(admin_actions_router)
 
 @app.exception_handler(AdminRedirectException)
 async def admin_redirect_exception_handler(request: Request, exc: AdminRedirectException):
-    """Handler para redirecionar usuarios nao autenticados no admin para o login."""
+    """
+    Handler para usuarios nao autenticados no admin.
+
+    Para requisicoes AJAX (Content-Type: application/json ou Accept: application/json),
+    retorna JSON com erro 401.
+    Para requisicoes normais (HTML), redireciona para login.
+    """
+    # Verifica se e uma requisicao AJAX/API
+    content_type = request.headers.get("content-type", "")
+    accept = request.headers.get("accept", "")
+
+    if "application/json" in content_type or "application/json" in accept:
+        # Requisicao AJAX - retorna JSON
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            content={"detail": "Sessao expirada. Faca login novamente."},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    # Requisicao HTML - redireciona para login
     return RedirectResponse(url="/admin/login", status_code=status.HTTP_303_SEE_OTHER)
 
 

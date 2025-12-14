@@ -96,9 +96,25 @@
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3 class="admin-card-title">SEO</h3>
-                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllSEO()" title="Gerar titulo e descricao com IA">
-                        🤖 Gerar com IA
+                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllSEO()" title="Gerar todos os campos SEO com IA">
+                        🤖 Gerar Tudo
                     </button>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="seo_focus_keyword" class="admin-form-label">
+                        Palavra-chave foco
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateSEO('seo_focus_keyword')" title="Gerar com IA">🤖</button>
+                    </label>
+                    <input
+                        type="text"
+                        id="seo_focus_keyword"
+                        name="seo_focus_keyword"
+                        class="admin-form-input"
+                        value="{{ post.seo_focus_keyword if post else '' }}"
+                        placeholder="Ex: presentes geek, funko pop marvel"
+                    >
+                    <div class="admin-form-hint">Palavra-chave principal para otimizacao SEO</div>
                 </div>
 
                 <div class="admin-form-group">
@@ -132,18 +148,8 @@
                     <div class="admin-form-hint"><span id="seo_description_count">{{ (post.seo_description|length) if post and post.seo_description else 0 }}</span>/160 caracteres</div>
                 </div>
 
-                <div class="admin-form-group">
-                    <label for="seo_focus_keyword" class="admin-form-label">Palavra-chave foco</label>
-                    <input
-                        type="text"
-                        id="seo_focus_keyword"
-                        name="seo_focus_keyword"
-                        class="admin-form-input"
-                        value="{{ post.seo_focus_keyword if post else '' }}"
-                    >
-                </div>
-
-                <div id="seo-loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
+                <div id="seo-loading" style="display: none; text-align: center; padding: 1rem; color: var(--admin-text-muted);">
+                    <div class="ai-spinner"></div>
                     <span>Gerando com IA...</span>
                 </div>
             </div>
@@ -255,7 +261,10 @@
             <!-- Tags -->
             <div class="admin-card">
                 <div class="admin-form-group" style="margin-bottom: 0;">
-                    <label for="tags" class="admin-form-label">Tags</label>
+                    <label for="tags" class="admin-form-label">
+                        Tags
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateTags()" title="Gerar com IA">🤖</button>
+                    </label>
                     <input
                         type="text"
                         id="tags"
@@ -265,6 +274,10 @@
                         placeholder="tag1, tag2, tag3"
                     >
                     <div class="admin-form-hint">Separadas por virgula</div>
+                    <div id="tags_loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
+                        <div class="ai-spinner"></div>
+                        <span>Gerando...</span>
+                    </div>
                 </div>
             </div>
 
@@ -736,8 +749,25 @@ document.getElementById('seo_description').addEventListener('input', function() 
     document.getElementById('seo_description_count').textContent = this.value.length;
 });
 
+// Mapeamento de campos para use_case da API
+// Usa os novos use_cases especificos para Post quando disponiveis
+const fieldToUseCase = {
+    'seo_title': 'post_seo_title',
+    'seo_description': 'post_seo_description',
+    'seo_focus_keyword': 'post_seo_keyword',
+    'tags': 'post_tags'
+};
+
+// Fallback para use_cases genericos caso os especificos nao existam
+const fallbackUseCase = {
+    'post_seo_title': 'seo_title',
+    'post_seo_description': 'seo_description',
+    'post_seo_keyword': 'seo_keywords'
+};
+
 async function generateSEO(field) {
     const title = document.getElementById('title').value.trim();
+    const subtitle = document.getElementById('subtitle').value.trim();
     const content = document.getElementById('content').value.trim();
 
     if (!title && !content) {
@@ -745,11 +775,11 @@ async function generateSEO(field) {
         return;
     }
 
-    const useCase = field === 'seo_title' ? 'seo_title' : 'seo_description';
+    const useCase = fieldToUseCase[field] || field;
     const loadingDiv = document.getElementById('seo-loading');
     const targetInput = document.getElementById(field);
 
-    loadingDiv.style.display = 'block';
+    loadingDiv.style.display = 'flex';
     targetInput.disabled = true;
 
     try {
@@ -759,19 +789,34 @@ async function generateSEO(field) {
             body: JSON.stringify({
                 use_case: useCase,
                 title: title,
+                subtitle: subtitle,
                 content: content.substring(0, 2000)
             })
         });
 
-        const data = await response.json();
+        let data = await response.json();
+
+        // Se o use_case especifico falhar, tenta o generico
+        if (!response.ok && fallbackUseCase[useCase]) {
+            const fallbackResponse = await fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    use_case: fallbackUseCase[useCase],
+                    title: title,
+                    subtitle: subtitle,
+                    content: content.substring(0, 2000)
+                })
+            });
+            data = await fallbackResponse.json();
+            if (fallbackResponse.ok) {
+                processGeneratedContent(field, data.generated_content, targetInput);
+                return;
+            }
+        }
 
         if (response.ok) {
-            targetInput.value = data.generated_content;
-            // Atualiza contador
-            const countSpan = document.getElementById(field + '_count');
-            if (countSpan) {
-                countSpan.textContent = data.generated_content.length;
-            }
+            processGeneratedContent(field, data.generated_content, targetInput);
         } else {
             alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
         }
@@ -783,8 +828,78 @@ async function generateSEO(field) {
     }
 }
 
+function processGeneratedContent(field, generatedContent, targetInput) {
+    if (field === 'seo_focus_keyword') {
+        // Remove prefixos comuns e pega a primeira keyword
+        generatedContent = generatedContent
+            .replace(/^(palavras?-?chave|keywords?|foco|principal)[:.\s-]*/i, '')
+            .split(/[,\n]/)[0]
+            .trim();
+    }
+    targetInput.value = generatedContent;
+    // Atualiza contador se existir
+    const countSpan = document.getElementById(field + '_count');
+    if (countSpan) {
+        countSpan.textContent = generatedContent.length;
+    }
+}
+
+// Funcao para gerar tags com IA
+async function generateTags() {
+    const title = document.getElementById('title').value.trim();
+    const subtitle = document.getElementById('subtitle').value.trim();
+    const content = document.getElementById('content').value.trim();
+
+    if (!title && !content) {
+        alert('Preencha o titulo ou conteudo antes de gerar tags');
+        return;
+    }
+
+    const loadingDiv = document.getElementById('tags_loading');
+    const tagsInput = document.getElementById('tags');
+
+    loadingDiv.style.display = 'flex';
+    tagsInput.disabled = true;
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: 'post_tags',
+                title: title,
+                subtitle: subtitle,
+                content: content.substring(0, 2000)
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Limpa e formata as tags
+            let tags = data.generated_content
+                .replace(/^(tags?|sugestoes?)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase())
+                .filter(t => t && !t.startsWith('#'))
+                .slice(0, 5)
+                .join(', ');
+
+            tagsInput.value = tags;
+        } else {
+            alert('Erro ao gerar tags: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        loadingDiv.style.display = 'none';
+        tagsInput.disabled = false;
+    }
+}
+
 async function generateAllSEO() {
     const title = document.getElementById('title').value.trim();
+    const subtitle = document.getElementById('subtitle').value.trim();
     const content = document.getElementById('content').value.trim();
 
     if (!title && !content) {
@@ -793,40 +908,66 @@ async function generateAllSEO() {
     }
 
     const loadingDiv = document.getElementById('seo-loading');
+    const tagsLoading = document.getElementById('tags_loading');
+    const seoKeyword = document.getElementById('seo_focus_keyword');
     const seoTitle = document.getElementById('seo_title');
     const seoDescription = document.getElementById('seo_description');
+    const tagsInput = document.getElementById('tags');
 
-    loadingDiv.style.display = 'block';
+    loadingDiv.style.display = 'flex';
+    tagsLoading.style.display = 'flex';
+    seoKeyword.disabled = true;
     seoTitle.disabled = true;
     seoDescription.disabled = true;
+    tagsInput.disabled = true;
+
+    const requestBody = {
+        title: title,
+        subtitle: subtitle,
+        content: content.substring(0, 2000)
+    };
 
     try {
-        // Gera titulo e descricao em paralelo
-        const [titleResponse, descResponse] = await Promise.all([
+        // Gera keyword, titulo, descricao e tags em paralelo
+        // Usa os novos use_cases especificos para Post
+        const [keywordResponse, titleResponse, descResponse, tagsResponse] = await Promise.all([
             fetch('/admin/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    use_case: 'seo_title',
-                    title: title,
-                    content: content.substring(0, 2000)
-                })
+                body: JSON.stringify({ ...requestBody, use_case: 'post_seo_keyword' })
             }),
             fetch('/admin/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    use_case: 'seo_description',
-                    title: title,
-                    content: content.substring(0, 2000)
-                })
+                body: JSON.stringify({ ...requestBody, use_case: 'post_seo_title' })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'post_seo_description' })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'post_tags' })
             })
         ]);
 
-        const [titleData, descData] = await Promise.all([
+        const [keywordData, titleData, descData, tagsData] = await Promise.all([
+            keywordResponse.json(),
             titleResponse.json(),
-            descResponse.json()
+            descResponse.json(),
+            tagsResponse.json()
         ]);
+
+        if (keywordResponse.ok) {
+            // Pega apenas a primeira keyword
+            let keyword = keywordData.generated_content
+                .replace(/^(palavras?-?chave|keywords?|foco|principal)[:.\s-]*/i, '')
+                .split(/[,\n]/)[0]
+                .trim();
+            seoKeyword.value = keyword;
+        }
 
         if (titleResponse.ok) {
             seoTitle.value = titleData.generated_content;
@@ -838,15 +979,30 @@ async function generateAllSEO() {
             document.getElementById('seo_description_count').textContent = descData.generated_content.length;
         }
 
-        if (!titleResponse.ok || !descResponse.ok) {
+        if (tagsResponse.ok) {
+            // Limpa e formata as tags
+            let tags = tagsData.generated_content
+                .replace(/^(tags?|sugestoes?)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase())
+                .filter(t => t && !t.startsWith('#'))
+                .slice(0, 5)
+                .join(', ');
+            tagsInput.value = tags;
+        }
+
+        if (!keywordResponse.ok || !titleResponse.ok || !descResponse.ok || !tagsResponse.ok) {
             alert('Alguns campos nao foram gerados. Verifique a configuracao de IA.');
         }
     } catch (error) {
         alert('Erro de conexao: ' + error.message);
     } finally {
         loadingDiv.style.display = 'none';
+        tagsLoading.style.display = 'none';
+        seoKeyword.disabled = false;
         seoTitle.disabled = false;
         seoDescription.disabled = false;
+        tagsInput.disabled = false;
     }
 }
 </script>

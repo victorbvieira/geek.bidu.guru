@@ -26,16 +26,33 @@ class AIProvider(str, enum.Enum):
     OPENROUTER = "openrouter"
 
 
+class AIEntity(str, enum.Enum):
+    """Entidades que podem usar configuracoes de IA."""
+
+    POST = "post"
+    CATEGORY = "category"
+    OCCASION = "occasion"
+    PRODUCT = "product"
+    GENERAL = "general"
+
+
 class AIUseCase(str, enum.Enum):
     """Casos de uso para configuracao de IA.
 
     Cada caso de uso pode ter seu proprio provider, modelo e prompts.
     """
 
-    # Geracao de SEO
+    # Geracao de SEO (generico - retrocompatibilidade)
     SEO_TITLE = "seo_title"
     SEO_DESCRIPTION = "seo_description"
     SEO_KEYWORDS = "seo_keywords"
+
+    # SEO especifico para Post
+    POST_SEO_ALL = "post_seo_all"
+    POST_SEO_KEYWORD = "post_seo_keyword"
+    POST_SEO_TITLE = "post_seo_title"
+    POST_SEO_DESCRIPTION = "post_seo_description"
+    POST_TAGS = "post_tags"
 
     # Geracao de conteudo
     POST_CONTENT = "post_content"
@@ -62,8 +79,15 @@ class AIConfig(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "ai_configs"
 
     # Identificador do caso de uso (unico)
+    # Nota: create_constraint=False porque o tipo ja existe no banco
+    # values_callable retorna os valores do enum (lowercase) em vez dos nomes
     use_case: Mapped[AIUseCase] = mapped_column(
-        Enum(AIUseCase),
+        Enum(
+            AIUseCase,
+            name="ai_use_case",
+            create_constraint=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         unique=True,
         nullable=False,
         index=True,
@@ -75,9 +99,26 @@ class AIConfig(Base, UUIDMixin, TimestampMixin):
     # Descricao do uso (ajuda o admin a entender)
     description: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Entidade associada (post, category, occasion, product, general)
+    entity: Mapped[AIEntity] = mapped_column(
+        Enum(
+            AIEntity,
+            name="ai_entity",
+            create_constraint=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
+        nullable=False,
+        default=AIEntity.GENERAL,
+    )
+
     # Provider de IA
     provider: Mapped[AIProvider] = mapped_column(
-        Enum(AIProvider),
+        Enum(
+            AIProvider,
+            name="ai_provider",
+            create_constraint=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         nullable=False,
         default=AIProvider.OPENROUTER,
     )

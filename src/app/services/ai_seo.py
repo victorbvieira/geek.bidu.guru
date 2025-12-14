@@ -42,6 +42,7 @@ class AISEOService:
         use_case: AIUseCase,
         *,
         title: str | None = None,
+        subtitle: str | None = None,
         content: str | None = None,
         keywords: list[str] | None = None,
         category: str | None = None,
@@ -54,6 +55,7 @@ class AISEOService:
         Args:
             use_case: Tipo de conteudo a gerar (seo_title, seo_description, etc.)
             title: Titulo original do conteudo
+            subtitle: Subtitulo do conteudo (para posts)
             content: Conteudo completo para analise
             keywords: Palavras-chave existentes
             category: Categoria do conteudo
@@ -77,16 +79,33 @@ class AISEOService:
                 f"Nenhuma configuracao ativa encontrada para: {use_case.value}"
             )
 
-        # Monta o prompt do usuario com o contexto fornecido
-        user_prompt = self._build_user_prompt(
-            use_case=use_case,
+        # Substitui placeholders no system_prompt se existirem
+        system_prompt = self._replace_placeholders(
+            config.system_prompt,
             title=title,
+            subtitle=subtitle,
             content=content,
             keywords=keywords,
             category=category,
             product_name=product_name,
-            target_audience=target_audience,
         )
+
+        # Para prompts com placeholders, o user_prompt pode ser simples
+        # Para prompts antigos (sem placeholders), monta o prompt completo
+        if "{{title}}" in config.system_prompt or "{{content}}" in config.system_prompt:
+            # Prompt novo com placeholders - ja incorporou contexto no system_prompt
+            user_prompt = "Gere o conteudo conforme as instrucoes acima."
+        else:
+            # Prompt antigo - monta user_prompt com contexto
+            user_prompt = self._build_user_prompt(
+                use_case=use_case,
+                title=title,
+                content=content,
+                keywords=keywords,
+                category=category,
+                product_name=product_name,
+                target_audience=target_audience,
+            )
 
         # Configura o servico LLM com os parametros da config
         llm = LLMService(
@@ -99,7 +118,7 @@ class AISEOService:
             # Gera o conteudo
             response = await llm.generate(
                 prompt=user_prompt,
-                system=config.system_prompt,
+                system=system_prompt,
             )
 
             return {
@@ -112,6 +131,44 @@ class AISEOService:
         except LLMError as e:
             logger.error(f"Erro ao gerar SEO ({use_case.value}): {e}")
             raise
+
+    def _replace_placeholders(
+        self,
+        template: str,
+        *,
+        title: str | None = None,
+        subtitle: str | None = None,
+        content: str | None = None,
+        keywords: list[str] | None = None,
+        category: str | None = None,
+        product_name: str | None = None,
+    ) -> str:
+        """
+        Substitui placeholders no template por valores reais.
+
+        Placeholders suportados:
+        - {{title}}: Titulo do conteudo
+        - {{subtitle}}: Subtitulo do conteudo
+        - {{content}}: Conteudo completo (limitado a 2000 chars)
+        - {{keywords}}: Palavras-chave separadas por virgula
+        - {{category}}: Categoria
+        - {{product_name}}: Nome do produto
+        """
+        result = template
+
+        # Substitui cada placeholder
+        result = result.replace("{{title}}", title or "(sem titulo)")
+        result = result.replace("{{subtitle}}", subtitle or "(sem subtitulo)")
+
+        # Limita conteudo para nao exceder tokens
+        content_text = content[:2000] if content and len(content) > 2000 else (content or "(sem conteudo)")
+        result = result.replace("{{content}}", content_text)
+
+        result = result.replace("{{keywords}}", ", ".join(keywords) if keywords else "(sem keywords)")
+        result = result.replace("{{category}}", category or "(sem categoria)")
+        result = result.replace("{{product_name}}", product_name or "(sem produto)")
+
+        return result
 
     def _build_user_prompt(
         self,

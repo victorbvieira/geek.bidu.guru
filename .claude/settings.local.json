@@ -35,7 +35,8 @@
       "Bash(brew list:*)",
       "Bash(source ../.env)",
       "Bash(../.venv/bin/alembic upgrade:*)",
-      "Bash(../.venv/bin/alembic downgrade:*)"
+      "Bash(../.venv/bin/alembic downgrade:*)",
+      "Bash(../.venv/bin/alembic current:*)"
     ],
     "deny": [],
     "ask": []

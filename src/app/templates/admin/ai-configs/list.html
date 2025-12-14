@@ -35,10 +35,11 @@
     <table class="admin-table">
         <thead>
             <tr>
+                <th>Entidade</th>
                 <th>Caso de Uso</th>
                 <th>Nome</th>
                 <th>Provedor / Modelo</th>
-                <th>Temperatura</th>
+                <th>Temp.</th>
                 <th>Status</th>
                 <th>Acoes</th>
             </tr>
@@ -47,13 +48,21 @@
             {% for config in configs %}
             <tr>
                 <td>
+                    {% set entity_colors = {'post': 'primary', 'category': 'info', 'occasion': 'warning', 'product': 'success', 'general': 'secondary'} %}
+                    {% set entity_icons = {'post': '📝', 'category': '📁', 'occasion': '🎁', 'product': '📦', 'general': '⚙️'} %}
+                    {% set entity_value = config.entity.value if config.entity else 'general' %}
+                    <span class="admin-badge admin-badge-{{ entity_colors.get(entity_value, 'secondary') }}" title="{{ entity_value|title }}">
+                        {{ entity_icons.get(entity_value, '⚙️') }} {{ entity_value|title }}
+                    </span>
+                </td>
+                <td>
                     <code class="admin-code">{{ config.use_case.value }}</code>
                 </td>
                 <td>
                     <strong>{{ config.name }}</strong>
                     {% if config.description %}
                     <br>
-                    <small style="color: var(--admin-text-muted);">{{ config.description[:60] }}{% if config.description|length > 60 %}...{% endif %}</small>
+                    <small style="color: var(--admin-text-muted);">{{ config.description[:50] }}{% if config.description|length > 50 %}...{% endif %}</small>
                     {% endif %}
                 </td>
                 <td>
@@ -61,7 +70,7 @@
                         {{ config.provider.value }}
                     </span>
                     <br>
-                    <small>{{ config.model }}</small>
+                    <small>{{ config.model[:30] }}{% if config.model|length > 30 %}...{% endif %}</small>
                 </td>
                 <td>{{ config.temperature }}</td>
                 <td>
@@ -79,7 +88,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" class="admin-empty-state">
+                <td colspan="7" class="admin-empty-state">
                     Nenhuma configuracao encontrada.
                 </td>
             </tr>
@@ -90,32 +99,72 @@
 
 <!-- Help -->
 <div class="admin-card" style="margin-top: 1.5rem;">
-    <h3 style="margin-bottom: 1rem;">Como funciona</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+    <h3 style="margin-bottom: 1rem;">Casos de Uso por Entidade</h3>
+
+    <h4 style="margin: 1.5rem 0 0.75rem; color: var(--admin-primary);">📝 Post</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
         <div>
-            <strong>SEO Title</strong>
+            <strong>post_seo_keyword</strong>
             <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
-                Gera titulos otimizados para SEO (max 60 caracteres) a partir do titulo original.
+                Gera a palavra-chave foco para o post baseado no titulo, subtitulo e conteudo.
             </p>
         </div>
         <div>
-            <strong>SEO Description</strong>
+            <strong>post_seo_title</strong>
             <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
-                Gera meta descriptions atrativas (120-160 caracteres) para melhor CTR.
+                Gera titulo SEO otimizado (max 60 caracteres).
             </p>
         </div>
         <div>
-            <strong>SEO Keywords</strong>
+            <strong>post_seo_description</strong>
             <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
-                Sugere palavras-chave relevantes incluindo variacoes long-tail.
+                Gera meta description (120-160 caracteres).
             </p>
         </div>
         <div>
-            <strong>Product Description</strong>
+            <strong>post_tags</strong>
+            <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
+                Gera 3-5 tags relevantes para o post.
+            </p>
+        </div>
+        <div>
+            <strong>post_seo_all</strong>
+            <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
+                Gera todos os campos SEO + tags em uma unica chamada (JSON).
+            </p>
+        </div>
+    </div>
+
+    <h4 style="margin: 1.5rem 0 0.75rem; color: var(--admin-text-muted);">⚙️ Generico (retrocompatibilidade)</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+        <div>
+            <strong>seo_title / seo_description / seo_keywords</strong>
+            <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
+                Prompts genericos usados por categorias e ocasioes. Serao substituidos por prompts especificos no futuro.
+            </p>
+        </div>
+        <div>
+            <strong>product_description</strong>
             <p style="color: var(--admin-text-muted); font-size: 0.875rem;">
                 Gera descricoes curtas e longas para produtos de afiliados.
             </p>
         </div>
+    </div>
+</div>
+
+<!-- Placeholders Info -->
+<div class="admin-card" style="margin-top: 1rem;">
+    <h3 style="margin-bottom: 1rem;">Placeholders Disponiveis</h3>
+    <p style="color: var(--admin-text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+        Use estes placeholders no system_prompt para incorporar o contexto do conteudo:
+    </p>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        <code class="admin-code">{{title}}</code>
+        <code class="admin-code">{{subtitle}}</code>
+        <code class="admin-code">{{content}}</code>
+        <code class="admin-code">{{keywords}}</code>
+        <code class="admin-code">{{category}}</code>
+        <code class="admin-code">{{product_name}}</code>
     </div>
 </div>
 {% endblock %}

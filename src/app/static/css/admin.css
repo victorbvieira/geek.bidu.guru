@@ -2037,3 +2037,38 @@ input, select, textarea, button {
     background: var(--admin-sidebar-bg) !important;
 }
 
+/* -----------------------------------------------------------------------------
+   AI Spinner (Loading indicator)
+   ----------------------------------------------------------------------------- */
+.ai-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--admin-border);
+    border-top-color: var(--admin-primary);
+    border-radius: 50%;
+    animation: ai-spin 0.8s linear infinite;
+    margin: 0 auto 0.5rem;
+}
+
+@keyframes ai-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#seo-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+#seo-loading span {
+    font-size: 0.875rem;
+    color: var(--admin-primary);
+}
+

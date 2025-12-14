@@ -118,36 +118,80 @@
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3 class="admin-card-title">SEO</h3>
+                    <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllSEO()">
+                        🤖 Gerar Tudo
+                    </button>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="seo_focus_keyword" class="admin-form-label">Palavra-chave Foco</label>
+                    <div class="admin-input-with-btn">
+                        <input
+                            type="text"
+                            id="seo_focus_keyword"
+                            name="seo_focus_keyword"
+                            class="admin-form-input"
+                            value="{{ occasion.seo_focus_keyword if occasion else '' }}"
+                            placeholder="Palavra-chave principal (ex: presentes de natal)"
+                            maxlength="100"
+                        >
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ai" onclick="generateSEO('seo_focus_keyword')" title="Gerar com IA">
+                            🤖
+                        </button>
+                    </div>
+                    <div class="admin-form-hint">Keyword principal para otimizar o conteudo</div>
+                    <div id="seo_focus_keyword_loading" class="ai-loading" style="display: none;">
+                        <div class="ai-spinner"></div>
+                        <span>Gerando...</span>
+                    </div>
                 </div>
 
                 <div class="admin-form-group">
                     <label for="seo_title" class="admin-form-label">Título SEO</label>
-                    <input
-                        type="text"
-                        id="seo_title"
-                        name="seo_title"
-                        class="admin-form-input"
-                        value="{{ occasion.seo_title if occasion else '' }}"
-                        placeholder="Título para buscadores (max 60 caracteres)"
-                        maxlength="60"
-                    >
+                    <div class="admin-input-with-btn">
+                        <input
+                            type="text"
+                            id="seo_title"
+                            name="seo_title"
+                            class="admin-form-input"
+                            value="{{ occasion.seo_title if occasion else '' }}"
+                            placeholder="Título para buscadores (max 60 caracteres)"
+                            maxlength="60"
+                        >
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ai" onclick="generateSEO('seo_title')" title="Gerar com IA">
+                            🤖
+                        </button>
+                    </div>
                     <div class="admin-form-hint">
                         <span id="seo_title_count">{{ (occasion.seo_title|length) if occasion and occasion.seo_title else 0 }}</span>/60 caracteres
+                    </div>
+                    <div id="seo_title_loading" class="ai-loading" style="display: none;">
+                        <div class="ai-spinner"></div>
+                        <span>Gerando...</span>
                     </div>
                 </div>
 
                 <div class="admin-form-group">
                     <label for="seo_description" class="admin-form-label">Descrição SEO</label>
-                    <textarea
-                        id="seo_description"
-                        name="seo_description"
-                        class="admin-form-textarea"
-                        rows="2"
-                        placeholder="Descrição para buscadores (max 160 caracteres)"
-                        maxlength="160"
-                    >{{ occasion.seo_description if occasion else '' }}</textarea>
+                    <div class="admin-input-with-btn">
+                        <textarea
+                            id="seo_description"
+                            name="seo_description"
+                            class="admin-form-textarea"
+                            rows="2"
+                            placeholder="Descrição para buscadores (max 160 caracteres)"
+                            maxlength="160"
+                        >{{ occasion.seo_description if occasion else '' }}</textarea>
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-ai" onclick="generateSEO('seo_description')" title="Gerar com IA">
+                            🤖
+                        </button>
+                    </div>
                     <div class="admin-form-hint">
                         <span id="seo_description_count">{{ (occasion.seo_description|length) if occasion and occasion.seo_description else 0 }}</span>/160 caracteres
+                    </div>
+                    <div id="seo_description_loading" class="ai-loading" style="display: none;">
+                        <div class="ai-spinner"></div>
+                        <span>Gerando...</span>
                     </div>
                 </div>
             </div>
@@ -373,6 +417,42 @@
 
 .admin-info-value {
     color: var(--admin-text);
+}
+
+/* Input com botao de IA */
+.admin-input-with-btn {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.admin-input-with-btn .admin-form-input,
+.admin-input-with-btn .admin-form-textarea {
+    flex: 1;
+}
+
+.admin-btn-ai {
+    flex-shrink: 0;
+    padding: 0.5rem 0.75rem;
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-btn-ai:hover {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+/* Loading de IA */
+.ai-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--admin-text-muted);
 }
 </style>
 {% endblock %}
@@ -808,5 +888,98 @@ document.addEventListener('keydown', (e) => {
         closeProductModal();
     }
 });
+
+// =============================================================================
+// Geracao de SEO com IA
+// =============================================================================
+
+/**
+ * Gera conteudo SEO usando a API de IA.
+ * @param {string} fieldType - Tipo do campo: 'seo_focus_keyword', 'seo_title' ou 'seo_description'
+ */
+async function generateSEO(fieldType) {
+    const nameInput = document.getElementById('name');
+    const descriptionInput = document.getElementById('description');
+    const targetInput = document.getElementById(fieldType);
+    const loadingDiv = document.getElementById(fieldType + '_loading');
+
+    // Valida se tem nome preenchido
+    if (!nameInput.value.trim()) {
+        alert('Preencha o nome da ocasiao antes de gerar SEO.');
+        nameInput.focus();
+        return;
+    }
+
+    // Mapeia o campo para o use_case da API
+    const useCaseMap = {
+        'seo_focus_keyword': 'seo_keywords',
+        'seo_title': 'seo_title',
+        'seo_description': 'seo_description'
+    };
+    const useCase = useCaseMap[fieldType];
+
+    // Mostra loading
+    loadingDiv.style.display = 'flex';
+    targetInput.disabled = true;
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                use_case: useCase,
+                title: nameInput.value.trim(),
+                content: descriptionInput.value.trim()
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Erro ao gerar conteudo');
+        }
+
+        // Processa o resultado
+        let generatedContent = data.generated_content || '';
+
+        // Para keywords, pega apenas a primeira se vier lista
+        if (fieldType === 'seo_focus_keyword') {
+            generatedContent = generatedContent.split(',')[0].trim();
+            generatedContent = generatedContent.split('\n')[0].trim();
+        }
+
+        // Remove aspas extras se houver
+        generatedContent = generatedContent.replace(/^["']|["']$/g, '').trim();
+
+        // Preenche o campo
+        targetInput.value = generatedContent;
+
+        // Dispara evento de input para atualizar contadores
+        targetInput.dispatchEvent(new Event('input'));
+
+    } catch (error) {
+        console.error('Erro na geracao:', error);
+        alert('Erro ao gerar: ' + error.message);
+    } finally {
+        loadingDiv.style.display = 'none';
+        targetInput.disabled = false;
+    }
+}
+
+/**
+ * Gera todos os campos SEO em sequencia.
+ */
+async function generateAllSEO() {
+    const fields = ['seo_focus_keyword', 'seo_title', 'seo_description'];
+
+    for (const field of fields) {
+        await generateSEO(field);
+        // Pequeno delay entre chamadas para evitar rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+}
 </script>
 {% endblock %}

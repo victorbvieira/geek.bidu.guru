@@ -25,64 +25,59 @@ SEO_PROMPTS = {
     "seo_title": {
         "name": "Titulo SEO",
         "description": "Gera titulo otimizado para SEO (max 60 caracteres) a partir do titulo original.",
-        "system_prompt": """Voce e um especialista em SEO para blogs de presentes geek.
+        "system_prompt": """Voce e um especialista em SEO para blogs de presentes geek e produtos de afiliados.
 
-Sua tarefa e criar um titulo SEO otimizado a partir do conteudo fornecido.
+TAREFA: Criar um titulo SEO otimizado baseado no titulo e conteudo do post fornecido.
 
 REGRAS:
-1. Maximo de 60 caracteres
-2. Inclua a palavra-chave principal no inicio quando possivel
-3. Use numeros quando relevante (ex: "10 Melhores", "Top 5")
-4. Crie senso de urgencia ou curiosidade
-5. Seja especifico e descritivo
-6. Evite clickbait exagerado
-7. Use linguagem natural em portugues brasileiro
+- Maximo 60 caracteres (ideal: 50-60)
+- Incluir palavra-chave principal no inicio
+- Ser atrativo e gerar cliques
+- Usar linguagem adequada para publico geek brasileiro
+- NAO usar aspas no titulo
+- NAO adicionar prefixos como "Titulo:" ou explicacoes
 
-FORMATO DE RESPOSTA:
-Retorne APENAS o titulo, sem explicacoes ou formatacao adicional.""",
+RESPONDA APENAS COM O TITULO, sem nenhum texto adicional.""",
         "temperature": 0.7,
         "max_tokens": 100,
     },
     "seo_description": {
         "name": "Descricao SEO (Meta Description)",
         "description": "Gera meta description otimizada para SEO (max 160 caracteres).",
-        "system_prompt": """Voce e um especialista em SEO para blogs de presentes geek.
+        "system_prompt": """Voce e um especialista em SEO para blogs de presentes geek e produtos de afiliados.
 
-Sua tarefa e criar uma meta description otimizada para SEO.
+TAREFA: Criar uma meta description otimizada baseada no titulo e conteudo do post fornecido.
 
 REGRAS:
-1. Entre 120-160 caracteres (ideal: 155)
-2. Inclua a palavra-chave principal naturalmente
-3. Crie um resumo atrativo que incentive o clique
-4. Use call-to-action sutil (Descubra, Confira, Veja)
-5. Destaque beneficios ou diferenciais
-6. Evite promessas vazias
-7. Use linguagem natural em portugues brasileiro
+- Entre 120 e 160 caracteres (ideal: 150-160)
+- Resumir o conteudo de forma atrativa
+- Incluir call-to-action quando possivel
+- Usar linguagem adequada para publico geek brasileiro
+- NAO usar aspas
+- NAO adicionar prefixos como "Descricao:" ou explicacoes
 
-FORMATO DE RESPOSTA:
-Retorne APENAS a meta description, sem explicacoes ou formatacao adicional.""",
+RESPONDA APENAS COM A META DESCRIPTION, sem nenhum texto adicional.""",
         "temperature": 0.7,
         "max_tokens": 200,
     },
     "seo_keywords": {
         "name": "Palavras-chave SEO",
-        "description": "Sugere palavras-chave relevantes para o conteudo.",
-        "system_prompt": """Voce e um especialista em SEO para blogs de presentes geek.
+        "description": "Sugere a melhor palavra-chave foco para o conteudo.",
+        "system_prompt": """Voce e um especialista em SEO para blogs de presentes geek e produtos de afiliados.
 
-Sua tarefa e sugerir palavras-chave relevantes para o conteudo fornecido.
+TAREFA: Identificar a MELHOR palavra-chave foco para o post baseado no titulo e conteudo fornecido.
 
 REGRAS:
-1. Sugira entre 5-8 palavras-chave
-2. Inclua variacoes long-tail (mais especificas)
-3. Considere intencao de busca (compra, pesquisa, comparacao)
-4. Priorize termos com potencial de busca real
-5. Inclua sinonimos e variacoes
-6. Pense em como pessoas buscam presentes geek no Brasil
+- Retornar apenas UMA palavra-chave principal (pode ser composta, ex: "funko pop marvel")
+- A keyword deve ser especifica e relevante para o conteudo
+- Considerar termos que usuarios realmente buscam
+- Priorizar keywords de cauda longa quando apropriado
+- NAO usar aspas
+- NAO adicionar prefixos como "Keyword:" ou explicacoes
 
-FORMATO DE RESPOSTA:
-Retorne as palavras-chave separadas por virgula, sem explicacoes.""",
+RESPONDA APENAS COM A PALAVRA-CHAVE, sem nenhum texto adicional.""",
         "temperature": 0.5,
-        "max_tokens": 200,
+        "max_tokens": 100,
     },
     "post_content": {
         "name": "Conteudo de Post",
@@ -221,8 +216,8 @@ def upgrade() -> None:
     # Criar indice
     op.execute("CREATE INDEX idx_ai_configs_use_case ON ai_configs(use_case)")
 
-    # Inserir configuracoes iniciais usando Google Gemini 2.0 Flash via OpenRouter
-    # Modelo gratuito: google/gemini-2.0-flash-exp:free
+    # Inserir configuracoes iniciais usando Meta Llama 3.2 via OpenRouter
+    # Modelo gratuito e estavel: meta-llama/llama-3.2-3b-instruct:free
     for use_case, config in SEO_PROMPTS.items():
         # Escape aspas simples no system_prompt
         prompt_escaped = config["system_prompt"].replace("'", "''")
@@ -238,7 +233,7 @@ def upgrade() -> None:
                 '{config["name"]}',
                 '{desc_escaped}',
                 'openrouter'::ai_provider,
-                'google/gemini-2.0-flash-exp:free',
+                'meta-llama/llama-3.2-3b-instruct:free',
                 '{prompt_escaped}',
                 {config["temperature"]},
                 {config["max_tokens"]},
