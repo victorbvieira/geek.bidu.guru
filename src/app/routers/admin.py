@@ -27,7 +27,12 @@ from app.api.deps import (
     pagination_params,
 )
 from app.core.deps import get_current_active_user, get_current_user, require_role
-from app.core.security import create_access_token, create_refresh_token, verify_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    should_renew_token,
+    verify_password,
+)
 from app.models import User
 from app.models.post import PostStatus
 from app.models.user import UserRole
@@ -48,43 +53,45 @@ templates = Jinja2Templates(directory=BASE_DIR / "templates")
 async def get_admin_user_from_cookie(
     request: Request,
     db: DBSession,
-) -> Optional[User]:
+) -> tuple[Optional[User], Optional[dict]]:
     """
     Extrai usuario do cookie de sessao do admin.
 
-    Retorna None se nao autenticado (para redirect ao login).
+    Retorna tupla (user, payload) onde:
+    - user: Usuario autenticado ou None
+    - payload: Payload do token JWT (para verificar renovacao) ou None
     """
     from app.core.security import verify_token
     from app.repositories.user import UserRepository
 
     token = request.cookies.get("admin_token")
     if not token:
-        return None
+        return None, None
 
     payload = verify_token(token, token_type="access")
     if payload is None:
-        return None
+        return None, None
 
     user_id = payload.get("sub")
     if not user_id:
-        return None
+        return None, None
 
     try:
         user_uuid = UUID(user_id)
     except ValueError:
-        return None
+        return None, None
 
     repo = UserRepository(db)
     user = await repo.get(user_uuid)
 
     if not user or not user.is_active:
-        return None
+        return None, None
 
     # Verificar se tem permissao de admin (admin ou editor)
     if user.role not in [UserRole.ADMIN, UserRole.EDITOR]:
-        return None
+        return None, None
 
-    return user
+    return user, payload
 
 
 class AdminRedirectException(Exception):
@@ -102,7 +109,7 @@ async def require_admin_user(
 
     Levanta AdminRedirectException para redirect ao login.
     """
-    user = await get_admin_user_from_cookie(request, db)
+    user, _payload = await get_admin_user_from_cookie(request, db)
     if not user:
         raise AdminRedirectException()
     return user
@@ -124,7 +131,7 @@ async def login_page(
 ):
     """Pagina de login do admin."""
     # Se ja esta autenticado, redireciona pro dashboard
-    user = await get_admin_user_from_cookie(request, db)
+    user, _payload = await get_admin_user_from_cookie(request, db)
     if user:
         return RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -179,15 +186,24 @@ async def login_submit(
         extra_claims={"role": user.role.value},
     )
 
+    # Configuracao do cookie baseada no ambiente
+    # Em producao: secure=True (apenas HTTPS)
+    # Em desenvolvimento: secure=False (permite HTTP)
+    from app.config import settings
+
+    is_production = settings.environment == "production"
+    # Tempo de expiracao do cookie igual ao JWT (em segundos)
+    cookie_max_age = settings.jwt_access_token_expire_minutes * 60
+
     # Redirect com cookie
     response = RedirectResponse(url="/admin", status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(
         key="admin_token",
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=is_production,  # True apenas em producao (HTTPS)
         samesite="lax",
-        max_age=60 * 60 * 24,  # 24 horas
+        max_age=cookie_max_age,
     )
     return response
 

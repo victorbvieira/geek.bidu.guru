@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.core.logging import setup_logging, get_logger
-from app.core.middleware import SecurityHeadersMiddleware
+from app.core.middleware import AdminTokenRenewalMiddleware, SecurityHeadersMiddleware
 from app.core.rate_limit import limiter
 from app.database import check_database_connection
 
@@ -74,6 +74,10 @@ app = FastAPI(
 
 # Security Headers (deve ser o primeiro para aplicar a todas as respostas)
 app.add_middleware(SecurityHeadersMiddleware)
+
+# Sliding expiration para tokens JWT do admin
+# Renova automaticamente o token quando usuario esta ativo e token esta proximo de expirar
+app.add_middleware(AdminTokenRenewalMiddleware)
 
 # CORS
 app.add_middleware(

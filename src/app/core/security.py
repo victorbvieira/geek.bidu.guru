@@ -158,3 +158,48 @@ def verify_token(token: str, token_type: str = "access") -> dict[str, Any] | Non
 
     except JWTError:
         return None
+
+
+def should_renew_token(payload: dict[str, Any], threshold_percent: float = 0.5) -> bool:
+    """
+    Verifica se o token deve ser renovado (sliding expiration).
+
+    Renova quando o tempo restante for menor que o percentual definido
+    do tempo total de vida do token.
+
+    Por exemplo, com threshold_percent=0.5 e token de 120 minutos:
+    - Token criado agora: 120 min restantes -> NAO renova
+    - Token com 60 min restantes (50%): -> RENOVA
+    - Token com 30 min restantes: -> RENOVA
+
+    Args:
+        payload: Payload do token JWT decodificado
+        threshold_percent: Percentual do tempo de vida para trigger de renovacao
+                          (padrao: 0.5 = 50% do tempo restante)
+
+    Returns:
+        True se o token deve ser renovado, False caso contrario
+    """
+    try:
+        # Obter timestamps do token
+        exp_timestamp = payload.get("exp")
+        iat_timestamp = payload.get("iat")
+
+        if not exp_timestamp or not iat_timestamp:
+            return False
+
+        now = datetime.now(UTC)
+        exp_time = datetime.fromtimestamp(exp_timestamp, tz=UTC)
+        iat_time = datetime.fromtimestamp(iat_timestamp, tz=UTC)
+
+        # Calcular tempo total de vida e tempo restante
+        total_lifetime = (exp_time - iat_time).total_seconds()
+        remaining_time = (exp_time - now).total_seconds()
+
+        # Se o tempo restante for menor que o threshold, renovar
+        threshold_seconds = total_lifetime * threshold_percent
+
+        return remaining_time < threshold_seconds
+
+    except (TypeError, ValueError):
+        return False
