@@ -37,13 +37,23 @@ def upgrade() -> None:
     """)
 
     # 2. Adicionar novos valores ao ENUM ai_use_case
-    # PostgreSQL nao permite adicionar valores em transacao com uso imediato,
-    # mas aqui apenas adicionamos os valores sem usar
+    # IMPORTANTE: ALTER TYPE ADD VALUE nao pode estar dentro de uma transacao
+    # Precisamos fazer COMMIT apos cada ADD VALUE para que o valor fique disponivel
+    # O op.execute com connection.execute().execution_options(isolation_level="AUTOCOMMIT")
+    # permite isso
+
+    # Primeiro, commitamos a transacao atual para liberar os ENUMs
+    op.execute("COMMIT")
+
+    # Agora adicionamos os valores (cada ADD VALUE e auto-commitado)
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'post_seo_all'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'post_seo_keyword'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'post_seo_title'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'post_seo_description'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'post_tags'")
+
+    # Iniciamos nova transacao para o resto da migration
+    op.execute("BEGIN")
 
     # 3. Adicionar coluna entity na tabela ai_configs
     op.execute("""

@@ -28,10 +28,17 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Adiciona novos valores ao ENUM ai_use_case para Category."""
 
+    # IMPORTANTE: ALTER TYPE ADD VALUE nao pode estar dentro de uma transacao
+    # Commitamos a transacao atual antes de adicionar os valores
+    op.execute("COMMIT")
+
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'category_seo_keyword'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'category_seo_title'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'category_seo_description'")
     op.execute("ALTER TYPE ai_use_case ADD VALUE IF NOT EXISTS 'category_tags'")
+
+    # Iniciamos nova transacao para manter consistencia com o Alembic
+    op.execute("BEGIN")
 
 
 def downgrade() -> None:

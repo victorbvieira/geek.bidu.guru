@@ -40,7 +40,8 @@
       "Bash(docker exec:*)",
       "Bash(source:*)",
       "Bash(/opt/homebrew/bin/psql:*)",
-      "Bash(../.venv/bin/alembic revision:*)"
+      "Bash(../.venv/bin/alembic revision:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
