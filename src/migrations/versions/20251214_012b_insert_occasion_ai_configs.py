@@ -12,20 +12,33 @@ Esta migration (parte 2 de 2):
   - occasion_seo_description: Gera meta description
   - occasion_content: Gera conteudo em Markdown
 
-NOTA: Esta migration depende de 012a que cria os ENUMs necessarios.
-A separacao em duas migrations evita o erro do PostgreSQL de usar
-valores ENUM novos na mesma transacao em que foram criados.
+NOTA: Esta migration usa psycopg2 para os INSERTs porque asyncpg
+mantem cache da sessao e nao reconhece novos valores de ENUM.
 """
 
 from typing import Sequence, Union
 
 from alembic import op
+from sqlalchemy import create_engine, text
 
 # revision identifiers, used by Alembic.
 revision: str = "012b"
 down_revision: Union[str, None] = "012a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
+
+def _get_sync_engine():
+    """Retorna engine sincrona com psycopg2."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from app.config import settings
+
+    sync_url = settings.database_url.replace(
+        "postgresql+asyncpg://", "postgresql+psycopg2://"
+    )
+    return create_engine(sync_url)
 
 
 # Prompts com placeholders para Occasion
@@ -185,33 +198,39 @@ O conteudo deve ser informativo, engajador e otimizado para SEO, focando em pres
 
 
 def upgrade() -> None:
-    """Insere novos prompts para Occasion."""
+    """Insere novos prompts para Occasion usando psycopg2."""
 
-    for use_case, config in OCCASION_PROMPTS.items():
-        system_prompt_escaped = config["system_prompt"].replace("'", "''")
-        user_prompt_escaped = config.get("user_prompt", "").replace("'", "''") if config.get("user_prompt") else ""
-        desc_escaped = config["description"].replace("'", "''") if config["description"] else ""
+    sync_engine = _get_sync_engine()
 
-        op.execute(f"""
-            INSERT INTO ai_configs (
-                id, use_case, name, description, entity, provider, model,
-                system_prompt, user_prompt, temperature, max_tokens, is_active
-            ) VALUES (
-                gen_random_uuid(),
-                '{use_case}'::ai_use_case,
-                '{config["name"]}',
-                '{desc_escaped}',
-                '{config["entity"]}'::ai_entity,
-                'openrouter'::ai_provider,
-                'google/gemini-2.0-flash-exp:free',
-                '{system_prompt_escaped}',
-                '{user_prompt_escaped}',
-                {config["temperature"]},
-                {config["max_tokens"]},
-                true
-            )
-            ON CONFLICT (use_case) DO NOTHING
-        """)
+    with sync_engine.connect() as conn:
+        for use_case, config in OCCASION_PROMPTS.items():
+            system_prompt_escaped = config["system_prompt"].replace("'", "''")
+            user_prompt_escaped = config.get("user_prompt", "").replace("'", "''") if config.get("user_prompt") else ""
+            desc_escaped = config["description"].replace("'", "''") if config["description"] else ""
+
+            conn.execute(text(f"""
+                INSERT INTO ai_configs (
+                    id, use_case, name, description, entity, provider, model,
+                    system_prompt, user_prompt, temperature, max_tokens, is_active
+                ) VALUES (
+                    gen_random_uuid(),
+                    '{use_case}'::ai_use_case,
+                    '{config["name"]}',
+                    '{desc_escaped}',
+                    '{config["entity"]}'::ai_entity,
+                    'openrouter'::ai_provider,
+                    'google/gemini-2.0-flash-exp:free',
+                    '{system_prompt_escaped}',
+                    '{user_prompt_escaped}',
+                    {config["temperature"]},
+                    {config["max_tokens"]},
+                    true
+                )
+                ON CONFLICT (use_case) DO NOTHING
+            """))
+        conn.commit()
+
+    sync_engine.dispose()
 
 
 def downgrade() -> None:

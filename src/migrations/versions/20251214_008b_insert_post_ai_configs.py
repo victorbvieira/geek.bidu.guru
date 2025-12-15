@@ -12,20 +12,34 @@ Esta migration (parte 2 de 2):
   - post_seo_description: Gera meta description
   - post_tags: Gera tags
 
-NOTA: Esta migration depende de 008a que cria os ENUMs necessarios.
-A separacao em duas migrations evita o erro do PostgreSQL de usar
-valores ENUM novos na mesma transacao em que foram criados.
+NOTA: Esta migration usa psycopg2 para os INSERTs porque asyncpg
+mantem cache da sessao e nao reconhece novos valores de ENUM
+mesmo apos serem commitados em outra conexao.
 """
 
 from typing import Sequence, Union
 
 from alembic import op
+from sqlalchemy import create_engine, text
 
 # revision identifiers, used by Alembic.
 revision: str = "008b"
 down_revision: Union[str, None] = "008a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
+
+def _get_sync_engine():
+    """Retorna engine sincrona com psycopg2."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from app.config import settings
+
+    sync_url = settings.database_url.replace(
+        "postgresql+asyncpg://", "postgresql+psycopg2://"
+    )
+    return create_engine(sync_url)
 
 
 # Prompts com placeholders para Post
@@ -166,31 +180,38 @@ Exemplo: funko pop, marvel, presente geek, colecao""",
 
 
 def upgrade() -> None:
-    """Insere novos prompts para Post."""
+    """Insere novos prompts para Post usando psycopg2."""
 
-    for use_case, config in POST_PROMPTS.items():
-        prompt_escaped = config["system_prompt"].replace("'", "''")
-        desc_escaped = config["description"].replace("'", "''") if config["description"] else ""
+    # Usar conexao sincrona para evitar problema de cache do asyncpg
+    sync_engine = _get_sync_engine()
 
-        op.execute(f"""
-            INSERT INTO ai_configs (
-                id, use_case, name, description, entity, provider, model,
-                system_prompt, temperature, max_tokens, is_active
-            ) VALUES (
-                gen_random_uuid(),
-                '{use_case}'::ai_use_case,
-                '{config["name"]}',
-                '{desc_escaped}',
-                '{config["entity"]}'::ai_entity,
-                'openai'::ai_provider,
-                'gpt-5-nano',
-                '{prompt_escaped}',
-                {config["temperature"]},
-                {config["max_tokens"]},
-                true
-            )
-            ON CONFLICT (use_case) DO NOTHING
-        """)
+    with sync_engine.connect() as conn:
+        for use_case, config in POST_PROMPTS.items():
+            prompt_escaped = config["system_prompt"].replace("'", "''")
+            desc_escaped = config["description"].replace("'", "''") if config["description"] else ""
+
+            conn.execute(text(f"""
+                INSERT INTO ai_configs (
+                    id, use_case, name, description, entity, provider, model,
+                    system_prompt, temperature, max_tokens, is_active
+                ) VALUES (
+                    gen_random_uuid(),
+                    '{use_case}'::ai_use_case,
+                    '{config["name"]}',
+                    '{desc_escaped}',
+                    '{config["entity"]}'::ai_entity,
+                    'openai'::ai_provider,
+                    'gpt-5-nano',
+                    '{prompt_escaped}',
+                    {config["temperature"]},
+                    {config["max_tokens"]},
+                    true
+                )
+                ON CONFLICT (use_case) DO NOTHING
+            """))
+        conn.commit()
+
+    sync_engine.dispose()
 
 
 def downgrade() -> None:
