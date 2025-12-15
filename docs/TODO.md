@@ -3,14 +3,9 @@
 ## Melhorias
 
 - https://geek.bidu.guru/admin/categories/new
-- - campo de upload de imagem deve ter o botao e o tamanho de referencia;
 - - slug nao esta sendo prrenchido automatico
 - - os campos titulo SEO e descricao SEO nao estão sendo persistidos no banco de dados, valide se estes campos estao sendo usados como deveria
 - - nao podemos ter 2 itens da mesma plataforma com o mesmo id do produto da plataforma estamos validando isso ?
-
-- https://geek.bidu.guru/admin/categories
-- - adicionar paginação e pesquisa
-- - adicionar coluna com a quantidade de itens
 
 - https://geek.bidu.guru/
 - - Ajustar o espaçamento entre o titulo "navegue por categoria" e os cards de categoria
@@ -20,17 +15,6 @@
 - - as paginas que tem subcategorias nao mostraram as subcategorias em suas paginas
 - - tambem nao esta mostrando os produtos
 
-- https://geek.bidu.guru/admin/products/new
-- - o slug nao esta sendo gerado automaticamente
-
-- https://geek.bidu.guru/admin/products
-- - adicionar paginação e pesquisa
-
-- https://geek.bidu.guru/admin/products/bd5e2866-0213-46ef-bc05-b190595d2860
-- - tive erro 500 ao editar um produto adicionano uma nova categoria
-
-- https://geek.bidu.guru/busca?q=marvel
-- - a busca nao esta funcionando
 
 - https://geek.bidu.guru/
 - - lista de destaques esta sempre fixa, devemos fazer uma lista de destaques que mude de vez em quando, podemos ter x itens estaticos e alguns em um carrocel, analise se isso combina com o design atual e publico
@@ -44,8 +28,6 @@
 - - criar estrutura para os guias
 - - na navegacao mobile o menu nao esta funcionando
 
-
-- o sistema esta perdendo a sessao do admin rapido de mais
 - nos botoes para compartilhar nas redes sociais tipo whatsapp nao esta enviando a imagem
 
 
