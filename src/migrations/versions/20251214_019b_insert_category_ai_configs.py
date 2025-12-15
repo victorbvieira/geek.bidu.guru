@@ -6,22 +6,35 @@ Create Date: 2025-12-14
 
 Esta migration (parte 2 de 2):
 - Insere os 4 novos prompts para Category
-- Usa mesmo provider/modelo/temp/max_tokens dos posts:
-  - provider: openai
-  - model: gpt-5-nano
-  - temperature: 1.0
-  - max_tokens: 4000
+- Usa mesmo provider/modelo/temp/max_tokens dos posts
+
+NOTA: Esta migration usa psycopg2 para os INSERTs porque asyncpg
+mantem cache da sessao e nao reconhece novos valores de ENUM.
 """
 
 from typing import Sequence, Union
 
 from alembic import op
+from sqlalchemy import create_engine, text
 
 # revision identifiers, used by Alembic.
 revision: str = "019b"
 down_revision: Union[str, None] = "019a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
+
+def _get_sync_engine():
+    """Retorna engine sincrona com psycopg2."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from app.config import settings
+
+    sync_url = settings.database_url.replace(
+        "postgresql+asyncpg://", "postgresql+psycopg2://"
+    )
+    return create_engine(sync_url)
 
 
 # Prompts para Category (variaveis apenas no user_prompt)
@@ -119,33 +132,39 @@ Descricao da categoria:
 
 
 def upgrade() -> None:
-    """Insere novos prompts para Category."""
+    """Insere novos prompts para Category usando psycopg2."""
 
-    for use_case, config in CATEGORY_PROMPTS.items():
-        system_escaped = config["system_prompt"].replace("'", "''")
-        user_escaped = config["user_prompt"].replace("'", "''")
-        desc_escaped = config["description"].replace("'", "''")
+    sync_engine = _get_sync_engine()
 
-        op.execute(f"""
-            INSERT INTO ai_configs (
-                id, use_case, name, description, entity, provider, model,
-                system_prompt, user_prompt, temperature, max_tokens, is_active
-            ) VALUES (
-                gen_random_uuid(),
-                '{use_case}'::ai_use_case,
-                '{config["name"]}',
-                '{desc_escaped}',
-                '{config["entity"]}'::ai_entity,
-                'openai'::ai_provider,
-                'gpt-5-nano',
-                '{system_escaped}',
-                '{user_escaped}',
-                1.0,
-                4000,
-                true
-            )
-            ON CONFLICT (use_case) DO NOTHING
-        """)
+    with sync_engine.connect() as conn:
+        for use_case, config in CATEGORY_PROMPTS.items():
+            system_escaped = config["system_prompt"].replace("'", "''")
+            user_escaped = config["user_prompt"].replace("'", "''")
+            desc_escaped = config["description"].replace("'", "''")
+
+            conn.execute(text(f"""
+                INSERT INTO ai_configs (
+                    id, use_case, name, description, entity, provider, model,
+                    system_prompt, user_prompt, temperature, max_tokens, is_active
+                ) VALUES (
+                    gen_random_uuid(),
+                    '{use_case}'::ai_use_case,
+                    '{config["name"]}',
+                    '{desc_escaped}',
+                    '{config["entity"]}'::ai_entity,
+                    'openai'::ai_provider,
+                    'gpt-5-nano',
+                    '{system_escaped}',
+                    '{user_escaped}',
+                    1.0,
+                    4000,
+                    true
+                )
+                ON CONFLICT (use_case) DO NOTHING
+            """))
+        conn.commit()
+
+    sync_engine.dispose()
 
 
 def downgrade() -> None:
