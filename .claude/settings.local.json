@@ -41,6 +41,7 @@
       "Bash(source:*)",
       "Bash(/opt/homebrew/bin/psql:*)",
       "Bash(../.venv/bin/alembic revision:*)",
+      "Bash(../.venv/bin/alembic history:*)",
       "Bash(cat:*)"
     ],
     "deny": [],
