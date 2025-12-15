@@ -342,6 +342,75 @@ Sempre:
 - Timestamps (created_at, updated_at)
 - Migrations via Alembic
 
+### Migrations Alembic (CRÍTICO!)
+
+#### Regra para ENUMs no PostgreSQL
+**NUNCA** adicionar novos valores a ENUMs dentro de transactions normais do Alembic!
+
+O comando `ALTER TYPE ... ADD VALUE` do PostgreSQL **NÃO pode ser executado dentro de uma transaction**. Isso causa erro em produção.
+
+**Padrão obrigatório para migrations que modificam ENUMs:**
+
+```python
+from alembic import op
+import sqlalchemy as sa
+
+# Identificador único da migration
+revision = 'xxx'
+down_revision = 'yyy'
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    """
+    IMPORTANTE: ADD VALUE em ENUMs requer conexão direta com AUTOCOMMIT.
+    Não pode ser executado dentro de transaction do Alembic.
+    """
+    # Usar psycopg2 diretamente com AUTOCOMMIT para ADD VALUE em ENUMs
+    from sqlalchemy import create_engine
+    from app.core.config import settings
+
+    # Converter URL async para sync (psycopg2)
+    sync_url = str(settings.DATABASE_URL).replace(
+        "postgresql+asyncpg", "postgresql+psycopg2"
+    )
+
+    sync_engine = create_engine(sync_url, isolation_level="AUTOCOMMIT")
+
+    with sync_engine.connect() as conn:
+        # Verificar se valor já existe antes de adicionar
+        result = conn.execute(sa.text(
+            "SELECT 1 FROM pg_enum WHERE enumlabel = 'novo_valor' "
+            "AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'meu_enum')"
+        ))
+        if not result.fetchone():
+            conn.execute(sa.text(
+                "ALTER TYPE meu_enum ADD VALUE 'novo_valor'"
+            ))
+
+    sync_engine.dispose()
+
+    # Outras operações normais podem usar op.execute() normalmente
+    # op.add_column(...)
+
+
+def downgrade() -> None:
+    """
+    ATENÇÃO: PostgreSQL não permite remover valores de ENUMs diretamente.
+    Downgrade de ENUM requer recriar o tipo (operação complexa).
+    """
+    pass
+```
+
+**Checklist para migrations com ENUMs:**
+- [ ] Usar `psycopg2` com `isolation_level="AUTOCOMMIT"`
+- [ ] Verificar se valor já existe antes de adicionar (idempotência)
+- [ ] Testar migration em ambiente de desenvolvimento ANTES de produção
+- [ ] Documentar no downgrade que ENUM não pode ser revertido facilmente
+
+**Referência**: Migrations corrigidas em `src/migrations/versions/20251214_008a_*.py` e similares.
+
 ### Templates (Jinja2)
 **Consulte**: `agents/frontend-developer.md`
 
@@ -547,7 +616,7 @@ Se a pergunta for sobre uma área sem agente específico:
 
 ---
 
-**Versão**: 1.3
-**Última atualização**: 2025-12-11
+**Versão**: 1.4
+**Última atualização**: 2025-12-15
 **Projeto**: geek.bidu.guru
 **Repositório**: GitHub
