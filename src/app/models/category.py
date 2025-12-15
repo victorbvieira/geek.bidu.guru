@@ -5,14 +5,15 @@ Categorias hierarquicas para organizar posts e produtos.
 """
 
 import uuid
+from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy import ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.post import Post
@@ -77,10 +78,36 @@ class Category(Base, UUIDMixin, TimestampMixin):
         lazy="selectin",
     )
 
+    # Tags (array JSON)
+    tags: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
+
+    # Custos de IA (para calcular ROI)
+    ai_tokens_used: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Total de tokens consumidos em geracoes de IA",
+    )
+    ai_prompt_tokens: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Tokens de entrada (prompt) consumidos em geracoes de IA",
+    )
+    ai_completion_tokens: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Tokens de saida (completion) consumidos em geracoes de IA",
+    )
+    ai_cost_usd: Mapped[Decimal] = mapped_column(
+        Numeric(precision=10, scale=6), default=Decimal("0"), server_default="0",
+        comment="Custo total em USD das geracoes de IA",
+    )
+    ai_generations_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0",
+        comment="Numero de vezes que IA foi usada para gerar conteudo",
+    )
+
     # Indices
     __table_args__ = (
         Index("idx_categories_slug", "slug"),
         Index("idx_categories_parent", "parent_id"),
+        Index("idx_categories_tags", "tags", postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:

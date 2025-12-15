@@ -118,11 +118,6 @@
                         >{{ category.seo_description if category and category.seo_description else '' }}</textarea>
                         <small class="admin-help-text"><span id="seo_description_count">{{ (category.seo_description|length) if category and category.seo_description else 0 }}</span>/160 caracteres</small>
                     </div>
-
-                    <div id="seo-loading" style="display: none; text-align: center; padding: 1rem; color: var(--admin-text-muted);">
-                        <div class="ai-spinner"></div>
-                        <span>Gerando com IA...</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -200,6 +195,79 @@
                 </div>
             </div>
 
+            <!-- Tags -->
+            <div class="admin-card">
+                <div class="admin-card-body">
+                    <div class="admin-form-group" style="margin-bottom: 0;">
+                        <label for="tags" class="admin-label">
+                            Tags
+                            <button type="button" class="admin-btn-icon-sm" onclick="generateTags()" title="Gerar com IA">🤖</button>
+                        </label>
+                        <input
+                            type="text"
+                            id="tags"
+                            name="tags"
+                            class="admin-input"
+                            value="{{ category.tags | join(', ') if category and category.tags else '' }}"
+                            placeholder="tag1, tag2, tag3"
+                        >
+                        <small class="admin-help-text">Separadas por virgula</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custos de IA -->
+            {% if category %}
+            <div class="admin-card" style="background: var(--admin-bg-tertiary);">
+                <h4 style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; text-align: center; margin-bottom: 0.75rem;">
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-prompt-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-warning);">
+                            {{ "{:,}".format(category.ai_prompt_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Entrada</div>
+                    </div>
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-completion-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-info);">
+                            {{ "{:,}".format(category.ai_completion_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Saida</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; text-align: center;">
+                    <div>
+                        <div id="ai-tokens-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-primary);">
+                            {{ "{:,}".format(category.ai_tokens_used) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Total</div>
+                    </div>
+                    <div>
+                        <div id="ai-cost-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-success);">
+                            ${{ "%.6f"|format(category.ai_cost_usd|float) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Custo</div>
+                    </div>
+                    <div>
+                        <div id="ai-generations-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-text);">
+                            {{ category.ai_generations_count }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Chamadas</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="admin-card" style="background: var(--admin-bg-tertiary); opacity: 0.6;">
+                <h4 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--admin-text-muted); margin: 0;">
+                    Salve a categoria para acompanhar custos de IA
+                </p>
+            </div>
+            {% endif %}
+
             {% if category %}
             <div class="admin-card">
                 <div class="admin-card-header">
@@ -233,17 +301,124 @@
         </div>
     </div>
 </form>
+
+<!-- Modal de Loading IA -->
+<div id="ai-loading-modal" class="ai-loading-modal">
+    <div class="ai-loading-backdrop"></div>
+    <div class="ai-loading-content">
+        <div class="ai-loading-spinner"></div>
+        <div class="ai-loading-text">Gerando com IA...</div>
+        <div class="ai-loading-subtext">Aguarde, isso pode levar alguns segundos</div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// =============================================================================
+// Variaveis globais
+// =============================================================================
+
+const categoryId = '{{ category.id if category else "" }}';
+
+let localTokensUsed = {{ category.ai_tokens_used if category else 0 }};
+let localPromptTokens = {{ category.ai_prompt_tokens if category else 0 }};
+let localCompletionTokens = {{ category.ai_completion_tokens if category else 0 }};
+let localCostUsd = {{ category.ai_cost_usd|float if category else 0 }};
+let localGenerationsCount = {{ category.ai_generations_count if category else 0 }};
+
+// =============================================================================
+// Funcoes auxiliares
+// =============================================================================
+
+function generateSlug(text) {
+    return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim();
+}
+
+function showMessage(message, type) {
+    alert(message);
+}
+
+// =============================================================================
+// Modal de Loading IA
+// =============================================================================
+
+const aiLoadingModal = document.getElementById('ai-loading-modal');
+
+function showAILoading(text = 'Gerando com IA...') {
+    if (!aiLoadingModal) return;
+    const textEl = aiLoadingModal.querySelector('.ai-loading-text');
+    if (textEl) textEl.textContent = text;
+    aiLoadingModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideAILoading() {
+    if (!aiLoadingModal) return;
+    aiLoadingModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// =============================================================================
+// Atualizar custos de IA
+// =============================================================================
+
+async function updateCategoryAICost(tokensUsed, promptTokens, completionTokens, costUsd) {
+    if (!categoryId) return;
+
+    try {
+        await fetch(`/admin/api/categories/${categoryId}/ai-cost`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tokens_used: tokensUsed,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                cost_usd: costUsd
+            })
+        });
+    } catch (error) {
+        console.error('Erro ao salvar custos de IA:', error);
+    }
+}
+
+function updateCostDisplay(tokensUsed, promptTokens, completionTokens, costUsd) {
+    localTokensUsed += tokensUsed || 0;
+    localPromptTokens += promptTokens || 0;
+    localCompletionTokens += completionTokens || 0;
+    localCostUsd += costUsd || 0;
+    localGenerationsCount += 1;
+
+    const tokensDisplay = document.getElementById('ai-tokens-display');
+    const promptDisplay = document.getElementById('ai-prompt-tokens-display');
+    const completionDisplay = document.getElementById('ai-completion-tokens-display');
+    const costDisplay = document.getElementById('ai-cost-display');
+    const genDisplay = document.getElementById('ai-generations-display');
+
+    if (tokensDisplay) tokensDisplay.textContent = localTokensUsed.toLocaleString('pt-BR');
+    if (promptDisplay) promptDisplay.textContent = localPromptTokens.toLocaleString('pt-BR');
+    if (completionDisplay) completionDisplay.textContent = localCompletionTokens.toLocaleString('pt-BR');
+    if (costDisplay) costDisplay.textContent = '$' + localCostUsd.toFixed(6);
+    if (genDisplay) genDisplay.textContent = localGenerationsCount;
+}
+
+// =============================================================================
+// Inicializacao
+// =============================================================================
+
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-preenchimento de slug a partir do nome
     const nameInput = document.getElementById('name');
     const slugInput = document.getElementById('slug');
 
     if (nameInput && slugInput) {
-        // So auto-preenche se for nova categoria (slug vazio)
         const isNewCategory = !slugInput.value;
 
         nameInput.addEventListener('input', function() {
@@ -252,7 +427,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Se usuario editar slug manualmente, para de auto-preencher
         slugInput.addEventListener('input', function() {
             if (this.value) {
                 this.dataset.manual = 'true';
@@ -274,20 +448,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = this.files[0];
             if (!file) return;
 
-            // Validar tipo de arquivo
             const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
             if (!allowedTypes.includes(file.type)) {
                 showMessage('Tipo de arquivo nao permitido. Use JPG, PNG, WebP ou GIF.', 'danger');
                 return;
             }
 
-            // Validar tamanho (10MB max - sera comprimido no servidor)
             if (file.size > 10 * 1024 * 1024) {
                 showMessage('Arquivo muito grande. Maximo 10MB.', 'danger');
                 return;
             }
 
-            // Mostrar progresso
             uploadProgress.style.display = 'block';
 
             try {
@@ -302,7 +473,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Atualizar URL e preview
                     imageUrlInput.value = data.url;
                     previewImg.src = data.url;
                     imagePreview.style.display = 'block';
@@ -315,7 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Upload error:', error);
             } finally {
                 uploadProgress.style.display = 'none';
-                fileInput.value = ''; // Reset para permitir reupload
+                fileInput.value = '';
             }
         });
     }
@@ -341,26 +511,29 @@ document.addEventListener('DOMContentLoaded', function() {
 // =============================================================================
 
 const fieldToUseCase = {
-    'seo_title': 'seo_title',
-    'seo_description': 'seo_description',
-    'seo_focus_keyword': 'seo_keywords'
+    'seo_title': 'category_seo_title',
+    'seo_description': 'category_seo_description',
+    'seo_focus_keyword': 'category_seo_keyword'
 };
 
 async function generateSEO(field) {
     const name = document.getElementById('name').value.trim();
     const description = document.getElementById('description').value.trim();
 
-    if (!name && !description) {
-        alert('Preencha o nome ou descricao antes de gerar SEO');
+    if (!name) {
+        alert('Preencha o nome da categoria antes de gerar SEO');
         return;
     }
 
     const useCase = fieldToUseCase[field] || field;
-    const loadingDiv = document.getElementById('seo-loading');
     const targetInput = document.getElementById(field);
 
-    loadingDiv.style.display = 'flex';
-    targetInput.disabled = true;
+    const fieldLabels = {
+        'seo_focus_keyword': 'Gerando palavra-chave...',
+        'seo_title': 'Gerando titulo SEO...',
+        'seo_description': 'Gerando descricao SEO...'
+    };
+    showAILoading(fieldLabels[field] || 'Gerando com IA...');
 
     try {
         const response = await fetch('/admin/api/ai/generate', {
@@ -388,14 +561,15 @@ async function generateSEO(field) {
             if (countSpan) {
                 countSpan.textContent = generatedContent.length;
             }
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updateCategoryAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
         } else {
             alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
         }
     } catch (error) {
         alert('Erro de conexao: ' + error.message);
     } finally {
-        loadingDiv.style.display = 'none';
-        targetInput.disabled = false;
+        hideAILoading();
     }
 }
 
@@ -403,56 +577,52 @@ async function generateAllSEO() {
     const name = document.getElementById('name').value.trim();
     const description = document.getElementById('description').value.trim();
 
-    if (!name && !description) {
-        alert('Preencha o nome ou descricao antes de gerar SEO');
+    if (!name) {
+        alert('Preencha o nome da categoria antes de gerar SEO');
         return;
     }
 
-    const loadingDiv = document.getElementById('seo-loading');
     const seoKeyword = document.getElementById('seo_focus_keyword');
     const seoTitle = document.getElementById('seo_title');
     const seoDescription = document.getElementById('seo_description');
+    const tagsInput = document.getElementById('tags');
 
-    loadingDiv.style.display = 'flex';
-    seoKeyword.disabled = true;
-    seoTitle.disabled = true;
-    seoDescription.disabled = true;
+    showAILoading('Gerando SEO completo...');
+
+    const requestBody = {
+        title: name,
+        content: description
+    };
 
     try {
-        const [keywordResponse, titleResponse, descResponse] = await Promise.all([
+        const [keywordResponse, titleResponse, descResponse, tagsResponse] = await Promise.all([
             fetch('/admin/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    use_case: 'seo_keywords',
-                    title: name,
-                    content: description
-                })
+                body: JSON.stringify({ ...requestBody, use_case: 'category_seo_keyword' })
             }),
             fetch('/admin/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    use_case: 'seo_title',
-                    title: name,
-                    content: description
-                })
+                body: JSON.stringify({ ...requestBody, use_case: 'category_seo_title' })
             }),
             fetch('/admin/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    use_case: 'seo_description',
-                    title: name,
-                    content: description
-                })
+                body: JSON.stringify({ ...requestBody, use_case: 'category_seo_description' })
+            }),
+            fetch('/admin/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...requestBody, use_case: 'category_tags' })
             })
         ]);
 
-        const [keywordData, titleData, descData] = await Promise.all([
+        const [keywordData, titleData, descData, tagsData] = await Promise.all([
             keywordResponse.json(),
             titleResponse.json(),
-            descResponse.json()
+            descResponse.json(),
+            tagsResponse.json()
         ]);
 
         if (keywordResponse.ok) {
@@ -473,16 +643,91 @@ async function generateAllSEO() {
             document.getElementById('seo_description_count').textContent = descData.generated_content.length;
         }
 
-        if (!keywordResponse.ok || !titleResponse.ok || !descResponse.ok) {
+        if (tagsResponse.ok) {
+            let tags = tagsData.generated_content
+                .replace(/^(tags?|sugest[oõ]es?)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase())
+                .filter(t => t.length > 0)
+                .join(', ');
+            tagsInput.value = tags;
+        }
+
+        // Salva custos
+        if (keywordResponse.ok) {
+            updateCostDisplay(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
+            await updateCategoryAICost(keywordData.tokens_used || 0, keywordData.prompt_tokens || 0, keywordData.completion_tokens || 0, keywordData.cost_usd || 0);
+        }
+        if (titleResponse.ok) {
+            updateCostDisplay(titleData.tokens_used || 0, titleData.prompt_tokens || 0, titleData.completion_tokens || 0, titleData.cost_usd || 0);
+            await updateCategoryAICost(titleData.tokens_used || 0, titleData.prompt_tokens || 0, titleData.completion_tokens || 0, titleData.cost_usd || 0);
+        }
+        if (descResponse.ok) {
+            updateCostDisplay(descData.tokens_used || 0, descData.prompt_tokens || 0, descData.completion_tokens || 0, descData.cost_usd || 0);
+            await updateCategoryAICost(descData.tokens_used || 0, descData.prompt_tokens || 0, descData.completion_tokens || 0, descData.cost_usd || 0);
+        }
+        if (tagsResponse.ok) {
+            updateCostDisplay(tagsData.tokens_used || 0, tagsData.prompt_tokens || 0, tagsData.completion_tokens || 0, tagsData.cost_usd || 0);
+            await updateCategoryAICost(tagsData.tokens_used || 0, tagsData.prompt_tokens || 0, tagsData.completion_tokens || 0, tagsData.cost_usd || 0);
+        }
+
+        if (!keywordResponse.ok || !titleResponse.ok || !descResponse.ok || !tagsResponse.ok) {
             alert('Alguns campos nao foram gerados. Verifique a configuracao de IA.');
         }
     } catch (error) {
         alert('Erro de conexao: ' + error.message);
     } finally {
-        loadingDiv.style.display = 'none';
-        seoKeyword.disabled = false;
-        seoTitle.disabled = false;
-        seoDescription.disabled = false;
+        hideAILoading();
+    }
+}
+
+// =============================================================================
+// Geracao de Tags com IA
+// =============================================================================
+
+async function generateTags() {
+    const name = document.getElementById('name').value.trim();
+    const description = document.getElementById('description').value.trim();
+
+    if (!name) {
+        alert('Preencha o nome da categoria antes de gerar tags');
+        return;
+    }
+
+    const tagsInput = document.getElementById('tags');
+
+    showAILoading('Gerando tags...');
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: 'category_tags',
+                title: name,
+                content: description
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            let tags = data.generated_content
+                .replace(/^(tags?|sugest[oõ]es?)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase())
+                .filter(t => t.length > 0)
+                .join(', ');
+            tagsInput.value = tags;
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updateCategoryAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        hideAILoading();
     }
 }
 </script>
