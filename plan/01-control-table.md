@@ -464,7 +464,12 @@
 | Fase 4 | 45 | 4 | 41 | 9% |
 | **TOTAL** | **230** | **140** | **90** | **61%** |
 
-## Avaliacao do Projeto (2025-12-12)
+## Avaliacao do Projeto (2025-12-15)
+
+### Metricas Atuais
+- **Arquivos Python**: 152 arquivos
+- **Testes**: 655 testes coletados
+- **Progresso Total**: 61% (140/230 tarefas)
 
 ### O que foi concluido
 - **Fase 1 (100%)**: Base tecnica completa - FastAPI, PostgreSQL, autenticacao JWT, CRUD, SSR, admin panel, testes OWASP
@@ -474,9 +479,10 @@
 ### Bloqueios Atuais
 - **APIs de Afiliados (2.7.2-2.7.3)**: Integracao Amazon/MercadoLivre requer credenciais de API
 
-### Concluidos nesta sessao
-- **n8n Base (2.4.1-2.4.4)**: Webhooks + usuario automation configurados
-- **Google Search Console (2.8.4)**: Meta tag de verificacao suportada
+### Ultimas atualizacoes (2025-12-15)
+- Correcoes de migrations com ENUMs (usando psycopg2 com AUTOCOMMIT)
+- Sincronizacao das branches dev/main
+- Documentacao Claude atualizada
 
 ---
 
@@ -546,14 +552,23 @@ Com base no progresso atual, as proximas tarefas prioritarias sao:
 
 ---
 
-**Versao**: 3.6
-**Ultima atualizacao**: 2025-12-12
-**Testes**: 498 passando
+**Versao**: 3.7
+**Ultima atualizacao**: 2025-12-15
+**Testes**: 655 coletados
 **Projeto**: geek.bidu.guru
 
 ---
 
 # CHANGELOG
+
+## v3.7 (2025-12-15)
+- :chart_with_upwards_trend: Atualizacao de status do projeto
+- :test_tube: 655 testes coletados (+157 desde v3.6)
+- :wrench: Correcoes de migrations com ENUMs (psycopg2 + AUTOCOMMIT)
+- :memo: Sincronizacao branches dev/main
+- :sparkles: Novos modelos: `ai_config.py`, `ai_log.py`, `occasion.py`
+- :sparkles: Migration 005: campos SEO em Category
+- :sparkles: Migration 006: tabela Occasions
 
 ## v3.6 (2025-12-12)
 - :white_check_mark: n8n Base completo (2.4.1-2.4.4)
