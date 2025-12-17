@@ -1,8 +1,22 @@
 # Guia de Estilo & Tom de Voz — geek.bidu.guru
 
-Versão: 1.0  
-Última atualização: 2025-12-10  
+Versão: 1.1
+Última atualização: 2025-12-17
 Relacionado: PRD.md §12.1, agents/content-strategist.md
+
+---
+
+## Identidade Visual do Logo
+
+O logo "GEEK BIDU GURU" utiliza a fonte **Bungee** (por David Jonathan Ross).
+
+| Elemento | Especificação |
+|----------|---------------|
+| **Fonte do logo** | Bungee (Google Fonts) |
+| **Cor do texto** | Amarelo `#F5B81C` |
+| **Mascote** | Guaxinim geek com óculos |
+
+**Documentação completa:** `docs/branding/LOGO-GUIDE.md`
 
 ---
 

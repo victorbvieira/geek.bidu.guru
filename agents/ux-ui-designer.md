@@ -112,6 +112,9 @@
 **Fontes**:
 ```css
 :root {
+  /* Logo - Fonte oficial Bungee */
+  --font-logo: 'Bungee', 'Impact', system-ui, sans-serif;
+
   /* Headings - Sans-serif forte */
   --font-heading: 'Poppins', 'Montserrat', system-ui, sans-serif;
 
@@ -122,6 +125,8 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 ```
+
+**Fonte do Logo**: O texto "GEEK BIDU GURU" utiliza a fonte **Bungee** (Google Fonts) na cor amarela `#F5B81C`. Documentação completa em `docs/branding/LOGO-GUIDE.md`.
 
 **Escala Tipográfica**:
 ```css

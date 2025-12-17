@@ -295,6 +295,12 @@ async def create_product(
     review_count: str = Form(""),
     tags: str = Form(""),
     categories_json: str = Form("[]"),
+    # Campos Instagram
+    instagram_headline: str = Form(""),
+    instagram_title: str = Form(""),
+    instagram_badge: str = Form(""),
+    instagram_caption: str = Form(""),
+    instagram_hashtags: str = Form(""),
 ):
     """Cria novo produto."""
     platform_enum = ProductPlatform(platform)
@@ -334,6 +340,9 @@ async def create_product(
     # Processa lista de categorias (slugs)
     categories_list = json.loads(categories_json) if categories_json else []
 
+    # Processa hashtags Instagram (separadas por virgula)
+    instagram_hashtags_list = parse_tags(instagram_hashtags) if instagram_hashtags else []
+
     # Monta dados do produto
     product_data = {
         "name": name.strip(),
@@ -352,6 +361,12 @@ async def create_product(
         "rating": float(rating) if rating else None,
         "review_count": int(review_count) if review_count else 0,
         "tags": parse_tags(tags),
+        # Campos Instagram
+        "instagram_headline": instagram_headline.strip() or None,
+        "instagram_title": instagram_title.strip() or None,
+        "instagram_badge": instagram_badge.strip() or None,
+        "instagram_caption": instagram_caption.strip() or None,
+        "instagram_hashtags": instagram_hashtags_list,
     }
 
     # Atualiza price_range baseado no preco
@@ -387,6 +402,12 @@ async def update_product(
     review_count: str = Form(""),
     tags: str = Form(""),
     categories_json: str = Form("[]"),
+    # Campos Instagram
+    instagram_headline: str = Form(""),
+    instagram_title: str = Form(""),
+    instagram_badge: str = Form(""),
+    instagram_caption: str = Form(""),
+    instagram_hashtags: str = Form(""),
 ):
     """Atualiza produto existente."""
     product = await repo.get(product_id)
@@ -466,6 +487,9 @@ async def update_product(
         except ValueError:
             review_count_value = 0
 
+    # Processa hashtags Instagram (separadas por virgula)
+    instagram_hashtags_list = parse_tags(instagram_hashtags) if instagram_hashtags else []
+
     # Monta dados de atualizacao
     update_data = {
         "name": name.strip(),
@@ -484,6 +508,12 @@ async def update_product(
         "rating": rating_value,
         "review_count": review_count_value,
         "tags": parse_tags(tags),
+        # Campos Instagram
+        "instagram_headline": instagram_headline.strip() or None,
+        "instagram_title": instagram_title.strip() or None,
+        "instagram_badge": instagram_badge.strip() or None,
+        "instagram_caption": instagram_caption.strip() or None,
+        "instagram_hashtags": instagram_hashtags_list,
     }
 
     await repo.update(product, update_data)
@@ -515,6 +545,77 @@ async def delete_product(
         url="/admin/products",
         status_code=http_status.HTTP_303_SEE_OTHER,
     )
+
+
+# -----------------------------------------------------------------------------
+# Products - Instagram Preview (para iframe no admin)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/products/{product_id}/instagram-preview")
+async def instagram_preview(
+    request: Request,
+    product_id: UUID,
+    current_user: AdminUser,
+    repo: ProductRepo,
+    headline: str = "",
+    title: str = "",
+    badge: str = "",
+):
+    """
+    Renderiza preview do template Instagram para uso no painel admin.
+
+    Este endpoint usa autenticacao de sessao do admin (cookie),
+    diferente do endpoint da API que usa JWT.
+    """
+    from fastapi.responses import HTMLResponse
+    from fastapi.templating import Jinja2Templates
+    from pathlib import Path
+    from app.config import settings
+
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    # Configura Jinja2
+    templates_dir = Path(__file__).parent.parent / "templates"
+    templates = Jinja2Templates(directory=str(templates_dir))
+
+    # Prepara dados do preco (com formatacao de milhar usando ponto)
+    price_integer = None
+    price_cents = None
+    if product.price:
+        price_float = float(product.price)
+        price_int = int(price_float)
+        # Formata com separador de milhar (ponto) - ex: 1.234
+        price_integer = f"{price_int:,}".replace(",", ".")
+        price_cents = f"{int((price_float - price_int) * 100):02d}"
+
+    # Usa metadados Instagram do produto ou overrides
+    template_data = {
+        "request": request,
+        "product_name": product.name,
+        "product_image_url": product.main_image_url,
+        "price": product.price,
+        "price_integer": price_integer,
+        "price_cents": price_cents,
+        "headline": headline or product.instagram_headline or "OFERTA IMPERDÍVEL!",
+        "title": title or product.instagram_title or product.name,
+        "badge": badge or product.instagram_badge,
+        "hashtags": product.instagram_hashtags or [],
+        "redirect_slug": product.affiliate_redirect_slug,
+        "logo_url": f"{settings.app_url}/static/logo/mascot-only.png",
+    }
+
+    # Renderiza template e retorna com headers que permitem iframe
+    response = templates.TemplateResponse(
+        "instagram/post_produto.html",
+        template_data,
+    )
+    # Permite que este conteudo seja carregado em iframe do mesmo dominio
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
+    return response
 
 
 # -----------------------------------------------------------------------------

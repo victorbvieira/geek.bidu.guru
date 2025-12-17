@@ -1,9 +1,25 @@
 # Especificação do Logo - geek.bidu.guru
 
-**Versão**: 1.0
-**Data**: 2025-12-11
+**Versão**: 2.0
+**Data**: 2025-12-17
 **Agente Responsável**: Brand/Logo Designer
-**Status**: Em desenvolvimento
+**Status**: Definido
+
+---
+
+## IMPORTANTE: Fonte Oficial do Logo
+
+O texto do logo "GEEK BIDU GURU" utiliza a fonte **Bungee**.
+
+| Aspecto | Valor |
+|---------|-------|
+| **Fonte** | Bungee |
+| **Designer** | David Jonathan Ross (DJR) |
+| **Cor do texto** | Amarelo `#F5B81C` |
+| **Licença** | SIL Open Font License (gratuita) |
+| **Google Fonts** | https://fonts.google.com/specimen/Bungee |
+
+**Guia completo de uso:** `docs/branding/LOGO-GUIDE.md`
 
 ---
 

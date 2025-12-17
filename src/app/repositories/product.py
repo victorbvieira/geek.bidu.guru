@@ -2,9 +2,10 @@
 Repositorio para Product.
 """
 
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
-from sqlalchemy import cast, func, select
+from sqlalchemy import cast, func, or_, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -332,5 +333,120 @@ class ProductRepository(BaseRepository[Product]):
                 Product.price <= max_price,
             )
         )
+        result = await self.db.execute(stmt)
+        return result.scalar_one()
+
+    # ==========================================================================
+    # Metodos para controle de posts em redes sociais (Instagram, TikTok, etc)
+    # ==========================================================================
+
+    async def get_random_for_posting(
+        self,
+        days_since_last_post: int = 30,
+        availability: ProductAvailability = ProductAvailability.AVAILABLE,
+    ) -> Product | None:
+        """
+        Busca produto aleatorio elegivel para posting em redes sociais.
+
+        Criterios de selecao:
+        - Esta disponivel (availability = available)
+        - Tem imagem principal (main_image_url nao nulo)
+        - Nao foi postado nos ultimos X dias (ou nunca foi postado)
+        - Prioriza produtos menos postados (post_count mais baixo)
+        - Aleatorio entre os menos postados
+
+        Args:
+            days_since_last_post: Dias minimos desde o ultimo post (default: 30)
+            availability: Status de disponibilidade requerido
+
+        Returns:
+            Produto elegivel ou None se nao houver produtos disponiveis
+        """
+        cutoff_date = datetime.now(UTC) - timedelta(days=days_since_last_post)
+
+        stmt = (
+            select(Product)
+            .where(Product.availability == availability)
+            .where(Product.main_image_url.isnot(None))
+            .where(
+                or_(
+                    Product.last_post_date.is_(None),
+                    Product.last_post_date < cutoff_date
+                )
+            )
+            .order_by(Product.post_count.asc(), func.random())
+            .limit(1)
+        )
+
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def mark_as_posted(
+        self,
+        product_id: UUID,
+        platform: str,
+        post_url: str | None = None,
+    ) -> Product:
+        """
+        Marca produto como postado em uma rede social.
+
+        Atualiza:
+        - last_post_date: Data/hora atual
+        - post_count: Incrementa em 1
+        - last_post_platform: Plataforma usada (instagram, tiktok, etc)
+        - last_post_url: URL do post publicado (opcional)
+
+        Args:
+            product_id: UUID do produto
+            platform: Nome da plataforma (ex: "instagram", "tiktok")
+            post_url: URL do post publicado (opcional)
+
+        Returns:
+            Produto atualizado
+
+        Raises:
+            ValueError: Se produto nao for encontrado
+        """
+        product = await self.get(product_id)
+        if not product:
+            raise ValueError("Produto nao encontrado")
+
+        product.last_post_date = datetime.now(UTC)
+        product.post_count = (product.post_count or 0) + 1
+        product.last_post_platform = platform
+        product.last_post_url = post_url
+
+        await self.db.commit()
+        await self.db.refresh(product)
+        return product
+
+    async def count_available_for_posting(
+        self,
+        days_since_last_post: int = 30,
+    ) -> int:
+        """
+        Conta quantos produtos estao elegiveis para posting.
+
+        Args:
+            days_since_last_post: Dias minimos desde o ultimo post
+
+        Returns:
+            Quantidade de produtos elegiveis
+        """
+        cutoff_date = datetime.now(UTC) - timedelta(days=days_since_last_post)
+
+        stmt = (
+            select(func.count())
+            .select_from(Product)
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.main_image_url.isnot(None))
+            .where(
+                or_(
+                    Product.last_post_date.is_(None),
+                    Product.last_post_date < cutoff_date
+                )
+            )
+        )
+
         result = await self.db.execute(stmt)
         return result.scalar_one()

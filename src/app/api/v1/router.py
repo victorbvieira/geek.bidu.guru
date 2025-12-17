@@ -6,7 +6,16 @@ Agrupa todos os endpoints em um unico router.
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, categories, clicks, newsletter, posts, products, users
+from app.api.v1.endpoints import (
+    auth,
+    categories,
+    clicks,
+    instagram,
+    newsletter,
+    posts,
+    products,
+    users,
+)
 
 api_router = APIRouter()
 
@@ -18,3 +27,4 @@ api_router.include_router(posts.router)
 api_router.include_router(products.router)
 api_router.include_router(newsletter.router)
 api_router.include_router(clicks.router)
+api_router.include_router(instagram.router)

@@ -34,7 +34,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
 
         # Previne clickjacking (pagina nao pode ser embedada em iframe)
-        response.headers["X-Frame-Options"] = "DENY"
+        # Permite que endpoints específicos definam seu próprio X-Frame-Options
+        # (ex: previews que precisam ser carregados em iframes do mesmo domínio)
+        if "X-Frame-Options" not in response.headers:
+            response.headers["X-Frame-Options"] = "DENY"
 
         # Proteção XSS para browsers antigos
         response.headers["X-XSS-Protection"] = "1; mode=block"

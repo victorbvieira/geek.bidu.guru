@@ -17,6 +17,29 @@
 - Implementação de componentes reutilizáveis
 - Integração com backend FastAPI
 
+## 🎨 Identidade Visual do Logo
+
+O texto do logo "GEEK BIDU GURU" utiliza a fonte **Bungee** (Google Fonts).
+
+```css
+/* Variável CSS para o logo */
+--font-logo: 'Bungee', 'Impact', system-ui, sans-serif;
+
+/* Classe do logo */
+.logo-text {
+  font-family: var(--font-logo);
+  color: #F5B81C;
+  font-weight: 400;
+}
+```
+
+**Importação da fonte:**
+```html
+<link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+```
+
+**Documentação completa:** `docs/branding/LOGO-GUIDE.md`
+
 ## 📁 Estrutura de Templates
 
 ```

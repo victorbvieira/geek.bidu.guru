@@ -216,6 +216,7 @@ Design tokens são as **variáveis atômicas** do design system. Toda cor, espa�
      ============================================ */
 
   /* Famílias de Fonte */
+  --font-logo: 'Bungee', 'Impact', -apple-system, system-ui, sans-serif;  /* Logo oficial - fonte Bungee */
   --font-heading: 'Poppins', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
@@ -430,6 +431,37 @@ Uso: "Frete grátis", informações adicionais, tooltips
 ---
 
 ## 📝 Tipografia
+
+### Fonte do Logo: Bungee
+
+O texto do logo "GEEK BIDU GURU" utiliza a fonte **Bungee**, uma display font urbana criada por David Jonathan Ross.
+
+| Aspecto | Descrição |
+|---------|-----------|
+| **Fonte** | Bungee (Google Fonts) |
+| **Designer** | David Jonathan Ross (DJR) |
+| **Estilo** | Display/urbana, signage, bold |
+| **Cor** | Amarelo `#F5B81C` |
+| **Licença** | SIL Open Font License (gratuita) |
+
+**Por que Bungee para o logo:**
+- Alta legibilidade em tamanhos pequenos (favicon)
+- Funciona em orientação horizontal e vertical
+- Estética urbana/geek que ressoa com o público gamer
+- Sistema de camadas (Regular, Outline, Shade) para efeitos especiais
+- Open source e gratuita
+
+```css
+/* Logo (Bungee - Display urbana para branding) */
+.logo-text, .brand-text {
+  font-family: var(--font-logo);
+  font-weight: 400;
+  color: #F5B81C;
+  text-transform: uppercase;
+}
+```
+
+**Documentação completa do logo:** `docs/branding/LOGO-GUIDE.md`
 
 ### Hierarquia de Fontes
 

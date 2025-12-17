@@ -94,6 +94,23 @@ class ProductCreate(ProductBase, ProductAffiliate):
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2, description="Rating 0-5")
     review_count: int = Field(default=0, ge=0, description="Numero de reviews")
 
+    # Metadados Instagram (pre-configuracao para posts futuros)
+    instagram_headline: str | None = Field(
+        None, max_length=50, description="Headline de impacto para Instagram"
+    )
+    instagram_title: str | None = Field(
+        None, max_length=100, description="Titulo curto para Instagram"
+    )
+    instagram_badge: str | None = Field(
+        None, max_length=30, description="Texto do badge (ex: NOVO!)"
+    )
+    instagram_caption: str | None = Field(
+        None, description="Caption pre-definida para posts"
+    )
+    instagram_hashtags: list[str] = Field(
+        default_factory=list, description="Lista de hashtags (sem #)"
+    )
+
     @field_validator("affiliate_redirect_slug")
     @classmethod
     def validate_redirect_slug(cls, v: str) -> str:
@@ -128,6 +145,13 @@ class ProductUpdate(BaseSchema):
     availability: ProductAvailability | None = None
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2)
     review_count: int | None = Field(None, ge=0)
+
+    # Metadados Instagram (pre-configuracao para posts futuros)
+    instagram_headline: str | None = Field(None, max_length=50)
+    instagram_title: str | None = Field(None, max_length=100)
+    instagram_badge: str | None = Field(None, max_length=30)
+    instagram_caption: str | None = None
+    instagram_hashtags: list[str] | None = None
 
     @field_validator("name")
     @classmethod
@@ -194,6 +218,18 @@ class ProductResponse(ProductBase, ProductAffiliate, ResponseSchema):
     internal_score: Decimal
     last_price_update: datetime | None
     click_count: int
+    # Campos de controle de posts em redes sociais
+    last_post_date: datetime | None
+    post_count: int
+    last_post_platform: str | None
+    last_post_url: str | None
+
+    # Metadados Instagram (pre-configuracao para posts futuros)
+    instagram_headline: str | None
+    instagram_title: str | None
+    instagram_badge: str | None
+    instagram_caption: str | None
+    instagram_hashtags: list[str]
 
 
 class ProductBrief(BaseSchema):

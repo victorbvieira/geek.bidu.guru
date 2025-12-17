@@ -2146,3 +2146,166 @@ input, select, textarea, button {
     color: var(--admin-text-muted);
 }
 
+/* -----------------------------------------------------------------------------
+   Social Networks Section - Redes Sociais Colapsáveis
+   ----------------------------------------------------------------------------- */
+
+.social-networks-section {
+    margin-top: 0;
+}
+
+.social-networks-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.social-network-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.5rem;
+    background: var(--admin-bg);
+    border: 2px solid var(--admin-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    min-height: 80px;
+}
+
+.social-network-btn:hover:not(:disabled) {
+    border-color: var(--admin-primary);
+    background: rgba(139, 92, 246, 0.1);
+    transform: translateY(-2px);
+}
+
+.social-network-btn.active {
+    border-color: var(--admin-primary);
+    background: rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.social-network-btn.configured {
+    border-color: var(--admin-success);
+}
+
+.social-network-btn.configured:hover:not(:disabled) {
+    border-color: var(--admin-success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.social-network-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.social-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.social-name {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--admin-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.social-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: var(--admin-success);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: bold;
+}
+
+.social-soon {
+    font-size: 0.55rem;
+    color: var(--admin-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Painel colapsável de cada rede social */
+.social-panel {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    animation: social-panel-open 0.25s ease-out;
+}
+
+@keyframes social-panel-open {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.social-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.social-panel-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--admin-text);
+}
+
+.social-panel-close {
+    background: none;
+    border: none;
+    color: var(--admin-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.social-panel-close:hover {
+    background: var(--admin-danger);
+    color: white;
+}
+
+.social-panel-content {
+    /* Conteúdo do painel */
+}
+
+/* Responsive: em telas menores, grid de 3 colunas */
+@media (max-width: 768px) {
+    .social-networks-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+

@@ -135,6 +135,61 @@ class Product(Base, UUIDMixin, TimestampMixin):
     # Metricas (desnormalizadas)
     click_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
+    # Controle de publicacao em redes sociais
+    last_post_date: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        comment="Data do ultimo post sobre este produto"
+    )
+    post_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default="0",
+        comment="Quantidade de vezes que foi postado"
+    )
+    last_post_platform: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Plataforma do ultimo post (instagram, tiktok, etc)"
+    )
+    last_post_url: Mapped[Optional[str]] = mapped_column(
+        String(500),
+        nullable=True,
+        comment="URL do ultimo post publicado"
+    )
+
+    # ==========================================================================
+    # Metadados para posts em redes sociais (pre-configurados no cadastro)
+    # Estes campos permitem preparar o conteudo do post antecipadamente
+    # ==========================================================================
+    instagram_headline: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+        comment="Headline de impacto para Instagram (ex: OFERTA IMPERDIVEL!)"
+    )
+    instagram_title: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="Titulo curto para Instagram (se diferente do nome)"
+    )
+    instagram_badge: Mapped[Optional[str]] = mapped_column(
+        String(30),
+        nullable=True,
+        comment="Texto do badge (ex: NOVO!, BEST SELLER)"
+    )
+    instagram_caption: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Caption pre-definida para posts Instagram"
+    )
+    instagram_hashtags: Mapped[list] = mapped_column(
+        JSONBType,
+        default=list,
+        server_default="[]",
+        comment="Lista de hashtags para Instagram"
+    )
+
     # Relacionamentos
     post_products: Mapped[list["PostProduct"]] = relationship(
         "PostProduct",

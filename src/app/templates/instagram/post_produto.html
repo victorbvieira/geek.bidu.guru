@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1080">
+    <title>Instagram Post - {{ product_name }}</title>
+    <style>
+        /* Fontes locais - carregadas do servidor para funcionar com Playwright */
+        @font-face {
+            font-family: 'Bungee';
+            src: url('/static/fonts/Bungee-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: block;
+        }
+
+        @font-face {
+            font-family: 'Press Start 2P';
+            src: url('/static/fonts/PressStart2P-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: block;
+        }
+
+        /* Reset e base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Anti-aliasing global para textos mais suaves */
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            width: 1080px;
+            height: 1080px;
+            overflow: hidden;
+            font-family: 'Russo One', sans-serif;
+        }
+
+        .container {
+            width: 1080px;
+            height: 1080px;
+            position: relative;
+            /* Imagem de fundo do template */
+            background-image: url('/static/images/template/instagram_01.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+        }
+
+        /* Elementos decorativos de fundo - desabilitados quando usando imagem */
+        .bg-pattern {
+            display: none;
+            /* Oculto pois usamos imagem de fundo */
+        }
+
+        .glow-effect {
+            display: none;
+            /* Oculto pois usamos imagem de fundo */
+        }
+
+        .glow-1 {
+            top: -100px;
+            right: -100px;
+            background: #e94560;
+        }
+
+        .glow-2 {
+            bottom: -100px;
+            left: -100px;
+            background: #F5B81C;
+        }
+
+        /* Header com logo e headline */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 40px;
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #F5B81C;
+            object-fit: cover;
+            background-color: #7B68EE;
+            padding: 0;
+        }
+
+        .brand-name {
+            font-family: 'Bungee', sans-serif;
+            font-size: 44px;
+            color: #F5B81C;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .headline {
+            background: #F5B81C;
+            color: #1a1a2e;
+            font-family: 'Bungee', sans-serif;
+            font-size: 47px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 0;
+            transform: rotate(-8deg);
+            text-transform: uppercase;
+            letter-spacing: 0px;
+            line-height: 1.2;
+            text-align: left;
+            position: absolute;
+            right: 40px;
+            top: 30px;
+            /* Borda externa preta com distância */
+            outline: 3px solid #1a1a2e;
+            outline-offset: 4px;
+            /* Limita largura para forçar quebra em duas linhas */
+            max-width: 340px;
+            /* Anti-aliasing para bordas e texto suaves */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        /* Area principal do produto */
+        .product-area {
+            position: absolute;
+            top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            text-align: center;
+            z-index: 5;
+        }
+
+        /* Badge - estilo inclinado com borda esquerda reta */
+        .badge {
+            display: inline-block;
+            background: #F5B81C;
+            color: #1a1a2e;
+            font-family: 'Bungee', sans-serif;
+            font-size: 36px;
+            font-weight: bold;
+            padding: 6px 18px;
+            text-transform: uppercase;
+            position: relative;
+            margin-top: 5px;
+            margin-right: 60px;
+            /* Skew para inclinar apenas visualmente, mantendo borda esquerda reta */
+            transform: skewY(-10deg);
+            /* Anti-aliasing para bordas e texto suaves */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .badge-text {
+            display: inline-block;
+            /* Anti-aliasing para texto inclinado */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Semi-borda superior e esquerda do badge */
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            width: 18px;
+            height: 18px;
+            border-top: 3px solid #F5B81C;
+            border-left: 3px solid #F5B81C;
+        }
+
+        /* Semi-borda inferior e direita do badge */
+        .badge::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            border-bottom: 3px solid #F5B81C;
+            border-right: 3px solid #F5B81C;
+        }
+
+        /* Imagem do produto */
+        .product-image-container {
+            position: relative;
+            width: 688px;
+            height: 688px;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #F5B81C;
+            border-radius: 20px;
+            transform: rotate(-2deg);
+        }
+
+        .product-image-frame-2 {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #e94560;
+            border-radius: 20px;
+            transform: rotate(2deg);
+        }
+
+        .product-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 15px;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+            z-index: 2;
+            position: relative;
+        }
+
+        /* Titulo do produto - estilo tarja azul com texto branco */
+        .product-title {
+            font-family: 'Bungee', sans-serif;
+            font-size: 38px;
+            color: white;
+            background: linear-gradient(135deg, #2b69fb 0%, #2b33fb 100%);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            line-height: 1.3;
+            margin-bottom: 15px;
+            padding: 15px 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            position: relative;
+            /* Borda amarela nos cantos */
+            border-left: 5px solid #F5B81C;
+            border-right: 5px solid #F5B81C;
+            /* Sombra para destaque */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            /* Anti-aliasing */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Detalhes decorativos amarelos no título */
+        .product-title::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #F5B81C;
+        }
+
+        .product-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #F5B81C;
+        }
+
+        /* Preco - tarja vermelha inclinada com borda esquerda reta */
+        .price-container {
+            display: inline-block;
+            background: #E53935;
+            padding: 12px 50px 12px 40px;
+            position: relative;
+            margin-bottom: 8px;
+            margin-right: -50px;
+            min-width: 280px;
+            /* Skew para inclinar apenas visualmente, mantendo borda esquerda reta */
+            transform: skewY(-10deg);
+            /* Anti-aliasing para bordas e texto suaves */
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        /* Semi-borda superior e esquerda do preco (amarela) */
+        .price-container::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 22px;
+            height: 22px;
+            border-top: 3px solid #F5B81C;
+            border-left: 3px solid #F5B81C;
+        }
+
+        /* Semi-borda inferior e direita do preco (amarela) */
+        .price-container::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 22px;
+            height: 22px;
+            border-bottom: 3px solid #F5B81C;
+            border-right: 3px solid #F5B81C;
+        }
+
+        .price-label {
+            display: none;
+            /* Oculto no novo design */
+        }
+
+        .price-value {
+            font-family: Impact, 'Arial Black', Haettenschweiler, sans-serif;
+            font-size: 75px;
+            color: white;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            font-weight: bold;
+            text-align: left;
+            /* Anti-aliasing para texto inclinado */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .price-cents {
+            font-size: 28px;
+            vertical-align: super;
+        }
+
+        /* Container do preco e badge - colado na borda direita */
+        .price-badge-area {
+            position: absolute;
+            right: 0;
+            top: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            z-index: 10;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 25px 40px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+            z-index: 10;
+        }
+
+        .cta {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .cta-text {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: #F5B81C;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .cta-arrow {
+            display: inline-block;
+            animation: bounce 1s infinite;
+            font-size: 20px;
+            margin-left: 10px;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(10px);
+            }
+        }
+
+        .url-bar {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 30px;
+            border-radius: 30px;
+            display: inline-block;
+            margin: 0 auto 15px;
+            width: auto;
+        }
+
+        .url-text {
+            font-family: 'Russo One', sans-serif;
+            font-size: 22px;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .hashtags {
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 1px;
+        }
+
+        /* Elementos decorativos extras */
+        .star {
+            position: absolute;
+            color: #F5B81C;
+            font-size: 30px;
+            opacity: 0.8;
+        }
+
+        .star-1 {
+            top: 200px;
+            left: 50px;
+            transform: rotate(15deg);
+        }
+
+        .star-2 {
+            top: 350px;
+            right: 60px;
+            transform: rotate(-10deg);
+        }
+
+        .star-3 {
+            bottom: 250px;
+            left: 80px;
+            transform: rotate(5deg);
+        }
+
+        .pixel-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #F5B81C;
+        }
+
+        .pixel-corner-tl {
+            top: 20px;
+            left: 20px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .pixel-corner-tr {
+            top: 20px;
+            right: 20px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .pixel-corner-bl {
+            bottom: 20px;
+            left: 20px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .pixel-corner-br {
+            bottom: 20px;
+            right: 20px;
+            border-left: none;
+            border-top: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Background elements -->
+        <div class="bg-pattern"></div>
+        <div class="glow-effect glow-1"></div>
+        <div class="glow-effect glow-2"></div>
+
+        <!-- Pixel corners -->
+        <div class="pixel-corner pixel-corner-tl"></div>
+        <div class="pixel-corner pixel-corner-tr"></div>
+        <div class="pixel-corner pixel-corner-bl"></div>
+        <div class="pixel-corner pixel-corner-br"></div>
+
+        <!-- Stars decoration -->
+        <div class="star star-1">★</div>
+        <div class="star star-2">★</div>
+        <div class="star star-3">★</div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-area">
+                <img src="{{ logo_url | default('https://geek.bidu.guru/static/logo/mascot-only.png') }}"
+                    alt="Geek Bidu Guru" class="logo-img">
+                <span class="brand-name">GEEK.BIDU.GURU</span>
+            </div>
+            <div class="headline">{{ headline | default('DESPERTE SEU HERÓI!') }}</div>
+        </div>
+
+        <!-- Product Area -->
+        <div class="product-area">
+            <!-- Product Image -->
+            <div class="product-image-container">
+                <div class="product-image-frame"></div>
+                <div class="product-image-frame-2"></div>
+                <img src="{{ product_image_url }}" alt="{{ product_name }}" class="product-image">
+            </div>
+
+            <!-- Product Title -->
+            <h1 class="product-title">{{ title | default(product_name) }}</h1>
+        </div>
+
+        <!-- Price and Badge Container - posicionado sobre a imagem à direita -->
+        <div class="price-badge-area">
+            <!-- Price -->
+            {% if price %}
+            <div class="price-container">
+                <div class="price-value">
+                    R$ {{ price_integer }}<span class="price-cents">,{{ price_cents }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Badge - abaixo do preco -->
+            {% if badge %}
+            <div class="badge"><span class="badge-text">{{ badge }}</span></div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="cta">
+                <span class="cta-text">LINK NA BIO</span>
+                <span class="cta-arrow">👉</span>
+            </div>
+            <div style="text-align: center;">
+                <div class="url-bar">
+                    <span class="url-text">geek.bidu.guru/goto/{{ redirect_slug }}</span>
+                </div>
+            </div>
+            {% if hashtags %}
+            <div class="hashtags">
+                {% for tag in hashtags %}#{{ tag }} {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
