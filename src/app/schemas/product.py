@@ -96,13 +96,13 @@ class ProductCreate(ProductBase, ProductAffiliate):
 
     # Metadados Instagram (pre-configuracao para posts futuros)
     instagram_headline: str | None = Field(
-        None, max_length=50, description="Headline de impacto para Instagram"
+        None, max_length=40, description="Headline de impacto para Instagram (max 40 chars)"
     )
     instagram_title: str | None = Field(
         None, max_length=100, description="Titulo curto para Instagram"
     )
     instagram_badge: str | None = Field(
-        None, max_length=30, description="Texto do badge (ex: NOVO!)"
+        None, max_length=20, description="Texto do badge (ex: NOVO!) (max 20 chars)"
     )
     instagram_caption: str | None = Field(
         None, description="Caption pre-definida para posts"
@@ -147,9 +147,9 @@ class ProductUpdate(BaseSchema):
     review_count: int | None = Field(None, ge=0)
 
     # Metadados Instagram (pre-configuracao para posts futuros)
-    instagram_headline: str | None = Field(None, max_length=50)
+    instagram_headline: str | None = Field(None, max_length=40)
     instagram_title: str | None = Field(None, max_length=100)
-    instagram_badge: str | None = Field(None, max_length=30)
+    instagram_badge: str | None = Field(None, max_length=20)
     instagram_caption: str | None = None
     instagram_hashtags: list[str] | None = None
 

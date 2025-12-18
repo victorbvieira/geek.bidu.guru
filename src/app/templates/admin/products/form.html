@@ -175,9 +175,9 @@
                                     class="admin-form-input"
                                     value="{{ product.instagram_headline if product else '' }}"
                                     placeholder="OFERTA IMPERDIVEL!"
-                                    maxlength="50"
+                                    maxlength="40"
                                 >
-                                <div class="admin-form-hint">Frase de impacto (max 50 chars)</div>
+                                <div class="admin-form-hint"><span id="instagram_headline_count">{{ (product.instagram_headline|length) if product and product.instagram_headline else 0 }}</span>/40 caracteres</div>
                             </div>
 
                             <div class="admin-form-group">
@@ -189,9 +189,9 @@
                                     class="admin-form-input"
                                     value="{{ product.instagram_badge if product else '' }}"
                                     placeholder="NOVO!, BEST SELLER"
-                                    maxlength="30"
+                                    maxlength="20"
                                 >
-                                <div class="admin-form-hint">Texto do badge (max 30 chars)</div>
+                                <div class="admin-form-hint"><span id="instagram_badge_count">{{ (product.instagram_badge|length) if product and product.instagram_badge else 0 }}</span>/20 caracteres</div>
                             </div>
                         </div>
 
@@ -250,14 +250,18 @@
                                     ></iframe>
                                 </div>
                             </div>
-                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="refreshInstagramPreview()">
                                     🔄 Atualizar Preview
                                 </button>
                                 <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" onclick="openPreviewFullscreen()">
                                     🔍 Ver em Tamanho Real
                                 </button>
+                                <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" onclick="downloadInstagramImage()" id="btn-download-image">
+                                    📥 Download Imagem
+                                </button>
                             </div>
+                            <div id="download-status" style="display: none; margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem;"></div>
                         </div>
                         {% else %}
                         <div class="admin-form-hint" style="margin-top: 1rem; padding: 1rem; background: var(--admin-bg-secondary); border-radius: 8px;">
@@ -1083,6 +1087,113 @@ function schedulePreviewUpdate() {
         input.addEventListener('input', schedulePreviewUpdate);
     }
 });
+
+// Contadores de caracteres para Headline e Badge
+const headlineInput = document.getElementById('instagram_headline');
+const badgeInput = document.getElementById('instagram_badge');
+
+if (headlineInput) {
+    headlineInput.addEventListener('input', function() {
+        const countSpan = document.getElementById('instagram_headline_count');
+        if (countSpan) {
+            countSpan.textContent = this.value.length;
+        }
+    });
+}
+
+if (badgeInput) {
+    badgeInput.addEventListener('input', function() {
+        const countSpan = document.getElementById('instagram_badge_count');
+        if (countSpan) {
+            countSpan.textContent = this.value.length;
+        }
+    });
+}
+
+/**
+ * Baixa a imagem do Instagram convertendo o HTML para imagem via API
+ * Usa o endpoint admin que ja tem autenticacao por sessao
+ */
+async function downloadInstagramImage() {
+    const btn = document.getElementById('btn-download-image');
+    const statusDiv = document.getElementById('download-status');
+
+    // Desabilita botao durante o processo
+    btn.disabled = true;
+    btn.textContent = '⏳ Gerando...';
+
+    // Mostra status
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = 'var(--admin-bg-secondary)';
+    statusDiv.style.color = 'var(--admin-text-muted)';
+    statusDiv.textContent = 'Gerando imagem (pode demorar alguns segundos)...';
+
+    try {
+        // Pega valores atuais dos campos
+        const headline = document.getElementById('instagram_headline').value;
+        const title = document.getElementById('instagram_title').value;
+        const badge = document.getElementById('instagram_badge').value;
+
+        // Usa o endpoint admin que gera a imagem diretamente
+        const response = await fetch(`/admin/products/${productId}/instagram-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                headline: headline,
+                title: title,
+                badge: badge
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Erro ao gerar imagem');
+        }
+
+        const data = await response.json();
+
+        // Converte base64 para blob e faz download
+        statusDiv.textContent = 'Preparando download...';
+        const byteCharacters = atob(data.image_base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+
+        // Cria link de download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `instagram-post-${productId}.png`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Sucesso
+        statusDiv.style.background = 'var(--admin-success-bg, #d4edda)';
+        statusDiv.style.color = 'var(--admin-success, #155724)';
+        statusDiv.textContent = `✅ Download concluido! (${data.file_size_kb} KB)`;
+
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 3000);
+
+    } catch (error) {
+        console.error('Erro ao gerar imagem:', error);
+        statusDiv.style.background = 'var(--admin-danger-bg, #f8d7da)';
+        statusDiv.style.color = 'var(--admin-danger, #721c24)';
+        statusDiv.textContent = `❌ Erro: ${error.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📥 Download Imagem';
+    }
+}
 {% endif %}
 
 // =============================================================================

@@ -571,7 +571,6 @@ async def instagram_preview(
     from fastapi.responses import HTMLResponse
     from fastapi.templating import Jinja2Templates
     from pathlib import Path
-    from app.config import settings
 
     product = await repo.get(product_id)
     if not product:
@@ -604,7 +603,7 @@ async def instagram_preview(
         "badge": badge or product.instagram_badge,
         "hashtags": product.instagram_hashtags or [],
         "redirect_slug": product.affiliate_redirect_slug,
-        "logo_url": f"{settings.app_url}/static/logo/mascot-only.png",
+        "logo_url": "/static/logo/mascot-only.png",
     }
 
     # Renderiza template e retorna com headers que permitem iframe
@@ -616,6 +615,124 @@ async def instagram_preview(
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
     return response
+
+
+# -----------------------------------------------------------------------------
+# Products - Gerar Imagem Instagram (HTML to Image)
+# -----------------------------------------------------------------------------
+
+
+@router.post("/products/{product_id}/instagram-image")
+async def generate_instagram_image(
+    request: Request,
+    product_id: UUID,
+    current_user: AdminUser,
+    repo: ProductRepo,
+):
+    """
+    Gera imagem PNG do post Instagram a partir do template HTML.
+
+    Usa Playwright para navegar ate a URL do preview e capturar screenshot.
+    A imagem gerada é 1080x1080 px (formato Instagram).
+
+    Returns:
+        JSON com imagem em base64 e metadados
+    """
+    import base64
+    from urllib.parse import urlencode
+
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    # Pega overrides do body se houver
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    headline = body.get("headline", "")
+    title = body.get("title", "")
+    badge = body.get("badge", "")
+
+    # Monta URL do preview com query params
+    # Usa localhost dentro do container para acessar a propria aplicacao
+    base_url = "http://localhost:8000"
+    preview_path = f"/admin/products/{product_id}/instagram-preview"
+
+    # Adiciona query params se houver overrides
+    params = {}
+    if headline:
+        params["headline"] = headline
+    if title:
+        params["title"] = title
+    if badge:
+        params["badge"] = badge
+
+    preview_url = f"{base_url}{preview_path}"
+    if params:
+        preview_url += "?" + urlencode(params)
+
+    # Converte HTML para imagem usando Playwright
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError:
+        return JSONResponse(
+            content={"detail": "Playwright nao instalado. Execute: pip install playwright && playwright install chromium"},
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page(viewport={"width": 1080, "height": 1080})
+
+            # Copia o cookie de sessao do usuario atual para o Playwright
+            # Isso permite que o preview seja acessado sem re-autenticacao
+            cookies = request.cookies
+            if cookies:
+                playwright_cookies = []
+                for name, value in cookies.items():
+                    playwright_cookies.append({
+                        "name": name,
+                        "value": value,
+                        "domain": "localhost",
+                        "path": "/",
+                    })
+                await page.context.add_cookies(playwright_cookies)
+
+            # Navega para a URL do preview (carrega todas as imagens corretamente)
+            await page.goto(preview_url, wait_until="networkidle", timeout=30000)
+
+            # Aguarda um pouco mais para garantir que imagens externas carreguem
+            await page.wait_for_timeout(2000)
+
+            # Captura screenshot
+            screenshot = await page.screenshot(type="png", full_page=False)
+            await browser.close()
+
+        # Converte para base64
+        image_base64 = base64.b64encode(screenshot).decode("utf-8")
+        file_size_kb = len(screenshot) // 1024
+
+        return JSONResponse(
+            content={
+                "success": True,
+                "image_base64": image_base64,
+                "format": "png",
+                "width": 1080,
+                "height": 1080,
+                "file_size_kb": file_size_kb,
+            },
+            status_code=http_status.HTTP_200_OK,
+        )
+
+    except Exception as e:
+        logger.error(f"Erro ao gerar imagem Instagram: {e}")
+        return JSONResponse(
+            content={"detail": f"Erro ao renderizar HTML: {str(e)}"},
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 # -----------------------------------------------------------------------------
