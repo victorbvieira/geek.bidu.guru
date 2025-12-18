@@ -88,7 +88,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "connect-src 'self' ws: wss:",
             ]
 
-        response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
+        # Permite que endpoints específicos definam seu próprio CSP
+        # (ex: previews que precisam de frame-ancestors diferente)
+        if "Content-Security-Policy" not in response.headers:
+            response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
 
         return response
 
