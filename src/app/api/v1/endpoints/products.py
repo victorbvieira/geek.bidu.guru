@@ -57,10 +57,12 @@ Protecao de Endpoints:
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import Pagination, ProductRepo
+from app.core.deps import require_role
 from app.models.product import PriceRange, ProductPlatform
+from app.models.user import UserRole
 from app.schemas import (
     MessageResponse,
     PaginatedResponse,
@@ -72,6 +74,9 @@ from app.schemas import (
 
 # Router com prefixo /products e tag para documentação OpenAPI
 router = APIRouter(prefix="/products", tags=["products"])
+
+# Roles permitidos para operações de escrita (criar, editar, deletar)
+WRITE_ROLES = [UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTOMATION]
 
 
 # =============================================================================
@@ -268,10 +273,17 @@ async def get_product_by_slug(slug: str, repo: ProductRepo):
 # =============================================================================
 
 
-@router.post("", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=ProductResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
 async def create_product(data: ProductCreate, repo: ProductRepo):
     """
     Cria um novo produto de afiliado.
+
+    **Autenticação**: Requer token JWT com role ADMIN, EDITOR ou AUTOMATION.
 
     Requer slug único e affiliate_redirect_slug único para
     o sistema de redirect (/goto/{slug}).
@@ -317,10 +329,16 @@ async def create_product(data: ProductCreate, repo: ProductRepo):
     return ProductResponse.model_validate(product)
 
 
-@router.patch("/{product_id}", response_model=ProductResponse)
+@router.patch(
+    "/{product_id}",
+    response_model=ProductResponse,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
 async def update_product(product_id: UUID, data: ProductUpdate, repo: ProductRepo):
     """
     Atualiza um produto existente (atualização parcial).
+
+    **Autenticação**: Requer token JWT com role ADMIN, EDITOR ou AUTOMATION.
 
     Permite atualizar qualquer campo do produto.
     Para atualizar apenas preço, use /products/{id}/price.
@@ -356,12 +374,18 @@ async def update_product(product_id: UUID, data: ProductUpdate, repo: ProductRep
     return ProductResponse.model_validate(product)
 
 
-@router.patch("/{product_id}/price", response_model=ProductResponse)
+@router.patch(
+    "/{product_id}/price",
+    response_model=ProductResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.AUTOMATION))],
+)
 async def update_product_price(
     product_id: UUID, data: ProductUpdatePrice, repo: ProductRepo
 ):
     """
     Atualiza apenas o preço do produto.
+
+    **Autenticação**: Requer token JWT com role ADMIN ou AUTOMATION.
 
     Endpoint específico para atualização de preços, útil para
     workflows de automação (n8n) que sincronizam preços.
@@ -400,10 +424,16 @@ async def update_product_price(
     return ProductResponse.model_validate(product)
 
 
-@router.delete("/{product_id}", response_model=MessageResponse)
+@router.delete(
+    "/{product_id}",
+    response_model=MessageResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def delete_product(product_id: UUID, repo: ProductRepo):
     """
     Remove um produto do sistema.
+
+    **Autenticação**: Requer token JWT com role ADMIN.
 
     Atenção: Links de afiliado (/goto/) para este produto
     deixarão de funcionar após a remoção.

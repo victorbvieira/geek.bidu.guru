@@ -17,6 +17,7 @@ from app.models.session import Session
 from app.models.newsletter import NewsletterSignup
 from app.models.redirect import Redirect
 from app.models.ai_config import AIConfig, AIProvider, AIUseCase
+from app.models.instagram_post import InstagramPostHistory
 
 __all__ = [
     # Mixins e Tipos
@@ -41,4 +42,5 @@ __all__ = [
     "AIConfig",
     "AIProvider",
     "AIUseCase",
+    "InstagramPostHistory",
 ]

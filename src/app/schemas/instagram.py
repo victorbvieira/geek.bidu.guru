@@ -41,6 +41,11 @@ class MarkPostedRequest(BaseModel):
         None,
         description="Caption utilizada no post (para historico)",
     )
+    ig_media_id: str | None = Field(
+        None,
+        max_length=100,
+        description="IG Media ID retornado pela Graph API do Instagram",
+    )
 
 
 class HtmlToImageRequest(BaseModel):
@@ -120,6 +125,8 @@ class MarkPostedResponse(BaseModel):
     product_id: UUID = Field(..., description="UUID do produto atualizado")
     last_post_date: datetime = Field(..., description="Data/hora do post")
     post_count: int = Field(..., description="Total de posts do produto")
+    ig_media_id: str | None = Field(None, description="IG Media ID registrado")
+    history_id: UUID | None = Field(None, description="UUID do registro de historico criado")
 
 
 class ProductForPostingResponse(BaseModel):
@@ -248,4 +255,68 @@ class InstagramMetadataUpdate(BaseModel):
         None,
         max_length=30,
         description="Lista de hashtags (sem #)",
+    )
+
+
+# =============================================================================
+# Schemas para Histórico de Publicações Instagram
+# =============================================================================
+
+
+class InstagramPostHistoryResponse(BaseModel):
+    """
+    Resposta com dados de um registro de histórico de publicação.
+
+    Representa uma publicação individual de produto no Instagram.
+    """
+
+    id: UUID = Field(..., description="UUID do registro de histórico")
+    product_id: UUID = Field(..., description="UUID do produto publicado")
+    ig_media_id: str | None = Field(None, description="IG Media ID do Instagram")
+    post_url: str | None = Field(None, description="URL do post no Instagram")
+    caption: str | None = Field(None, description="Caption utilizada")
+    posted_at: datetime = Field(..., description="Data/hora da publicação")
+    created_at: datetime = Field(..., description="Data de criação do registro")
+
+    class Config:
+        """Configuração do schema."""
+
+        from_attributes = True
+
+
+class InstagramPostHistoryListResponse(BaseModel):
+    """
+    Lista de registros de histórico de publicações.
+
+    Usada para exibir o histórico completo de publicações de um produto.
+    """
+
+    items: list[InstagramPostHistoryResponse] = Field(
+        ..., description="Lista de publicações"
+    )
+    total: int = Field(..., description="Total de publicações")
+
+
+class ProductInstagramInfoResponse(BaseModel):
+    """
+    Informações resumidas de Instagram de um produto.
+
+    Usado no admin para exibir campos somente leitura com as
+    informações de publicação do produto.
+    """
+
+    product_id: UUID = Field(..., description="UUID do produto")
+    last_ig_media_id: str | None = Field(
+        None, description="IG Media ID da última publicação"
+    )
+    last_post_date: datetime | None = Field(
+        None, description="Data/hora da última publicação"
+    )
+    post_count: int = Field(..., description="Total de publicações")
+    last_post_url: str | None = Field(
+        None, description="URL da última publicação"
+    )
+    history: list[InstagramPostHistoryResponse] = Field(
+        default_factory=list,
+        description="Histórico de publicações (últimas 5)"
     )

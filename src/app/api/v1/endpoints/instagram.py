@@ -40,10 +40,13 @@ from app.models.user import UserRole
 from app.schemas.instagram import (
     HtmlToImageRequest,
     HtmlToImageResponse,
+    InstagramPostHistoryListResponse,
+    InstagramPostHistoryResponse,
     MarkPostedRequest,
     MarkPostedResponse,
     PostingStatsResponse,
     ProductForPostingResponse,
+    ProductInstagramInfoResponse,
     ResizeImageRequest,
     ResizeImageResponse,
 )
@@ -164,7 +167,7 @@ async def render_instagram_template(
     from fastapi.templating import Jinja2Templates
     from pathlib import Path
 
-    product = await repo.get_by_id(product_id)
+    product = await repo.get(product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -235,6 +238,10 @@ async def mark_product_as_posted(
     - post_count: Incrementa em 1
     - last_post_platform: Nome da plataforma (ex: "instagram")
     - last_post_url: URL do post publicado (opcional)
+    - last_ig_media_id: IG Media ID (apenas para Instagram)
+
+    Para Instagram, também cria um registro no histórico de publicações
+    na tabela instagram_post_history.
 
     Args:
         product_id: UUID do produto postado
@@ -248,12 +255,22 @@ async def mark_product_as_posted(
         HTTPException 401: Token invalido ou ausente
         HTTPException 403: Role nao autorizado
         HTTPException 404: Se o produto nao for encontrado
+
+    Body (JSON):
+        {
+            "platform": "instagram",
+            "post_url": "https://instagram.com/p/xxx",
+            "ig_media_id": "17841400000000000",
+            "caption": "Caption do post..."
+        }
     """
     try:
-        product = await repo.mark_as_posted(
+        product, history_record = await repo.mark_as_posted(
             product_id=product_id,
             platform=request.platform,
             post_url=request.post_url,
+            ig_media_id=request.ig_media_id,
+            caption=request.caption,
         )
     except ValueError as e:
         raise HTTPException(
@@ -266,6 +283,8 @@ async def mark_product_as_posted(
         product_id=product.id,
         last_post_date=product.last_post_date,
         post_count=product.post_count,
+        ig_media_id=request.ig_media_id,
+        history_id=history_record.id if history_record else None,
     )
 
 
@@ -315,6 +334,107 @@ async def get_posting_stats(
         available_for_posting=available_count,
         total_products=total_count,
         days_since_last_post=days_since_last_post,
+    )
+
+
+# =============================================================================
+# Endpoints de Histórico de Publicações
+# =============================================================================
+
+
+@router.get(
+    "/products/{product_id}/info",
+    response_model=ProductInstagramInfoResponse,
+    dependencies=[Depends(require_role(*ALLOWED_ROLES))],
+)
+async def get_product_instagram_info(
+    product_id: UUID,
+    repo: ProductRepo,
+):
+    """
+    Retorna informações de Instagram de um produto.
+
+    **Autenticacao**: Requer token JWT com role ADMIN ou AUTOMATION.
+
+    Inclui:
+    - last_ig_media_id: IG Media ID da última publicação
+    - last_post_date: Data/hora da última publicação
+    - post_count: Total de publicações
+    - last_post_url: URL da última publicação
+    - history: Últimas 5 publicações do histórico
+
+    Args:
+        product_id: UUID do produto
+        repo: Repositório de produtos (injetado automaticamente)
+
+    Returns:
+        ProductInstagramInfoResponse com informações do produto
+
+    Raises:
+        HTTPException 401: Token invalido ou ausente
+        HTTPException 403: Role nao autorizado
+        HTTPException 404: Se o produto nao for encontrado
+    """
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto nao encontrado",
+        )
+
+    # Busca histórico de publicações
+    history = await repo.get_instagram_post_history(product_id, limit=5)
+
+    return ProductInstagramInfoResponse(
+        product_id=product.id,
+        last_ig_media_id=product.last_ig_media_id,
+        last_post_date=product.last_post_date,
+        post_count=product.post_count,
+        last_post_url=product.last_post_url,
+        history=[InstagramPostHistoryResponse.model_validate(h) for h in history],
+    )
+
+
+@router.get(
+    "/products/{product_id}/history",
+    response_model=InstagramPostHistoryListResponse,
+    dependencies=[Depends(require_role(*ALLOWED_ROLES))],
+)
+async def get_product_instagram_history(
+    product_id: UUID,
+    repo: ProductRepo,
+    limit: int = Query(default=20, ge=1, le=100, description="Número máximo de registros"),
+):
+    """
+    Retorna histórico completo de publicações Instagram de um produto.
+
+    **Autenticacao**: Requer token JWT com role ADMIN ou AUTOMATION.
+
+    Args:
+        product_id: UUID do produto
+        repo: Repositório de produtos (injetado automaticamente)
+        limit: Número máximo de registros (default: 20, max: 100)
+
+    Returns:
+        InstagramPostHistoryListResponse com lista de publicações
+
+    Raises:
+        HTTPException 401: Token invalido ou ausente
+        HTTPException 403: Role nao autorizado
+        HTTPException 404: Se o produto nao for encontrado
+    """
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto nao encontrado",
+        )
+
+    history = await repo.get_instagram_post_history(product_id, limit=limit)
+
+    return InstagramPostHistoryListResponse(
+        items=[InstagramPostHistoryResponse.model_validate(h) for h in history],
+        total=len(history),
     )
 
 

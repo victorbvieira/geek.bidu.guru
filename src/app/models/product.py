@@ -16,6 +16,7 @@ from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.click import AffiliateClick
+    from app.models.instagram_post import InstagramPostHistory
     from app.models.post_product import PostProduct
 
 
@@ -158,6 +159,11 @@ class Product(Base, UUIDMixin, TimestampMixin):
         nullable=True,
         comment="URL do ultimo post publicado"
     )
+    last_ig_media_id: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+        comment="IG Media ID do ultimo post no Instagram (retornado pela Graph API)"
+    )
 
     # ==========================================================================
     # Metadados para posts em redes sociais (pre-configurados no cadastro)
@@ -202,6 +208,14 @@ class Product(Base, UUIDMixin, TimestampMixin):
         "AffiliateClick",
         back_populates="product",
         lazy="selectin",
+    )
+
+    instagram_posts: Mapped[list["InstagramPostHistory"]] = relationship(
+        "InstagramPostHistory",
+        back_populates="product",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        order_by="desc(InstagramPostHistory.posted_at)",
     )
 
     # Indices

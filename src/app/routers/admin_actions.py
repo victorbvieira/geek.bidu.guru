@@ -622,6 +622,49 @@ async def instagram_preview(
 # -----------------------------------------------------------------------------
 
 
+@router.get("/products/{product_id}/instagram-history")
+async def get_product_instagram_history(
+    product_id: UUID,
+    current_user: AdminUser,
+    repo: ProductRepo,
+):
+    """
+    Busca histórico de publicações Instagram de um produto.
+
+    Endpoint interno do admin para exibir o histórico no modal.
+
+    Returns:
+        JSON com lista de publicações e total
+    """
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado")
+
+    # Busca histórico
+    history = await repo.get_instagram_post_history(product_id, limit=20)
+
+    # Serializa para JSON
+    items = []
+    for h in history:
+        items.append({
+            "id": str(h.id),
+            "product_id": str(h.product_id),
+            "ig_media_id": h.ig_media_id,
+            "post_url": h.post_url,
+            "caption": h.caption,
+            "posted_at": h.posted_at.isoformat() if h.posted_at else None,
+            "created_at": h.created_at.isoformat() if h.created_at else None,
+        })
+
+    return JSONResponse(
+        content={
+            "items": items,
+            "total": len(items),
+        },
+        status_code=http_status.HTTP_200_OK,
+    )
+
+
 @router.post("/products/{product_id}/instagram-image")
 async def generate_instagram_image(
     request: Request,

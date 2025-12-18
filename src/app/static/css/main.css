@@ -194,13 +194,36 @@ section {
 }
 
 .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    text-decoration: none;
+}
+
+.logo-mascot {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    transition: transform var(--transition-base);
+}
+
+.logo:hover .logo-mascot {
+    transform: scale(1.1);
+}
+
+.logo-text {
     font-family: var(--font-heading);
     font-size: var(--font-size-xl);
     font-weight: 700;
     color: var(--text-primary);
+    transition: color var(--transition-base);
 }
 
-.logo:hover {
+.logo-dot {
+    color: var(--color-primary-500);
+}
+
+.logo:hover .logo-text {
     color: var(--color-primary-400);
 }
 

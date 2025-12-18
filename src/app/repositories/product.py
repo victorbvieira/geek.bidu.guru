@@ -9,7 +9,7 @@ from sqlalchemy import cast, func, or_, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Product
+from app.models import Product, InstagramPostHistory
 from app.models.product import PriceRange, ProductAvailability, ProductPlatform
 from app.repositories.base import BaseRepository
 
@@ -386,23 +386,30 @@ class ProductRepository(BaseRepository[Product]):
         product_id: UUID,
         platform: str,
         post_url: str | None = None,
-    ) -> Product:
+        ig_media_id: str | None = None,
+        caption: str | None = None,
+    ) -> tuple[Product, InstagramPostHistory | None]:
         """
         Marca produto como postado em uma rede social.
 
-        Atualiza:
+        Atualiza no produto:
         - last_post_date: Data/hora atual
         - post_count: Incrementa em 1
         - last_post_platform: Plataforma usada (instagram, tiktok, etc)
         - last_post_url: URL do post publicado (opcional)
+        - last_ig_media_id: IG Media ID (se plataforma for instagram)
+
+        Se for Instagram, também cria um registro no histórico de publicações.
 
         Args:
             product_id: UUID do produto
             platform: Nome da plataforma (ex: "instagram", "tiktok")
             post_url: URL do post publicado (opcional)
+            ig_media_id: IG Media ID retornado pela Graph API (opcional, apenas Instagram)
+            caption: Caption utilizada na publicação (opcional)
 
         Returns:
-            Produto atualizado
+            Tupla (produto atualizado, registro de histórico ou None)
 
         Raises:
             ValueError: Se produto nao for encontrado
@@ -411,14 +418,61 @@ class ProductRepository(BaseRepository[Product]):
         if not product:
             raise ValueError("Produto nao encontrado")
 
-        product.last_post_date = datetime.now(UTC)
+        posted_at = datetime.now(UTC)
+
+        # Atualiza dados do produto
+        product.last_post_date = posted_at
         product.post_count = (product.post_count or 0) + 1
         product.last_post_platform = platform
         product.last_post_url = post_url
 
+        # Se for Instagram e tiver IG Media ID, atualiza
+        history_record = None
+        if platform.lower() == "instagram":
+            if ig_media_id:
+                product.last_ig_media_id = ig_media_id
+
+            # Cria registro no histórico de publicações Instagram
+            history_record = InstagramPostHistory(
+                product_id=product_id,
+                ig_media_id=ig_media_id,
+                post_url=post_url,
+                caption=caption,
+                posted_at=posted_at,
+            )
+            self.db.add(history_record)
+
         await self.db.commit()
         await self.db.refresh(product)
-        return product
+        if history_record:
+            await self.db.refresh(history_record)
+
+        return product, history_record
+
+    async def get_instagram_post_history(
+        self,
+        product_id: UUID,
+        limit: int = 10,
+    ) -> list[InstagramPostHistory]:
+        """
+        Busca histórico de publicações Instagram de um produto.
+
+        Args:
+            product_id: UUID do produto
+            limit: Número máximo de registros (default: 10)
+
+        Returns:
+            Lista de registros de histórico ordenados por data (mais recente primeiro)
+        """
+        stmt = (
+            select(InstagramPostHistory)
+            .where(InstagramPostHistory.product_id == product_id)
+            .order_by(InstagramPostHistory.posted_at.desc())
+            .limit(limit)
+        )
+
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
     async def count_available_for_posting(
         self,

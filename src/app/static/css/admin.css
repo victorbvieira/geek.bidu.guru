@@ -85,15 +85,15 @@ input, select, textarea, button {
     color: var(--admin-text);
 }
 
-.admin-logo-icon {
+.admin-logo-mascot {
     width: 40px;
     height: 40px;
-    background: var(--admin-primary);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
+    object-fit: contain;
+    transition: transform 0.2s ease;
+}
+
+.admin-logo:hover .admin-logo-mascot {
+    transform: scale(1.1);
 }
 
 .admin-logo-text {
