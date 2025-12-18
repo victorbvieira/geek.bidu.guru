@@ -55,6 +55,11 @@ services:
       # Analytics (opcional)
       - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
       - GA4_API_SECRET=${GA4_API_SECRET:-}
+      # Playwright - path dos navegadores instalados na imagem
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    # Playwright precisa de permissoes especiais para o Chromium headless
+    security_opt:
+      - seccomp:unconfined
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

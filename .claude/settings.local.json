@@ -42,7 +42,10 @@
       "Bash(/opt/homebrew/bin/psql:*)",
       "Bash(../.venv/bin/alembic revision:*)",
       "Bash(../.venv/bin/alembic history:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(export:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjOWNlYzk2MC1iNzM4LTQyYmItOGNkZi1jMThlNGJmYzU5ODYiLCJleHAiOjE3NjYwNjc5NzgsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NjYwNjA3NzgsInJvbGUiOiJhZG1pbiJ9.foasJ8cxu6g9MypHHpHH2l2PPMSBBthWNFJMrHKCZwA\":*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

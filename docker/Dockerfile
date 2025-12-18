@@ -31,16 +31,44 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Instalar apenas runtime dependencies
+# Instalar runtime dependencies e dependencias do Playwright/Chromium
+# As libs sao necessarias para o Chromium headless funcionar
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
+    # Dependencias do Chromium (Playwright)
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    fonts-liberation \
+    # Fontes para emojis (necessario para renderizar emojis no Playwright)
+    fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar wheels do builder e instalar
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache-dir /wheels/*
+
+# Instalar Playwright e o navegador Chromium
+# Precisa ser feito apos instalar os wheels pois playwright precisa estar instalado
+# Define PLAYWRIGHT_BROWSERS_PATH para garantir que os navegadores sejam instalados no local correto
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN pip install playwright==1.49.1 && playwright install chromium
 
 # Copiar codigo fonte
 COPY src/ ./src/

@@ -45,6 +45,8 @@ services:
       # Sobrescreve variaveis do .env se necessario
       - REDIS_URL=redis://redis:6379/0
       # Em desenvolvimento, nao define UPLOAD_DIR para usar /static/uploads
+      # Playwright - desabilita sandbox (necessario para rodar como root no container)
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
     volumes:
       - ../src:/app/src
       # Volume para uploads persistentes (desenvolvimento)
@@ -54,6 +56,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    # Playwright precisa de IPC_LOCK e permissoes de seguranca
+    security_opt:
+      - seccomp:unconfined
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - geek_network
