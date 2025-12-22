@@ -35,8 +35,13 @@ Uso alternativo (mais controle):
 """
 
 import base64
+import mimetypes
+import re
 from io import BytesIO
+from pathlib import Path
 from uuid import UUID
+
+import httpx
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import HTMLResponse
@@ -67,6 +72,154 @@ router = APIRouter(prefix="/instagram", tags=["instagram"])
 
 # Roles permitidos para acessar estes endpoints
 ALLOWED_ROLES = [UserRole.ADMIN, UserRole.AUTOMATION]
+
+# Diretorio de arquivos estaticos (para conversao de imagens/fontes para base64)
+STATIC_DIR = Path(__file__).parent.parent.parent.parent / "static"
+
+
+# =============================================================================
+# Funcoes Auxiliares para Conversao de Imagens/Fontes para Base64
+# =============================================================================
+
+
+def _file_to_data_uri(file_path: Path) -> str:
+    """
+    Converte arquivo local para data URI base64.
+
+    Usado para embutir imagens e fontes diretamente no HTML,
+    permitindo que o Playwright renderize sem precisar de servidor web.
+
+    Args:
+        file_path: Caminho absoluto para o arquivo
+
+    Returns:
+        Data URI no formato: data:mime/type;base64,<conteudo>
+
+    Raises:
+        FileNotFoundError: Se o arquivo nao existir
+    """
+    if not file_path.exists():
+        raise FileNotFoundError(f"Arquivo nao encontrado: {file_path}")
+
+    # Determina o tipo MIME
+    mime_type, _ = mimetypes.guess_type(str(file_path))
+    if not mime_type:
+        # Fallback para tipos comuns
+        suffix = file_path.suffix.lower()
+        mime_map = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".ttf": "font/ttf",
+            ".woff": "font/woff",
+            ".woff2": "font/woff2",
+        }
+        mime_type = mime_map.get(suffix, "application/octet-stream")
+
+    # Le e converte para base64
+    with open(file_path, "rb") as f:
+        content = f.read()
+
+    b64_content = base64.b64encode(content).decode("utf-8")
+    return f"data:{mime_type};base64,{b64_content}"
+
+
+async def _url_to_data_uri(url: str) -> str:
+    """
+    Baixa imagem de URL externa e converte para data URI base64.
+
+    Usado para embutir imagem do produto diretamente no HTML,
+    permitindo que o Playwright renderize sem fazer requests externos.
+
+    Args:
+        url: URL da imagem externa
+
+    Returns:
+        Data URI no formato: data:mime/type;base64,<conteudo>
+
+    Raises:
+        HTTPException: Se falhar ao baixar a imagem
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(url, follow_redirects=True)
+            response.raise_for_status()
+
+            # Determina tipo MIME do response ou da URL
+            content_type = response.headers.get("content-type", "").split(";")[0]
+            if not content_type or content_type == "application/octet-stream":
+                # Tenta determinar pela extensao da URL
+                mime_type, _ = mimetypes.guess_type(url)
+                content_type = mime_type or "image/png"
+
+            b64_content = base64.b64encode(response.content).decode("utf-8")
+            return f"data:{content_type};base64,{b64_content}"
+
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Erro ao baixar imagem do produto: {str(e)}",
+        )
+
+
+def _prepare_template_with_embedded_assets(
+    html_content: str,
+    product_image_data_uri: str,
+) -> str:
+    """
+    Prepara HTML do template com todos os assets embutidos como data URIs.
+
+    Substitui referencias a arquivos estaticos locais (/static/...) e
+    a imagem do produto por data URIs base64, permitindo renderizacao
+    offline com Playwright.
+
+    Args:
+        html_content: HTML do template com referencias a arquivos
+        product_image_data_uri: Data URI da imagem do produto
+
+    Returns:
+        HTML com todos os assets embutidos como base64
+    """
+    # Mapeamento de arquivos estaticos locais para seus caminhos
+    static_files = {
+        "/static/images/template/instagram_01.png": STATIC_DIR / "images" / "template" / "instagram_01.png",
+        "/static/logo/mascot-only.png": STATIC_DIR / "logo" / "mascot-only.png",
+        "/static/fonts/Bungee-Regular.ttf": STATIC_DIR / "fonts" / "Bungee-Regular.ttf",
+        "/static/fonts/PressStart2P-Regular.ttf": STATIC_DIR / "fonts" / "PressStart2P-Regular.ttf",
+    }
+
+    # Substitui cada arquivo estatico por seu data URI
+    for url_path, file_path in static_files.items():
+        if url_path in html_content:
+            try:
+                data_uri = _file_to_data_uri(file_path)
+                html_content = html_content.replace(url_path, data_uri)
+            except FileNotFoundError:
+                # Se arquivo nao existir, mantem URL original (fallback)
+                pass
+
+    # Substitui a imagem do produto
+    # O template usa {{ product_image_url }} que ja foi renderizado com a URL real
+    # Precisamos encontrar essa URL e substituir pelo data URI
+    # Como a URL pode variar, usamos a tag <img> com class="product-image"
+
+    # Pattern para encontrar o src da imagem do produto
+    # Exemplo: <img src="https://..." alt="..." class="product-image">
+    pattern = r'(<img\s+[^>]*class="product-image"[^>]*src=")([^"]+)(")'
+
+    def replace_product_image(match):
+        return match.group(1) + product_image_data_uri + match.group(3)
+
+    html_content = re.sub(pattern, replace_product_image, html_content)
+
+    # Tenta pattern alternativo caso src venha antes de class
+    pattern_alt = r'(<img\s+src=")([^"]+)("[^>]*class="product-image")'
+
+    html_content = re.sub(pattern_alt, replace_product_image, html_content)
+
+    return html_content
 
 
 # =============================================================================
@@ -519,6 +672,10 @@ async def generate_instagram_image(
             detail="Produto nao possui imagem principal (main_image_url)",
         )
 
+    # Baixa a imagem do produto e converte para data URI
+    # Isso e necessario pois o Playwright nao carrega URLs externas com set_content()
+    product_image_data_uri = await _url_to_data_uri(product.main_image_url)
+
     # Prepara dados do preco (com formatacao de milhar usando ponto)
     price_integer = None
     price_cents = None
@@ -536,16 +693,16 @@ async def generate_instagram_image(
 
     # Configura Jinja2
     from fastapi.templating import Jinja2Templates
-    from pathlib import Path
 
     templates_dir = Path(__file__).parent.parent.parent.parent / "templates"
     templates = Jinja2Templates(directory=str(templates_dir))
 
     # Prepara dados do template
+    # Nota: product_image_url usa URL original aqui, sera substituida depois
     template_data = {
         "request": request_obj,
         "product_name": product.name,
-        "product_image_url": product.main_image_url,
+        "product_image_url": product.main_image_url,  # Sera substituido por data URI
         "price": product.price,
         "price_integer": price_integer,
         "price_cents": price_cents,
@@ -554,12 +711,19 @@ async def generate_instagram_image(
         "badge": badge,
         "hashtags": hashtags,
         "redirect_slug": product.affiliate_redirect_slug,
-        "logo_url": f"{settings.app_url}/static/logo/mascot-only.png",
+        "logo_url": "/static/logo/mascot-only.png",  # URL relativa, sera convertida
     }
 
     # Renderiza o template HTML
     html_content = templates.get_template("instagram/post_produto.html").render(
         **template_data
+    )
+
+    # Substitui todos os assets por data URIs (imagens, fontes, produto)
+    # Isso permite que o Playwright renderize sem precisar de servidor web
+    html_content = _prepare_template_with_embedded_assets(
+        html_content=html_content,
+        product_image_data_uri=product_image_data_uri,
     )
 
     # Converte HTML para imagem usando Playwright
@@ -578,7 +742,11 @@ async def generate_instagram_image(
                 viewport={"width": 1080, "height": 1080}
             )
 
-            await page.set_content(html_content, wait_until="networkidle")
+            # Renderiza HTML com todos os assets embutidos como base64
+            await page.set_content(html_content, wait_until="load")
+
+            # Aguarda um pouco para garantir que fontes foram carregadas
+            await page.wait_for_timeout(500)
 
             screenshot = await page.screenshot(
                 type="png",
