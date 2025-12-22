@@ -37,6 +37,7 @@ Uso alternativo (mais controle):
 import base64
 import mimetypes
 import re
+import uuid as uuid_module
 from io import BytesIO
 from pathlib import Path
 from uuid import UUID
@@ -51,6 +52,7 @@ from app.api.deps import ProductRepo
 from app.config import settings
 from app.core.deps import require_role
 from app.models.user import UserRole
+from app.services.upload import UPLOAD_DIR, UPLOAD_URL_PREFIX
 from app.schemas.instagram import (
     GenerateImageRequest,
     GenerateImageResponse,
@@ -634,7 +636,10 @@ async def generate_instagram_image(
     1. Busca o produto pelo ID
     2. Renderiza o template HTML com os dados do produto
     3. Converte o HTML para imagem PNG usando Playwright
-    4. Retorna a imagem em base64
+    4. Salva a imagem no servidor e retorna a URL publica
+
+    A imagem e salva no diretorio de uploads (/uploads/instagram/) e a URL
+    publica e retornada para uso direto na Graph API do Instagram.
 
     Se os campos de conteudo (headline, title, badge, hashtags) nao forem
     passados no request, usa os dados pre-cadastrados do produto.
@@ -645,7 +650,7 @@ async def generate_instagram_image(
         repo: Repositorio de produtos (injetado automaticamente)
 
     Returns:
-        GenerateImageResponse com imagem em base64
+        GenerateImageResponse com URL publica da imagem (e base64 se solicitado)
 
     Raises:
         HTTPException 401: Token invalido ou ausente
@@ -659,7 +664,8 @@ async def generate_instagram_image(
             "headline": "DESPERTE SEU HEROI!",    // opcional
             "title": "Material Escolar Epico!",   // opcional
             "badge": "NOVO NA LOJA!",             // opcional
-            "hashtags": ["Vingadores", "Marvel"]  // opcional
+            "hashtags": ["Vingadores", "Marvel"], // opcional
+            "include_base64": false               // opcional, default false
         }
     """
     # Busca o produto
@@ -771,19 +777,43 @@ async def generate_instagram_image(
 
             await browser.close()
 
-        # Converte para base64
-        image_base64 = base64.b64encode(screenshot).decode("utf-8")
+        # Calcula tamanho do arquivo
         file_size_kb = len(screenshot) // 1024
 
-        return GenerateImageResponse(
-            success=True,
-            image_base64=image_base64,
-            image_url=None,  # Nao salvamos em storage por enquanto
-            format="png",
-            width=1080,
-            height=1080,
-            file_size_kb=file_size_kb,
-        )
+        # Salva a imagem no diretorio de uploads para obter URL publica
+        # Usa subdiretorio 'instagram' para organizar as imagens geradas
+        instagram_upload_dir = UPLOAD_DIR / "instagram"
+        instagram_upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Gera nome unico para o arquivo
+        filename = f"{uuid_module.uuid4().hex}.png"
+        file_path = instagram_upload_dir / filename
+
+        # Salva a imagem
+        with open(file_path, "wb") as f:
+            f.write(screenshot)
+
+        # Monta URL publica (relativa)
+        image_url_relative = f"{UPLOAD_URL_PREFIX}/instagram/{filename}"
+
+        # Monta URL absoluta para retornar
+        image_url = f"{settings.app_url}{image_url_relative}"
+
+        # Prepara resposta
+        response_data = {
+            "success": True,
+            "image_url": image_url,
+            "format": "png",
+            "width": 1080,
+            "height": 1080,
+            "file_size_kb": file_size_kb,
+        }
+
+        # Inclui base64 apenas se solicitado
+        if data.include_base64:
+            response_data["image_base64"] = base64.b64encode(screenshot).decode("utf-8")
+
+        return GenerateImageResponse(**response_data)
 
     except Exception as e:
         raise HTTPException(

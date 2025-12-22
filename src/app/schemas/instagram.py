@@ -395,6 +395,9 @@ class GenerateImageRequest(BaseModel):
 
     Recebe os dados do produto e conteudo para gerar a imagem.
     Se os campos de conteudo nao forem passados, usa os pre-cadastrados do produto.
+
+    Por padrao, a imagem e salva no servidor e a URL publica e retornada.
+    Para obter tambem o base64, passe include_base64=true.
     """
 
     product_id: UUID = Field(
@@ -420,20 +423,28 @@ class GenerateImageRequest(BaseModel):
         None,
         description="Override das hashtags (usa instagram_hashtags do produto se None)",
     )
+    include_base64: bool = Field(
+        default=False,
+        description="Se True, inclui a imagem em base64 na resposta (alem da URL)",
+    )
 
 
 class GenerateImageResponse(BaseModel):
     """
     Resposta da geracao de imagem Instagram.
 
-    Retorna a imagem em base64 ou URL publica.
+    Sempre retorna a URL publica da imagem salva no servidor.
+    Opcionalmente inclui a imagem em base64 se solicitado no request.
     """
 
     success: bool = Field(..., description="Se a geracao foi bem sucedida")
-    image_base64: str = Field(..., description="Imagem gerada em base64")
-    image_url: str | None = Field(
+    image_url: str = Field(
+        ...,
+        description="URL publica da imagem (para uso na Graph API do Instagram)",
+    )
+    image_base64: str | None = Field(
         None,
-        description="URL publica da imagem (se salva em storage)",
+        description="Imagem em base64 (apenas se include_base64=true no request)",
     )
     format: str = Field(default="png", description="Formato da imagem")
     width: int = Field(default=1080, description="Largura da imagem")
