@@ -22,29 +22,30 @@ from pydantic import BaseModel, Field
 
 class MarkPostedRequest(BaseModel):
     """
-    Request para marcar produto como postado.
+    Request para marcar produto como postado no Instagram.
 
     Chamado apos o post ser publicado com sucesso no Instagram.
+    ig_media_id e platform sao obrigatorios - a data e registrada automaticamente.
     """
 
+    ig_media_id: str = Field(
+        ...,
+        max_length=100,
+        description="IG Media ID retornado pela Graph API do Instagram (obrigatorio)",
+    )
     platform: str = Field(
-        default="instagram",
+        ...,
         max_length=50,
-        description="Plataforma onde foi postado",
+        description="Plataforma onde foi postado (obrigatorio)",
     )
     post_url: str | None = Field(
         None,
         max_length=500,
-        description="URL do post publicado",
+        description="URL do post publicado (opcional, pode ser construida a partir do ig_media_id)",
     )
     caption: str | None = Field(
         None,
-        description="Caption utilizada no post (para historico)",
-    )
-    ig_media_id: str | None = Field(
-        None,
-        max_length=100,
-        description="IG Media ID retornado pela Graph API do Instagram",
+        description="Caption utilizada no post (opcional, para historico)",
     )
 
 

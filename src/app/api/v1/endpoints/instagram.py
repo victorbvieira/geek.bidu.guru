@@ -397,22 +397,21 @@ async def mark_product_as_posted(
     repo: ProductRepo,
 ):
     """
-    Marca produto como postado em uma rede social.
+    Marca produto como postado no Instagram.
 
     **Autenticacao**: Requer token JWT com role ADMIN ou AUTOMATION.
 
-    Deve ser chamado apos a publicacao bem-sucedida do post
-    no Instagram (ou outra plataforma).
+    Deve ser chamado apos a publicacao bem-sucedida do post no Instagram.
+    ig_media_id e platform sao obrigatorios - a data/hora e registrada automaticamente.
 
     Atualiza os seguintes campos do produto:
-    - last_post_date: Data/hora atual (UTC)
+    - last_post_date: Data/hora atual (UTC) - automatico
     - post_count: Incrementa em 1
-    - last_post_platform: Nome da plataforma (ex: "instagram")
+    - last_post_platform: Nome da plataforma
     - last_post_url: URL do post publicado (opcional)
-    - last_ig_media_id: IG Media ID (apenas para Instagram)
+    - last_ig_media_id: IG Media ID retornado pela Graph API
 
-    Para Instagram, também cria um registro no histórico de publicações
-    na tabela instagram_post_history.
+    Tambem cria um registro no historico de publicacoes (instagram_post_history).
 
     Args:
         product_id: UUID do produto postado
@@ -427,11 +426,17 @@ async def mark_product_as_posted(
         HTTPException 403: Role nao autorizado
         HTTPException 404: Se o produto nao for encontrado
 
-    Body (JSON):
+    Body (JSON) - minimo:
         {
+            "ig_media_id": "17841400000000000",
+            "platform": "instagram"
+        }
+
+    Body (JSON) - completo:
+        {
+            "ig_media_id": "17841400000000000",
             "platform": "instagram",
             "post_url": "https://instagram.com/p/xxx",
-            "ig_media_id": "17841400000000000",
             "caption": "Caption do post..."
         }
     """
