@@ -737,7 +737,18 @@ async def generate_instagram_image(
 
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch()
+            # Inicia browser em modo headless com flags para ambiente containerizado
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",  # Necessario para rodar como root em containers
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",  # Evita problemas de memoria compartilhada
+                    "--disable-gpu",  # Desabilita GPU (nao disponivel em containers)
+                    "--single-process",  # Reduz uso de memoria
+                    "--no-zygote",  # Evita fork de processos (mais estavel em containers)
+                ],
+            )
             page = await browser.new_page(
                 viewport={"width": 1080, "height": 1080}
             )
@@ -824,7 +835,18 @@ async def convert_html_to_image(request: HtmlToImageRequest):
 
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch()
+            # Inicia browser em modo headless com flags para ambiente containerizado
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",  # Necessario para rodar como root em containers
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",  # Evita problemas de memoria compartilhada
+                    "--disable-gpu",  # Desabilita GPU (nao disponivel em containers)
+                    "--single-process",  # Reduz uso de memoria
+                    "--no-zygote",  # Evita fork de processos (mais estavel em containers)
+                ],
+            )
             page = await browser.new_page(
                 viewport={"width": request.width, "height": request.height}
             )
