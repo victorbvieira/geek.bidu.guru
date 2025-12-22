@@ -228,18 +228,53 @@ class ResizeImageResponse(BaseModel):
 # =============================================================================
 
 
+class LLMCostInfo(BaseModel):
+    """
+    Informacoes de custo de uma chamada LLM.
+
+    Usado para rastrear custos de geracao de conteudo por IA.
+    """
+
+    provider: str = Field(
+        ...,
+        max_length=50,
+        description="Provedor do LLM (openai, anthropic, etc)",
+    )
+    model: str = Field(
+        ...,
+        max_length=100,
+        description="Modelo usado (gpt-4o-mini, claude-3, etc)",
+    )
+    input_tokens: int = Field(
+        ...,
+        ge=0,
+        description="Tokens de entrada (prompt)",
+    )
+    output_tokens: int = Field(
+        ...,
+        ge=0,
+        description="Tokens de saida (completion)",
+    )
+    cost_usd: float = Field(
+        ...,
+        ge=0,
+        description="Custo em USD da chamada",
+    )
+
+
 class InstagramMetadataUpdate(BaseModel):
     """
     Schema para atualizar metadados Instagram de um produto.
 
     Usado no cadastro/edicao de produtos para pre-configurar
-    o conteudo de posts futuros.
+    o conteudo de posts futuros. Opcionalmente registra custo de LLM
+    quando o conteudo foi gerado por IA.
     """
 
     instagram_headline: str | None = Field(
         None,
-        max_length=50,
-        description="Headline de impacto (ex: OFERTA IMPERDIVEL!)",
+        max_length=40,
+        description="Headline de impacto (ex: OFERTA IMPERDIVEL!) - max 40 chars",
     )
     instagram_title: str | None = Field(
         None,
@@ -248,17 +283,22 @@ class InstagramMetadataUpdate(BaseModel):
     )
     instagram_badge: str | None = Field(
         None,
-        max_length=30,
-        description="Texto do badge (ex: NOVO!, BEST SELLER)",
+        max_length=20,
+        description="Texto do badge (ex: NOVO!, BEST SELLER) - max 20 chars",
     )
     instagram_caption: str | None = Field(
         None,
-        description="Caption pre-definida para posts Instagram",
+        max_length=2200,
+        description="Caption pre-definida para posts Instagram - max 2200 chars",
     )
     instagram_hashtags: list[str] | None = Field(
         None,
         max_length=30,
-        description="Lista de hashtags (sem #)",
+        description="Lista de hashtags (sem #) - 5 a 10 recomendado",
+    )
+    llm_cost: LLMCostInfo | None = Field(
+        None,
+        description="Informacoes de custo do LLM (quando gerado por IA)",
     )
 
 
@@ -324,3 +364,78 @@ class ProductInstagramInfoResponse(BaseModel):
         default_factory=list,
         description="Histórico de publicações (últimas 5)"
     )
+
+
+class InstagramMetadataUpdateResponse(BaseModel):
+    """
+    Resposta da atualizacao de metadados Instagram.
+
+    Confirma quais campos foram atualizados e se o custo LLM foi registrado.
+    """
+
+    success: bool = Field(..., description="Se a operacao foi bem sucedida")
+    product_id: UUID = Field(..., description="UUID do produto atualizado")
+    updated_fields: list[str] = Field(
+        ...,
+        description="Lista de campos que foram atualizados",
+    )
+    llm_cost_registered: bool = Field(
+        False,
+        description="Se informacoes de custo LLM foram registradas",
+    )
+    total_llm_cost_usd: float | None = Field(
+        None,
+        description="Custo total acumulado de LLM do produto (USD)",
+    )
+
+
+class GenerateImageRequest(BaseModel):
+    """
+    Request para gerar imagem de post Instagram.
+
+    Recebe os dados do produto e conteudo para gerar a imagem.
+    Se os campos de conteudo nao forem passados, usa os pre-cadastrados do produto.
+    """
+
+    product_id: UUID = Field(
+        ...,
+        description="UUID do produto para gerar imagem",
+    )
+    headline: str | None = Field(
+        None,
+        max_length=40,
+        description="Override da headline (usa instagram_headline do produto se None)",
+    )
+    title: str | None = Field(
+        None,
+        max_length=100,
+        description="Override do titulo (usa instagram_title ou name se None)",
+    )
+    badge: str | None = Field(
+        None,
+        max_length=20,
+        description="Override do badge (usa instagram_badge do produto se None)",
+    )
+    hashtags: list[str] | None = Field(
+        None,
+        description="Override das hashtags (usa instagram_hashtags do produto se None)",
+    )
+
+
+class GenerateImageResponse(BaseModel):
+    """
+    Resposta da geracao de imagem Instagram.
+
+    Retorna a imagem em base64 ou URL publica.
+    """
+
+    success: bool = Field(..., description="Se a geracao foi bem sucedida")
+    image_base64: str = Field(..., description="Imagem gerada em base64")
+    image_url: str | None = Field(
+        None,
+        description="URL publica da imagem (se salva em storage)",
+    )
+    format: str = Field(default="png", description="Formato da imagem")
+    width: int = Field(default=1080, description="Largura da imagem")
+    height: int = Field(default=1080, description="Altura da imagem")
+    file_size_kb: int = Field(..., description="Tamanho do arquivo em KB")

@@ -9,14 +9,23 @@ AUTENTICACAO:
     Roles permitidos: ADMIN, AUTOMATION
 
 Endpoints disponiveis:
-    GET    /instagram/product/random    - Busca produto aleatorio para posting
-    GET    /instagram/template/{id}     - Renderiza template HTML do produto
-    PATCH  /instagram/products/{id}/mark-posted - Marca produto como postado
-    GET    /instagram/stats             - Estatisticas de posting
-    POST   /instagram/utils/html-to-image - Converte HTML em imagem
-    POST   /instagram/utils/resize-image  - Redimensiona imagem
+    GET    /instagram/product/random              - Busca produto aleatorio para posting
+    GET    /instagram/template/{id}               - Renderiza template HTML do produto
+    POST   /instagram/generate-image              - Gera imagem PNG do produto (template + screenshot)
+    PATCH  /instagram/products/{id}/mark-posted   - Marca produto como postado
+    GET    /instagram/products/{id}/info          - Retorna info de publicacao do produto
+    GET    /instagram/products/{id}/history       - Retorna historico de publicacoes
+    GET    /instagram/stats                       - Estatisticas de posting
+    POST   /instagram/utils/html-to-image         - Converte HTML em imagem (baixo nivel)
+    POST   /instagram/utils/resize-image          - Redimensiona imagem
 
-Uso tipico (Flow A do n8n):
+Uso tipico (Flow A do n8n - simplificado):
+    1. GET /instagram/product/random - Seleciona produto
+    2. POST /instagram/generate-image - Gera imagem PNG diretamente (combina template + screenshot)
+    3. [n8n] Publica no Instagram via Graph API
+    4. PATCH /instagram/products/{id}/mark-posted - Registra publicacao
+
+Uso alternativo (mais controle):
     1. GET /instagram/product/random - Seleciona produto
     2. GET /instagram/template/{id} - Gera HTML renderizado do template
     3. POST /instagram/utils/html-to-image - Converte para imagem
@@ -38,6 +47,8 @@ from app.config import settings
 from app.core.deps import require_role
 from app.models.user import UserRole
 from app.schemas.instagram import (
+    GenerateImageRequest,
+    GenerateImageResponse,
     HtmlToImageRequest,
     HtmlToImageResponse,
     InstagramPostHistoryListResponse,
@@ -436,6 +447,165 @@ async def get_product_instagram_history(
         items=[InstagramPostHistoryResponse.model_validate(h) for h in history],
         total=len(history),
     )
+
+
+# =============================================================================
+# Endpoints de Geracao de Imagem
+# =============================================================================
+
+
+@router.post(
+    "/generate-image",
+    response_model=GenerateImageResponse,
+    dependencies=[Depends(require_role(*ALLOWED_ROLES))],
+)
+async def generate_instagram_image(
+    request_obj: Request,
+    data: GenerateImageRequest,
+    repo: ProductRepo,
+):
+    """
+    Gera imagem de post Instagram a partir de um produto.
+
+    **Autenticacao**: Requer token JWT com role ADMIN ou AUTOMATION.
+
+    Este endpoint combina a renderizacao do template HTML com a conversao
+    para imagem em uma unica chamada. Ideal para uso no workflow n8n.
+
+    Fluxo interno:
+    1. Busca o produto pelo ID
+    2. Renderiza o template HTML com os dados do produto
+    3. Converte o HTML para imagem PNG usando Playwright
+    4. Retorna a imagem em base64
+
+    Se os campos de conteudo (headline, title, badge, hashtags) nao forem
+    passados no request, usa os dados pre-cadastrados do produto.
+
+    Args:
+        request_obj: Request do FastAPI (para templates)
+        data: Dados para geracao (GenerateImageRequest)
+        repo: Repositorio de produtos (injetado automaticamente)
+
+    Returns:
+        GenerateImageResponse com imagem em base64
+
+    Raises:
+        HTTPException 401: Token invalido ou ausente
+        HTTPException 403: Role nao autorizado
+        HTTPException 404: Se o produto nao for encontrado
+        HTTPException 500: Erro na renderizacao
+
+    Body (JSON):
+        {
+            "product_id": "uuid",
+            "headline": "DESPERTE SEU HEROI!",    // opcional
+            "title": "Material Escolar Epico!",   // opcional
+            "badge": "NOVO NA LOJA!",             // opcional
+            "hashtags": ["Vingadores", "Marvel"]  // opcional
+        }
+    """
+    # Busca o produto
+    product = await repo.get(data.product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto nao encontrado",
+        )
+
+    # Verifica se produto tem imagem
+    if not product.main_image_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Produto nao possui imagem principal (main_image_url)",
+        )
+
+    # Prepara dados do preco (com formatacao de milhar usando ponto)
+    price_integer = None
+    price_cents = None
+    if product.price:
+        price_float = float(product.price)
+        price_int = int(price_float)
+        price_integer = f"{price_int:,}".replace(",", ".")
+        price_cents = f"{int((price_float - price_int) * 100):02d}"
+
+    # Usa dados do request ou fallback para dados do produto
+    headline = data.headline or product.instagram_headline or "OFERTA IMPERDÍVEL!"
+    title = data.title or product.instagram_title or product.name
+    badge = data.badge or product.instagram_badge
+    hashtags = data.hashtags or product.instagram_hashtags or []
+
+    # Configura Jinja2
+    from fastapi.templating import Jinja2Templates
+    from pathlib import Path
+
+    templates_dir = Path(__file__).parent.parent.parent.parent / "templates"
+    templates = Jinja2Templates(directory=str(templates_dir))
+
+    # Prepara dados do template
+    template_data = {
+        "request": request_obj,
+        "product_name": product.name,
+        "product_image_url": product.main_image_url,
+        "price": product.price,
+        "price_integer": price_integer,
+        "price_cents": price_cents,
+        "headline": headline,
+        "title": title,
+        "badge": badge,
+        "hashtags": hashtags,
+        "redirect_slug": product.affiliate_redirect_slug,
+        "logo_url": f"{settings.app_url}/static/logo/mascot-only.png",
+    }
+
+    # Renderiza o template HTML
+    html_content = templates.get_template("instagram/post_produto.html").render(
+        **template_data
+    )
+
+    # Converte HTML para imagem usando Playwright
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Playwright nao instalado. Execute: pip install playwright && playwright install chromium",
+        )
+
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page(
+                viewport={"width": 1080, "height": 1080}
+            )
+
+            await page.set_content(html_content, wait_until="networkidle")
+
+            screenshot = await page.screenshot(
+                type="png",
+                full_page=False,
+            )
+
+            await browser.close()
+
+        # Converte para base64
+        image_base64 = base64.b64encode(screenshot).decode("utf-8")
+        file_size_kb = len(screenshot) // 1024
+
+        return GenerateImageResponse(
+            success=True,
+            image_base64=image_base64,
+            image_url=None,  # Nao salvamos em storage por enquanto
+            format="png",
+            width=1080,
+            height=1080,
+            file_size_kb=file_size_kb,
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao gerar imagem: {str(e)}",
+        )
 
 
 # =============================================================================

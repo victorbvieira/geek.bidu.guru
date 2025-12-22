@@ -33,12 +33,14 @@ Publicar automaticamente 1 post por dia (as 8h) no Instagram com:
 |----------|--------|-----------|--------|
 | `/api/v1/instagram/product/random` | GET | Busca produto aleatorio para posting | ✅ |
 | `/api/v1/instagram/template/{id}` | GET | Renderiza template HTML do produto | ✅ |
-| `/api/v1/instagram/utils/html-to-image` | POST | Converte HTML para imagem PNG | ✅ |
+| `/api/v1/instagram/generate-image` | POST | Gera imagem PNG do produto (template + screenshot) | ✅ |
+| `/api/v1/instagram/utils/html-to-image` | POST | Converte HTML para imagem PNG (baixo nivel) | ✅ |
 | `/api/v1/instagram/products/{id}/mark-posted` | PATCH | Marca produto como postado + historico | ✅ |
 | `/api/v1/instagram/products/{id}/info` | GET | Retorna info de publicacao do produto | ✅ |
 | `/api/v1/instagram/products/{id}/history` | GET | Retorna historico de publicacoes | ✅ |
 | `/api/v1/instagram/stats` | GET | Estatisticas de posting | ✅ |
 | `/api/v1/products/{id}` | GET | Busca produto por ID (para teste manual) | ✅ |
+| `/api/v1/products/{id}/instagram-metadata` | PATCH | Salvar metadados Instagram + custo LLM | ✅ |
 
 ### Tabelas do Banco de Dados
 
@@ -102,7 +104,7 @@ Publicar automaticamente 1 post por dia (as 8h) no Instagram com:
 │           │              │                  │                               │
 │           │              │                  ▼                               │
 │           │              │   ┌─────────────────────────────┐               │
-│           │              │   │ 5. PATCH /api/v1/products/  │  ◄── NOVO!    │
+│           │              │   │ 5. PATCH /api/v1/products/  │  ◄── ✅ IMPL  │
 │           │              │   │ {id}/instagram-metadata     │               │
 │           │              │   │ - Salvar dados gerados      │               │
 │           │              │   │ - Registrar custo LLM       │               │
@@ -112,10 +114,10 @@ Publicar automaticamente 1 post por dia (as 8h) no Instagram com:
 │                          │                                                  │
 │                          ▼                                                  │
 │         ┌─────────────────────────────────────────┐                        │
-│         │ 6. POST /api/v1/instagram/generate-image│  ◄── API INTERNA       │
-│         │ - Recebe: produto + conteudo            │                        │
+│         │ 6. POST /api/v1/instagram/generate-image│  ◄── ✅ IMPLEMENTADO   │
+│         │ - Recebe: product_id + overrides        │                        │
 │         │ - Gera imagem 1080x1080 do template     │                        │
-│         │ - Retorna: URL da imagem gerada         │                        │
+│         │ - Retorna: imagem em base64             │                        │
 │         └────────────────┬────────────────────────┘                        │
 │                          │                                                  │
 │                          ▼                                                  │
@@ -1069,8 +1071,9 @@ src/app/
 | Endpoint `GET /api/v1/instagram/stats` | Alta | ✅ | Estatisticas de posting |
 | Endpoint `GET /api/v1/products/{id}` | Alta | ✅ | Ja existe |
 | Endpoint `POST/PATCH/DELETE /api/v1/products` | Alta | ✅ | Autenticacao adicionada |
-| Migration: campos llm_cost (FUTURO) | Baixa | ⬜ | Opcao A ou B |
-| Endpoint `PATCH /api/v1/products/{id}/instagram-metadata` | Media | ⬜ | Salvar + custo LLM |
+| Migration: campos llm_cost | Alta | ✅ | Campos ai_* no Product (ja existem) |
+| Endpoint `PATCH /api/v1/products/{id}/instagram-metadata` | Alta | ✅ | Salvar + custo LLM |
+| Endpoint `POST /api/v1/instagram/generate-image` | Alta | ✅ | Template + screenshot em 1 chamada |
 | Testes automatizados dos endpoints | Media | ⬜ | |
 
 ### Instagram

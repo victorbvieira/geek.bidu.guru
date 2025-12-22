@@ -5,15 +5,16 @@ Este módulo implementa as operações CRUD para produtos de plataformas
 de afiliados (Amazon, Mercado Livre, Shopee).
 
 Endpoints disponíveis:
-    GET    /products             - Lista produtos com paginação e filtros
-    GET    /products/available   - Lista produtos disponíveis
-    GET    /products/top-clicked - Lista mais clicados
-    GET    /products/{id}        - Busca produto por ID
-    GET    /products/slug/{s}    - Busca produto por slug
-    POST   /products             - Cria novo produto
-    PATCH  /products/{id}        - Atualiza produto existente
-    PATCH  /products/{id}/price  - Atualiza apenas preço
-    DELETE /products/{id}        - Remove produto
+    GET    /products                        - Lista produtos com paginação e filtros
+    GET    /products/available              - Lista produtos disponíveis
+    GET    /products/top-clicked            - Lista mais clicados
+    GET    /products/{id}                   - Busca produto por ID
+    GET    /products/slug/{s}               - Busca produto por slug
+    POST   /products                        - Cria novo produto
+    PATCH  /products/{id}                   - Atualiza produto existente
+    PATCH  /products/{id}/price             - Atualiza apenas preço
+    PATCH  /products/{id}/instagram-metadata - Atualiza metadados Instagram + custo LLM
+    DELETE /products/{id}                   - Remove produto
 
 Plataformas de Afiliados:
     - amazon: Amazon Brasil
@@ -70,6 +71,10 @@ from app.schemas import (
     ProductResponse,
     ProductUpdate,
     ProductUpdatePrice,
+)
+from app.schemas.instagram import (
+    InstagramMetadataUpdate,
+    InstagramMetadataUpdateResponse,
 )
 
 # Router com prefixo /products e tag para documentação OpenAPI
@@ -461,3 +466,108 @@ async def delete_product(product_id: UUID, repo: ProductRepo):
 
     await repo.delete(product_id)
     return MessageResponse(message="Produto removido com sucesso")
+
+
+# =============================================================================
+# Endpoints de Metadados Instagram
+# =============================================================================
+
+
+@router.patch(
+    "/{product_id}/instagram-metadata",
+    response_model=InstagramMetadataUpdateResponse,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
+async def update_instagram_metadata(
+    product_id: UUID,
+    data: InstagramMetadataUpdate,
+    repo: ProductRepo,
+):
+    """
+    Atualiza metadados de Instagram de um produto.
+
+    **Autenticação**: Requer token JWT com role ADMIN, EDITOR ou AUTOMATION.
+
+    Este endpoint e usado pelo workflow n8n para salvar dados gerados
+    por IA (headline, title, badge, caption, hashtags) e registrar
+    o custo da geracao.
+
+    Campos atualizaveis:
+    - instagram_headline: Headline de impacto (max 40 chars)
+    - instagram_title: Titulo para imagem (max 100 chars)
+    - instagram_badge: Texto do badge (max 20 chars)
+    - instagram_caption: Caption do post (max 2200 chars)
+    - instagram_hashtags: Lista de hashtags (sem #)
+
+    Custo LLM (opcional):
+    Se o campo llm_cost for enviado, atualiza as metricas de IA do produto:
+    - ai_tokens_used: soma de input + output tokens
+    - ai_prompt_tokens: tokens de entrada
+    - ai_completion_tokens: tokens de saida
+    - ai_cost_usd: custo em USD (acumulado)
+    - ai_generations_count: incrementa contador
+
+    Args:
+        product_id: UUID do produto a ser atualizado
+        data: Metadados Instagram e info de custo LLM (opcional)
+        repo: Repositório de produtos (injetado automaticamente)
+
+    Returns:
+        InstagramMetadataUpdateResponse com campos atualizados
+
+    Raises:
+        HTTPException 404: Se o produto não for encontrado
+
+    Body (JSON):
+        {
+            "instagram_headline": "DESPERTE SEU HEROI!",
+            "instagram_title": "Material Escolar Epico e Aqui!",
+            "instagram_badge": "NOVO NA LOJA!",
+            "instagram_caption": "🦸 Comece o ano letivo com estilo...",
+            "instagram_hashtags": ["Vingadores", "Marvel", "GeekGeek"],
+            "llm_cost": {
+                "provider": "openai",
+                "model": "gpt-4o-mini",
+                "input_tokens": 250,
+                "output_tokens": 180,
+                "cost_usd": 0.00043
+            }
+        }
+    """
+    # Busca o produto
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto nao encontrado",
+        )
+
+    # Prepara campos de Instagram para atualizacao (exclui llm_cost)
+    update_data = data.model_dump(exclude_unset=True, exclude={"llm_cost"})
+    updated_fields = list(update_data.keys())
+
+    # Processa informacoes de custo LLM se fornecidas
+    llm_cost_registered = False
+    if data.llm_cost:
+        llm_cost = data.llm_cost
+        total_tokens = llm_cost.input_tokens + llm_cost.output_tokens
+
+        # Acumula os custos de IA no produto
+        update_data["ai_tokens_used"] = product.ai_tokens_used + total_tokens
+        update_data["ai_prompt_tokens"] = product.ai_prompt_tokens + llm_cost.input_tokens
+        update_data["ai_completion_tokens"] = product.ai_completion_tokens + llm_cost.output_tokens
+        update_data["ai_cost_usd"] = float(product.ai_cost_usd) + llm_cost.cost_usd
+        update_data["ai_generations_count"] = product.ai_generations_count + 1
+
+        llm_cost_registered = True
+
+    # Atualiza o produto
+    product = await repo.update(product, update_data)
+
+    return InstagramMetadataUpdateResponse(
+        success=True,
+        product_id=product.id,
+        updated_fields=updated_fields,
+        llm_cost_registered=llm_cost_registered,
+        total_llm_cost_usd=float(product.ai_cost_usd) if llm_cost_registered else None,
+    )
