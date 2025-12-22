@@ -141,6 +141,10 @@ class ProductForPostingResponse(BaseModel):
     name: str
     slug: str
     short_description: str | None
+    long_description: str | None = Field(
+        None,
+        description="Descricao completa do produto",
+    )
     price: float | None
     currency: str
     main_image_url: str | None

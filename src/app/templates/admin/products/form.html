@@ -468,7 +468,7 @@
                         type="hidden"
                         id="images"
                         name="images"
-                        value="{{ product.images | tojson if product and product.images else '[]' }}"
+                        value="{{ (product.images | tojson) if product and product.images is not none and product.images else '[]' }}"
                     >
 
                     <!-- URL manual opcional -->
@@ -808,9 +808,16 @@ const imageUrlManualInput = document.getElementById('image_url_manual');
 let images = [];
 try {
     const imagesValue = imagesInput.value.trim();
-    images = imagesValue ? JSON.parse(imagesValue) : [];
+    // Verifica se parece ser um JSON valido (comeca com [ ou {)
+    if (imagesValue && (imagesValue.startsWith('[') || imagesValue.startsWith('{'))) {
+        images = JSON.parse(imagesValue);
+        // Garante que seja um array
+        if (!Array.isArray(images)) {
+            images = [];
+        }
+    }
 } catch (e) {
-    console.warn('Erro ao parsear imagens:', e);
+    // Silencia o erro - valor invalido sera tratado como array vazio
     images = [];
 }
 
