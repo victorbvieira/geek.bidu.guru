@@ -134,7 +134,7 @@ async def _url_to_data_uri(url: str) -> str:
     permitindo que o Playwright renderize sem fazer requests externos.
 
     Args:
-        url: URL da imagem externa
+        url: URL da imagem (pode ser absoluta ou relativa)
 
     Returns:
         Data URI no formato: data:mime/type;base64,<conteudo>
@@ -142,6 +142,11 @@ async def _url_to_data_uri(url: str) -> str:
     Raises:
         HTTPException: Se falhar ao baixar a imagem
     """
+    # Trata URLs relativas (ex: /uploads/products/xxx.jpg)
+    # Prefixa com a URL base da aplicacao para formar URL absoluta
+    if url.startswith("/"):
+        url = f"{settings.app_url}{url}"
+
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, follow_redirects=True)
