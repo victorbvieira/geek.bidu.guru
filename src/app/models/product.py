@@ -6,6 +6,7 @@ Produtos das plataformas de afiliados (Amazon, Mercado Livre, Shopee).
 
 import enum
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import DateTime, Enum, Index, Integer, Numeric, String, Text
@@ -194,6 +195,40 @@ class Product(Base, UUIDMixin, TimestampMixin):
         default=list,
         server_default="[]",
         comment="Lista de hashtags para Instagram"
+    )
+
+    # ==========================================================================
+    # Custos de IA (para calcular ROI de geracoes automaticas)
+    # ==========================================================================
+    ai_tokens_used: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default="0",
+        comment="Total de tokens consumidos em geracoes de IA"
+    )
+    ai_prompt_tokens: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default="0",
+        comment="Tokens de entrada (prompt) consumidos em geracoes de IA"
+    )
+    ai_completion_tokens: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default="0",
+        comment="Tokens de saida (completion) consumidos em geracoes de IA"
+    )
+    ai_cost_usd: Mapped[Decimal] = mapped_column(
+        Numeric(precision=10, scale=6),
+        default=Decimal("0"),
+        server_default="0",
+        comment="Custo total em USD das geracoes de IA"
+    )
+    ai_generations_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default="0",
+        comment="Numero de vezes que IA foi usada para gerar conteudo"
     )
 
     # Relacionamentos

@@ -161,13 +161,21 @@
                 <div id="instagram-panel" class="social-panel" style="display: none;">
                     <div class="social-panel-header">
                         <h4>📸 Configuração Instagram</h4>
-                        <button type="button" class="social-panel-close" onclick="toggleSocialPanel('instagram')">&times;</button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" onclick="generateAllInstagram()" title="Gerar todos os campos Instagram com IA">
+                                🤖 Gerar Tudo
+                            </button>
+                            <button type="button" class="social-panel-close" onclick="toggleSocialPanel('instagram')">&times;</button>
+                        </div>
                     </div>
 
                     <div class="social-panel-content">
                         <div class="admin-form-row">
                             <div class="admin-form-group">
-                                <label for="instagram_headline" class="admin-form-label">Headline</label>
+                                <label for="instagram_headline" class="admin-form-label">
+                                    Headline
+                                    <button type="button" class="admin-btn-icon-sm" onclick="generateInstagramField('headline')" title="Gerar com IA">🤖</button>
+                                </label>
                                 <input
                                     type="text"
                                     id="instagram_headline"
@@ -181,7 +189,10 @@
                             </div>
 
                             <div class="admin-form-group">
-                                <label for="instagram_badge" class="admin-form-label">Badge</label>
+                                <label for="instagram_badge" class="admin-form-label">
+                                    Badge
+                                    <button type="button" class="admin-btn-icon-sm" onclick="generateInstagramField('badge')" title="Gerar com IA">🤖</button>
+                                </label>
                                 <input
                                     type="text"
                                     id="instagram_badge"
@@ -196,7 +207,10 @@
                         </div>
 
                         <div class="admin-form-group">
-                            <label for="instagram_title" class="admin-form-label">Título Instagram</label>
+                            <label for="instagram_title" class="admin-form-label">
+                                Título Instagram
+                                <button type="button" class="admin-btn-icon-sm" onclick="generateInstagramField('title')" title="Gerar com IA">🤖</button>
+                            </label>
                             <input
                                 type="text"
                                 id="instagram_title"
@@ -210,7 +224,10 @@
                         </div>
 
                         <div class="admin-form-group">
-                            <label for="instagram_hashtags" class="admin-form-label">Hashtags</label>
+                            <label for="instagram_hashtags" class="admin-form-label">
+                                Hashtags
+                                <button type="button" class="admin-btn-icon-sm" onclick="generateInstagramField('hashtags')" title="Gerar com IA">🤖</button>
+                            </label>
                             <input
                                 type="text"
                                 id="instagram_hashtags"
@@ -223,7 +240,10 @@
                         </div>
 
                         <div class="admin-form-group">
-                            <label for="instagram_caption" class="admin-form-label">Caption</label>
+                            <label for="instagram_caption" class="admin-form-label">
+                                Caption
+                                <button type="button" class="admin-btn-icon-sm" onclick="generateInstagramField('caption')" title="Gerar com IA">🤖</button>
+                            </label>
                             <textarea
                                 id="instagram_caption"
                                 name="instagram_caption"
@@ -504,7 +524,10 @@
             <!-- Tags -->
             <div class="admin-card">
                 <div class="admin-form-group" style="margin-bottom: 0;">
-                    <label for="tags" class="admin-form-label">Tags</label>
+                    <label for="tags" class="admin-form-label">
+                        Tags
+                        <button type="button" class="admin-btn-icon-sm" onclick="generateProductTags()" title="Gerar com IA">🤖</button>
+                    </label>
                     <input
                         type="text"
                         id="tags"
@@ -516,6 +539,59 @@
                     <div class="admin-form-hint">Separadas por virgula</div>
                 </div>
             </div>
+
+            <!-- Custos de IA -->
+            {% if product %}
+            <div class="admin-card" id="ai-costs-card" style="background: var(--admin-bg-tertiary);">
+                <h4 style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; text-align: center; margin-bottom: 0.75rem;">
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-prompt-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-warning);">
+                            {{ "{:,}".format(product.ai_prompt_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Entrada</div>
+                    </div>
+                    <div style="background: var(--admin-bg-secondary); padding: 0.5rem; border-radius: 4px;">
+                        <div id="ai-completion-tokens-display" style="font-size: 1rem; font-weight: bold; color: var(--admin-info);">
+                            {{ "{:,}".format(product.ai_completion_tokens) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Saida</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; text-align: center;">
+                    <div>
+                        <div id="ai-tokens-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-primary);">
+                            {{ "{:,}".format(product.ai_tokens_used) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Total</div>
+                    </div>
+                    <div>
+                        <div id="ai-cost-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-success);">
+                            ${{ "%.6f"|format(product.ai_cost_usd|float) }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Custo</div>
+                    </div>
+                    <div>
+                        <div id="ai-generations-display" style="font-size: 1.1rem; font-weight: bold; color: var(--admin-text);">
+                            {{ product.ai_generations_count }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--admin-text-muted);">Chamadas</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Novo produto - custos serao exibidos apos salvar -->
+            <div class="admin-card" style="background: var(--admin-bg-tertiary); opacity: 0.6;">
+                <h4 style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>💰</span> Custos de IA
+                </h4>
+                <p style="font-size: 0.8rem; color: var(--admin-text-muted); margin: 0;">
+                    Salve o produto para acompanhar custos de IA
+                </p>
+            </div>
+            {% endif %}
 
             <!-- Categorias -->
             <div class="admin-card">
@@ -621,6 +697,16 @@
             <button type="button" class="admin-btn admin-btn-secondary" onclick="closeCategoryModal()">Cancelar</button>
             <button type="button" class="admin-btn admin-btn-primary" onclick="createCategory()">Criar Categoria</button>
         </div>
+    </div>
+</div>
+
+<!-- Modal de Loading IA (bloqueia interacao) -->
+<div id="ai-loading-modal" class="ai-loading-modal">
+    <div class="ai-loading-backdrop"></div>
+    <div class="ai-loading-content">
+        <div class="ai-loading-spinner"></div>
+        <div class="ai-loading-text">Gerando com IA...</div>
+        <div class="ai-loading-subtext">Aguarde, isso pode levar alguns segundos</div>
     </div>
 </div>
 {% endblock %}
@@ -1079,8 +1165,6 @@ if (shortDescInput) {
 // =============================================================================
 
 {% if product %}
-const productId = '{{ product.id }}';
-
 function refreshInstagramPreview() {
     const iframe = document.getElementById('instagram-preview-frame');
     const loading = document.getElementById('instagram-preview-loading');
@@ -1315,6 +1399,353 @@ async function generateProductDescription(type) {
         alert('Erro de conexao: ' + error.message);
     } finally {
         loadingDiv.style.display = 'none';
+    }
+}
+
+// =============================================================================
+// Geracao com IA - Funcoes Auxiliares
+// =============================================================================
+
+{% if product %}
+const productId = '{{ product.id }}';
+
+// Variaveis locais para tracking de custos (atualizadas em tempo real)
+let localTokensUsed = {{ product.ai_tokens_used }};
+let localPromptTokens = {{ product.ai_prompt_tokens }};
+let localCompletionTokens = {{ product.ai_completion_tokens }};
+let localCostUsd = {{ product.ai_cost_usd|float }};
+let localGenerationsCount = {{ product.ai_generations_count }};
+{% else %}
+const productId = null;
+let localTokensUsed = 0;
+let localPromptTokens = 0;
+let localCompletionTokens = 0;
+let localCostUsd = 0;
+let localGenerationsCount = 0;
+{% endif %}
+
+// Controle do modal de loading global
+const aiLoadingModal = document.getElementById('ai-loading-modal');
+
+function showAILoading(text = 'Gerando com IA...') {
+    if (!aiLoadingModal) return;
+    const textEl = aiLoadingModal.querySelector('.ai-loading-text');
+    if (textEl) textEl.textContent = text;
+    aiLoadingModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideAILoading() {
+    if (!aiLoadingModal) return;
+    aiLoadingModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Atualiza exibicao de custos na pagina em tempo real
+function updateCostDisplay(tokensUsed, promptTokens, completionTokens, costUsd) {
+    localTokensUsed += tokensUsed || 0;
+    localPromptTokens += promptTokens || 0;
+    localCompletionTokens += completionTokens || 0;
+    localCostUsd += costUsd || 0;
+    localGenerationsCount += 1;
+
+    const tokensDisplay = document.getElementById('ai-tokens-display');
+    const promptDisplay = document.getElementById('ai-prompt-tokens-display');
+    const completionDisplay = document.getElementById('ai-completion-tokens-display');
+    const costDisplay = document.getElementById('ai-cost-display');
+    const genDisplay = document.getElementById('ai-generations-display');
+
+    if (tokensDisplay) {
+        tokensDisplay.textContent = localTokensUsed.toLocaleString('pt-BR');
+    }
+    if (promptDisplay) {
+        promptDisplay.textContent = localPromptTokens.toLocaleString('pt-BR');
+    }
+    if (completionDisplay) {
+        completionDisplay.textContent = localCompletionTokens.toLocaleString('pt-BR');
+    }
+    if (costDisplay) {
+        costDisplay.textContent = '$' + localCostUsd.toFixed(6);
+    }
+    if (genDisplay) {
+        genDisplay.textContent = localGenerationsCount;
+    }
+}
+
+// Atualiza custo no banco de dados
+async function updateProductAICost(tokensUsed, promptTokens, completionTokens, costUsd) {
+    if (!productId) return;
+
+    try {
+        await fetch(`/admin/api/products/${productId}/ai-cost`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tokens_used: tokensUsed,
+                prompt_tokens: promptTokens,
+                completion_tokens: completionTokens,
+                cost_usd: costUsd
+            })
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar custo de IA:', error);
+    }
+}
+
+// =============================================================================
+// Geracao de Tags com IA
+// =============================================================================
+
+async function generateProductTags() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        alert('Preencha o nome do produto antes de gerar tags');
+        return;
+    }
+
+    const tagsInput = document.getElementById('tags');
+    const shortDesc = document.getElementById('short_description').value.trim();
+    const longDesc = document.getElementById('long_description').value.trim();
+    const platform = document.getElementById('platform')?.value || '';
+
+    showAILoading('Gerando tags...');
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: 'product_tags',
+                product_name: name,
+                content: shortDesc || longDesc || name,
+                platform: platform,
+                entity_type: 'product',
+                entity_id: productId
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Limpa e formata as tags
+            let rawContent = data.generated_content || '';
+            let tags = rawContent
+                .replace(/^(tags?|sugestoes?|palavras?-?chave)[:.\s-]*/i, '')
+                .split(/[,\n]/)
+                .map(t => t.trim().toLowerCase().replace(/^[-•*\d.)\s]+/, ''))
+                .filter(t => t && !t.startsWith('#') && t.length > 1)
+                .slice(0, 5)
+                .join(', ');
+
+            if (!tags && rawContent.trim()) {
+                tags = rawContent.trim().toLowerCase();
+            }
+
+            tagsInput.value = tags;
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updateProductAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+        } else {
+            alert('Erro ao gerar tags: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        hideAILoading();
+    }
+}
+
+// =============================================================================
+// Geracao de Campos Instagram com IA
+// =============================================================================
+
+// Mapeamento de campos para use_cases
+const instagramFieldToUseCase = {
+    'headline': 'product_instagram_headline',
+    'badge': 'product_instagram_badge',
+    'title': 'product_instagram_title',
+    'hashtags': 'product_instagram_hashtags',
+    'caption': 'product_instagram_caption'
+};
+
+async function generateInstagramField(field) {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        alert('Preencha o nome do produto antes de gerar conteudo');
+        return;
+    }
+
+    const useCase = instagramFieldToUseCase[field];
+    if (!useCase) {
+        console.error('Campo desconhecido:', field);
+        return;
+    }
+
+    const targetInput = document.getElementById(`instagram_${field}`);
+    const price = document.getElementById('price')?.value || '';
+    const platform = document.getElementById('platform')?.value || '';
+    const shortDesc = document.getElementById('short_description').value.trim();
+    const longDesc = document.getElementById('long_description').value.trim();
+
+    const fieldLabels = {
+        'headline': 'Gerando headline...',
+        'badge': 'Gerando badge...',
+        'title': 'Gerando titulo...',
+        'hashtags': 'Gerando hashtags...',
+        'caption': 'Gerando caption...'
+    };
+
+    showAILoading(fieldLabels[field] || 'Gerando com IA...');
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: useCase,
+                product_name: name,
+                content: shortDesc || longDesc || name,
+                price: price,
+                platform: platform,
+                entity_type: 'product',
+                entity_id: productId
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            let generatedContent = data.generated_content || '';
+
+            // Processamento especifico por campo
+            if (field === 'hashtags') {
+                // Remove # e formata como lista
+                generatedContent = generatedContent
+                    .replace(/#/g, '')
+                    .split(/[,\n]/)
+                    .map(h => h.trim().toLowerCase())
+                    .filter(h => h && h.length > 1)
+                    .slice(0, 15)
+                    .join(', ');
+            }
+
+            targetInput.value = generatedContent;
+
+            // Atualiza contador de caracteres se existir
+            const countSpan = document.getElementById(`instagram_${field}_count`);
+            if (countSpan) {
+                countSpan.textContent = generatedContent.length;
+            }
+
+            updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+            await updateProductAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+
+            // Atualiza preview se campo afetar
+            if (['headline', 'title', 'badge'].includes(field)) {
+                schedulePreviewUpdate();
+            }
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        hideAILoading();
+    }
+}
+
+// Gera todos os campos Instagram de uma vez
+async function generateAllInstagram() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        alert('Preencha o nome do produto antes de gerar conteudo');
+        return;
+    }
+
+    const price = document.getElementById('price')?.value || '';
+    const platform = document.getElementById('platform')?.value || '';
+    const shortDesc = document.getElementById('short_description').value.trim();
+    const longDesc = document.getElementById('long_description').value.trim();
+
+    showAILoading('Gerando todos os campos Instagram...');
+
+    try {
+        const response = await fetch('/admin/api/ai/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                use_case: 'product_instagram_all',
+                product_name: name,
+                content: shortDesc || longDesc || name,
+                price: price,
+                platform: platform,
+                entity_type: 'product',
+                entity_id: productId
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            try {
+                // Tenta parsear como JSON
+                const parsed = JSON.parse(data.generated_content);
+
+                // Preenche os campos
+                if (parsed.headline) {
+                    document.getElementById('instagram_headline').value = parsed.headline;
+                    const countHeadline = document.getElementById('instagram_headline_count');
+                    if (countHeadline) countHeadline.textContent = parsed.headline.length;
+                }
+                if (parsed.badge) {
+                    document.getElementById('instagram_badge').value = parsed.badge;
+                    const countBadge = document.getElementById('instagram_badge_count');
+                    if (countBadge) countBadge.textContent = parsed.badge.length;
+                }
+                if (parsed.title) {
+                    document.getElementById('instagram_title').value = parsed.title;
+                }
+                if (parsed.hashtags) {
+                    // Remove # e formata
+                    const hashtags = parsed.hashtags
+                        .replace(/#/g, '')
+                        .split(/[,\n]/)
+                        .map(h => h.trim().toLowerCase())
+                        .filter(h => h && h.length > 1)
+                        .slice(0, 15)
+                        .join(', ');
+                    document.getElementById('instagram_hashtags').value = hashtags;
+                }
+                if (parsed.caption) {
+                    document.getElementById('instagram_caption').value = parsed.caption;
+                }
+
+                updateCostDisplay(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+                await updateProductAICost(data.tokens_used || 0, data.prompt_tokens || 0, data.completion_tokens || 0, data.cost_usd || 0);
+
+                // Atualiza preview
+                schedulePreviewUpdate();
+
+            } catch (parseError) {
+                // Se nao for JSON valido, gera campos individualmente em paralelo
+                console.warn('Resposta nao e JSON valido, gerando campos individualmente');
+                hideAILoading();
+
+                // Gera campos em paralelo
+                await Promise.all([
+                    generateInstagramField('headline'),
+                    generateInstagramField('badge'),
+                    generateInstagramField('title'),
+                    generateInstagramField('hashtags'),
+                    generateInstagramField('caption')
+                ]);
+            }
+        } else {
+            alert('Erro ao gerar: ' + (data.detail || 'Erro desconhecido'));
+        }
+    } catch (error) {
+        alert('Erro de conexao: ' + error.message);
+    } finally {
+        hideAILoading();
     }
 }
 

@@ -72,6 +72,17 @@ class AIUseCase(str, enum.Enum):
     POST_CONTENT = "post_content"
     PRODUCT_DESCRIPTION = "product_description"
 
+    # Produto - Tags
+    PRODUCT_TAGS = "product_tags"
+
+    # Produto - Instagram
+    PRODUCT_INSTAGRAM_HEADLINE = "product_instagram_headline"
+    PRODUCT_INSTAGRAM_BADGE = "product_instagram_badge"
+    PRODUCT_INSTAGRAM_TITLE = "product_instagram_title"
+    PRODUCT_INSTAGRAM_HASHTAGS = "product_instagram_hashtags"
+    PRODUCT_INSTAGRAM_CAPTION = "product_instagram_caption"
+    PRODUCT_INSTAGRAM_ALL = "product_instagram_all"
+
     # Social media
     SOCIAL_SHARE = "social_share"
 

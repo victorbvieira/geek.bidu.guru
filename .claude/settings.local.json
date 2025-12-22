@@ -45,7 +45,13 @@
       "Bash(cat:*)",
       "Bash(export:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjOWNlYzk2MC1iNzM4LTQyYmItOGNkZi1jMThlNGJmYzU5ODYiLCJleHAiOjE3NjYwNjc5NzgsInR5cGUiOiJhY2Nlc3MiLCJpYXQiOjE3NjYwNjA3NzgsInJvbGUiOiJhZG1pbiJ9.foasJ8cxu6g9MypHHpHH2l2PPMSBBthWNFJMrHKCZwA\":*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(code --list-extensions)",
+      "Bash(.venv/Scripts/python:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(../.venv/Scripts/alembic upgrade:*)",
+      "Bash(python -m venv:*)",
+      "Bash(docker volume inspect:*)"
     ],
     "deny": [],
     "ask": []

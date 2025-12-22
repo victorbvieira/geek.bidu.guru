@@ -488,6 +488,114 @@
             border-left: none;
             border-top: none;
         }
+
+        /* Balão de quadrinhos - Link na Bio */
+        .comic-bubble {
+            position: absolute;
+            left: 15px;
+            top: 420px;
+            z-index: 15;
+            transform: rotate(-8deg);
+        }
+
+        .comic-bubble-inner {
+            background: #FFFFFF;
+            border: 4px solid #1a1a2e;
+            border-radius: 50% 50% 50% 10%;
+            padding: 20px 28px;
+            position: relative;
+            box-shadow: 4px 4px 0 #1a1a2e;
+        }
+
+        .comic-bubble-inner::before {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 15px;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid #1a1a2e;
+            border-top: 20px solid #1a1a2e;
+            border-bottom: 0;
+            transform: rotate(-15deg);
+        }
+
+        .comic-bubble-inner::after {
+            content: '';
+            position: absolute;
+            bottom: -14px;
+            left: 18px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid #FFFFFF;
+            border-top: 16px solid #FFFFFF;
+            border-bottom: 0;
+            transform: rotate(-15deg);
+        }
+
+        .comic-bubble-text {
+            font-family: Impact, 'Arial Black', Haettenschweiler, sans-serif;
+            font-size: 38px;
+            color: #1a1a2e;
+            text-transform: uppercase;
+            line-height: 1.1;
+            text-align: center;
+            white-space: nowrap;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .comic-bubble-text .highlight {
+            color: #E53935;
+            display: block;
+            font-size: 42px;
+        }
+
+        /* Pequenos detalhes de impacto ao redor do balão */
+        .comic-lines {
+            position: absolute;
+            left: 0;
+            top: 400px;
+            width: 180px;
+            height: 150px;
+            z-index: 14;
+            pointer-events: none;
+        }
+
+        .comic-line {
+            position: absolute;
+            background: #F5B81C;
+            transform-origin: center;
+        }
+
+        .comic-line-1 {
+            width: 25px;
+            height: 4px;
+            top: 10px;
+            left: 140px;
+            transform: rotate(45deg);
+        }
+
+        .comic-line-2 {
+            width: 20px;
+            height: 4px;
+            top: 130px;
+            left: 145px;
+            transform: rotate(-30deg);
+        }
+
+        .comic-line-3 {
+            width: 18px;
+            height: 4px;
+            top: 70px;
+            left: 5px;
+            transform: rotate(15deg);
+        }
     </style>
 </head>
 
@@ -508,6 +616,21 @@
         <div class="star star-1">★</div>
         <div class="star star-2">★</div>
         <div class="star star-3">★</div>
+
+        <!-- Balão de quadrinhos - Link na Bio -->
+        <div class="comic-lines">
+            <div class="comic-line comic-line-1"></div>
+            <div class="comic-line comic-line-2"></div>
+            <div class="comic-line comic-line-3"></div>
+        </div>
+        <div class="comic-bubble">
+            <div class="comic-bubble-inner">
+                <div class="comic-bubble-text">
+                    <span class="highlight">Link</span>
+                    na Bio!
+                </div>
+            </div>
+        </div>
 
         <!-- Header -->
         <div class="header">
@@ -551,15 +674,6 @@
 
         <!-- Footer -->
         <div class="footer">
-            <div class="cta">
-                <span class="cta-text">LINK NA BIO</span>
-                <span class="cta-arrow">👉</span>
-            </div>
-            <div style="text-align: center;">
-                <div class="url-bar">
-                    <span class="url-text">geek.bidu.guru/goto/{{ redirect_slug }}</span>
-                </div>
-            </div>
             {% if hashtags %}
             <div class="hashtags">
                 {% for tag in hashtags %}#{{ tag }} {% endfor %}
