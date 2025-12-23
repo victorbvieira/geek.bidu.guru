@@ -21,6 +21,7 @@ from app.api.deps import (
     DBSession,
     OccasionRepo,
     PostRepo,
+    PriceHistoryRepo,
     ProductRepo,
     UserRepo,
 )
@@ -1995,6 +1996,61 @@ async def api_update_product_availability(
             "success": True,
             "product_id": str(product.id),
             "availability": product.availability.value,
+        },
+        status_code=http_status.HTTP_200_OK,
+    )
+
+
+@router.get("/api/products/{product_id}/price-history", response_class=JSONResponse)
+async def api_get_product_price_history(
+    product_id: UUID,
+    current_user: AdminUser,
+    product_repo: ProductRepo,
+    price_history_repo: PriceHistoryRepo,
+    days: int = 30,
+):
+    """
+    Busca o historico de precos de um produto para exibicao em grafico.
+
+    Query params:
+        - days: int - Numero de dias para buscar historico (default: 30)
+
+    Returns:
+        JSON com trend (dados para grafico), count (total de registros) e stats
+    """
+    # Verifica se produto existe
+    product = await product_repo.get(product_id)
+    if not product:
+        return JSONResponse(
+            content={"detail": "Produto nao encontrado"},
+            status_code=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    # Busca dados para o grafico
+    trend = await price_history_repo.get_price_trend(product_id, days=days)
+
+    # Busca estatisticas
+    lowest = await price_history_repo.get_lowest_price(product_id)
+    highest = await price_history_repo.get_highest_price(product_id)
+    average = await price_history_repo.get_average_price(product_id)
+    count = await price_history_repo.count_by_product(product_id)
+
+    # Monta estatisticas
+    stats = {
+        "lowest": float(lowest.price) if lowest else None,
+        "highest": float(highest.price) if highest else None,
+        "average": average,
+        "current": float(product.price) if product.price else None,
+    }
+
+    return JSONResponse(
+        content={
+            "success": True,
+            "product_id": str(product.id),
+            "days": days,
+            "count": count,
+            "trend": trend,
+            "stats": stats,
         },
         status_code=http_status.HTTP_200_OK,
     )

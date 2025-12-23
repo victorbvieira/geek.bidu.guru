@@ -355,6 +355,57 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Historico de Precos -->
+            {% if product and product.id %}
+            <div class="admin-card" id="price-history-section">
+                <h3 class="admin-card-title">
+                    <span>📈 Evolução de Preço</span>
+                    <span class="admin-badge admin-badge-info" style="font-size: 0.75rem; margin-left: 0.5rem;" id="price-history-count">
+                        Carregando...
+                    </span>
+                </h3>
+
+                <div class="price-chart-container" style="position: relative; height: 300px; margin-bottom: 1rem;">
+                    <canvas id="price-history-chart"></canvas>
+                    <div id="price-chart-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--admin-text-muted);">
+                        ⏳ Carregando dados...
+                    </div>
+                    <div id="price-chart-empty" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--admin-text-muted);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                        <div>Nenhum histórico de preço registrado</div>
+                    </div>
+                </div>
+
+                <!-- Estatisticas de Preco -->
+                <div class="price-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div class="price-stat-card" style="background: var(--admin-bg-secondary); padding: 1rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--admin-text-muted); margin-bottom: 0.25rem;">Menor Preço</div>
+                        <div style="font-size: 1.25rem; font-weight: 600; color: var(--admin-success);" id="stat-lowest-price">--</div>
+                    </div>
+                    <div class="price-stat-card" style="background: var(--admin-bg-secondary); padding: 1rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--admin-text-muted); margin-bottom: 0.25rem;">Maior Preço</div>
+                        <div style="font-size: 1.25rem; font-weight: 600; color: var(--admin-danger);" id="stat-highest-price">--</div>
+                    </div>
+                    <div class="price-stat-card" style="background: var(--admin-bg-secondary); padding: 1rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--admin-text-muted); margin-bottom: 0.25rem;">Preço Médio</div>
+                        <div style="font-size: 1.25rem; font-weight: 600; color: var(--admin-primary);" id="stat-average-price">--</div>
+                    </div>
+                    <div class="price-stat-card" style="background: var(--admin-bg-secondary); padding: 1rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.75rem; color: var(--admin-text-muted); margin-bottom: 0.25rem;">Preço Atual</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;" id="stat-current-price">--</div>
+                    </div>
+                </div>
+
+                <!-- Periodo do grafico -->
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
+                    <button type="button" class="admin-btn admin-btn-sm period-btn" data-days="7" onclick="loadPriceHistory(7)">7 dias</button>
+                    <button type="button" class="admin-btn admin-btn-sm admin-btn-primary period-btn" data-days="30" onclick="loadPriceHistory(30)">30 dias</button>
+                    <button type="button" class="admin-btn admin-btn-sm period-btn" data-days="90" onclick="loadPriceHistory(90)">90 dias</button>
+                    <button type="button" class="admin-btn admin-btn-sm period-btn" data-days="365" onclick="loadPriceHistory(365)">1 ano</button>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Sidebar -->
@@ -712,6 +763,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js para grafico de evolucao de precos -->
+<script src="/static/js/chart.min.js"></script>
 <script>
 // =============================================================================
 // Auto-geracao de Slugs
@@ -1898,6 +1951,275 @@ function closeInstagramHistoryModal() {
         modal.style.display = 'none';
     }
 }
+
+// =============================================================================
+// Grafico de Evolucao de Precos
+// =============================================================================
+
+let priceChart = null;
+// Usa a variavel productId ja declarada acima
+
+/**
+ * Carrega e exibe o historico de precos no grafico.
+ * @param {number} days - Numero de dias para buscar historico
+ */
+async function loadPriceHistory(days = 30) {
+    const loading = document.getElementById('price-chart-loading');
+    const empty = document.getElementById('price-chart-empty');
+    const canvas = document.getElementById('price-history-chart');
+    const countBadge = document.getElementById('price-history-count');
+
+    // Atualiza botoes de periodo
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('admin-btn-primary');
+        if (parseInt(btn.dataset.days) === days) {
+            btn.classList.add('admin-btn-primary');
+        }
+    });
+
+    // Mostra loading
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    canvas.style.opacity = '0.3';
+
+    try {
+        // Busca dados da API
+        const response = await fetch(`/admin/api/products/${productId}/price-history?days=${days}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Erro ao carregar historico');
+        }
+
+        // Esconde loading
+        loading.style.display = 'none';
+        canvas.style.opacity = '1';
+
+        // Atualiza contador
+        countBadge.textContent = `${data.count} registro(s)`;
+
+        // Se nao ha dados, mostra mensagem
+        if (!data.trend || data.trend.length === 0) {
+            empty.style.display = 'block';
+            if (priceChart) {
+                priceChart.destroy();
+                priceChart = null;
+            }
+            // Atualiza estatisticas com preco atual
+            updatePriceStats(data.stats);
+            return;
+        }
+
+        // Atualiza estatisticas
+        updatePriceStats(data.stats);
+
+        // Prepara dados para o grafico, filtrando valores invalidos
+        const validData = data.trend.filter(item => {
+            const price = parseFloat(item.price);
+            return item.date && !isNaN(price) && price !== null;
+        });
+
+        // Se nao ha dados validos apos filtro, mostra mensagem
+        if (validData.length === 0) {
+            empty.style.display = 'block';
+            if (priceChart) {
+                priceChart.destroy();
+                priceChart = null;
+            }
+            return;
+        }
+
+        const labels = validData.map(item => {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        });
+        const prices = validData.map(item => parseFloat(item.price));
+
+        // Cria ou atualiza grafico
+        renderPriceChart(labels, prices);
+
+    } catch (error) {
+        console.error('Erro ao carregar historico de precos:', error);
+        loading.style.display = 'none';
+        empty.innerHTML = `
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">❌</div>
+            <div>Erro ao carregar: ${error.message}</div>
+        `;
+        empty.style.display = 'block';
+    }
+}
+
+/**
+ * Atualiza as estatisticas de preco exibidas nos cards.
+ * @param {object} stats - Objeto com estatisticas de preco
+ */
+function updatePriceStats(stats) {
+    // Valida se stats existe
+    if (!stats) {
+        stats = { lowest: null, highest: null, average: null, current: null };
+    }
+
+    const formatPrice = (value) => {
+        // Trata None, null, undefined, NaN e strings invalidas
+        if (value === null || value === undefined || value === 'None' ||
+            (typeof value === 'number' && isNaN(value))) {
+            return '--';
+        }
+        const num = parseFloat(value);
+        if (isNaN(num)) return '--';
+        return `R$ ${num.toFixed(2)}`;
+    };
+
+    // Converte valores para numeros seguros
+    const safeNumber = (value) => {
+        if (value === null || value === undefined || value === 'None') return null;
+        const num = parseFloat(value);
+        return isNaN(num) ? null : num;
+    };
+
+    const lowest = safeNumber(stats.lowest);
+    const highest = safeNumber(stats.highest);
+    const average = safeNumber(stats.average);
+    const current = safeNumber(stats.current);
+
+    document.getElementById('stat-lowest-price').textContent = formatPrice(lowest);
+    document.getElementById('stat-highest-price').textContent = formatPrice(highest);
+    document.getElementById('stat-average-price').textContent = formatPrice(average);
+
+    const currentEl = document.getElementById('stat-current-price');
+    currentEl.textContent = formatPrice(current);
+
+    // Colore o preco atual baseado na comparacao com a media
+    if (current !== null && lowest !== null && highest !== null) {
+        if (current <= lowest) {
+            currentEl.style.color = 'var(--admin-success)';
+        } else if (current >= highest) {
+            currentEl.style.color = 'var(--admin-danger)';
+        } else {
+            currentEl.style.color = 'var(--admin-primary)';
+        }
+    } else {
+        currentEl.style.color = 'var(--admin-text)';
+    }
+}
+
+/**
+ * Renderiza o grafico de evolucao de precos.
+ * @param {array} labels - Labels do eixo X (datas)
+ * @param {array} prices - Valores do eixo Y (precos)
+ */
+function renderPriceChart(labels, prices) {
+    // Valida se ha dados para renderizar
+    if (!labels || !prices || labels.length === 0 || prices.length === 0) {
+        console.warn('Sem dados para renderizar grafico');
+        return;
+    }
+
+    // Filtra valores invalidos dos precos
+    const validPrices = prices.filter(p => !isNaN(p) && p !== null && p !== undefined);
+    if (validPrices.length === 0) {
+        console.warn('Todos os precos sao invalidos');
+        return;
+    }
+
+    const ctx = document.getElementById('price-history-chart').getContext('2d');
+
+    // Destroi grafico anterior se existir
+    if (priceChart) {
+        priceChart.destroy();
+    }
+
+    // Calcula valores para gradiente usando apenas valores validos
+    const minPrice = Math.min(...validPrices);
+    const maxPrice = Math.max(...validPrices);
+
+    // Cria gradiente para area
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(139, 92, 246, 0.3)');
+    gradient.addColorStop(1, 'rgba(139, 92, 246, 0.0)');
+
+    priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Preço (R$)',
+                data: prices,
+                borderColor: 'rgb(139, 92, 246)',
+                backgroundColor: gradient,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointRadius: prices.length > 30 ? 0 : 4,
+                pointHoverRadius: 6,
+                pointBackgroundColor: 'rgb(139, 92, 246)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return `R$ ${context.parsed.y.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        font: {
+                            size: 10
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(0);
+                        },
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Carrega grafico inicial ao carregar a pagina
+document.addEventListener('DOMContentLoaded', function() {
+    const priceHistorySection = document.getElementById('price-history-section');
+    if (priceHistorySection) {
+        loadPriceHistory(30);
+    }
+});
 {% endif %}
 </script>
 {% endblock %}
