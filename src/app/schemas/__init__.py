@@ -127,6 +127,19 @@ from app.schemas.ai_config import (
     SEOGenerateResponse,
 )
 
+# Social Integration
+from app.schemas.social_integration import (
+    SocialIntegrationBase,
+    SocialIntegrationBrief,
+    SocialIntegrationCreate,
+    SocialIntegrationDetail,
+    SocialIntegrationResponse,
+    SocialIntegrationTokenUpdateResponse,
+    SocialIntegrationUpdate,
+    SocialIntegrationUpdateCredentials,
+    SocialIntegrationUpdateToken,
+)
+
 __all__ = [
     # Base
     "BaseSchema",
@@ -216,4 +229,14 @@ __all__ = [
     "SEOGenerateResponse",
     "ProductDescriptionRequest",
     "ProductDescriptionResponse",
+    # Social Integration
+    "SocialIntegrationBase",
+    "SocialIntegrationCreate",
+    "SocialIntegrationUpdate",
+    "SocialIntegrationUpdateToken",
+    "SocialIntegrationUpdateCredentials",
+    "SocialIntegrationResponse",
+    "SocialIntegrationBrief",
+    "SocialIntegrationDetail",
+    "SocialIntegrationTokenUpdateResponse",
 ]

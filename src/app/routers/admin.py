@@ -24,6 +24,7 @@ from app.api.deps import (
     Pagination,
     PostRepo,
     ProductRepo,
+    SocialIntegrationRepo,
     UserRepo,
     pagination_params,
 )
@@ -959,4 +960,109 @@ async def list_ai_logs(
             "error_count": error_count,
             "total_cost": total_cost,
         },
+    )
+
+
+# -----------------------------------------------------------------------------
+# Integracoes Sociais (apenas admin)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/integrations", response_class=HTMLResponse)
+async def list_integrations(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    repo: SocialIntegrationRepo,
+):
+    """
+    Listagem de integracoes com redes sociais.
+
+    Exibe todas as integracoes cadastradas (Instagram, etc.),
+    permitindo visualizar o status e editar credenciais.
+    """
+    integrations = await repo.get_multi(order_by="platform", desc=False)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/integrations/list.html",
+        context={
+            "title": "Integracoes - Admin",
+            "current_user": current_user,
+            "integrations": integrations,
+            "active_page": "integrations",
+        },
+    )
+
+
+@router.get("/integrations/{integration_id}", response_class=HTMLResponse)
+async def edit_integration(
+    request: Request,
+    integration_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    repo: SocialIntegrationRepo,
+):
+    """
+    Formulario de edicao de integracao.
+
+    Permite editar nome, user_id e token de acesso.
+    O token atual e exibido apenas como preview (ofuscado).
+    """
+    integration = await repo.get(integration_id)
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integracao nao encontrada")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/integrations/form.html",
+        context={
+            "title": f"Editar: {integration.name} - Admin",
+            "current_user": current_user,
+            "integration": integration,
+            "active_page": "integrations",
+        },
+    )
+
+
+@router.post("/integrations/{integration_id}", response_class=HTMLResponse)
+async def update_integration(
+    request: Request,
+    integration_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    repo: SocialIntegrationRepo,
+    name: str = Form(...),
+    platform_user_id: str = Form(None),
+    access_token: str = Form(None),
+    is_active: str = Form(None),
+):
+    """
+    Atualiza integracao com rede social.
+
+    Campos:
+    - name: Nome identificador da integracao
+    - platform_user_id: ID do usuario na plataforma (ex: IG_USER_ID)
+    - access_token: Token de acesso a API (deixar vazio para manter o atual)
+    - is_active: Se a integracao esta ativa
+    """
+    integration = await repo.get(integration_id)
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integracao nao encontrada")
+
+    # Monta dados de atualizacao
+    update_data = {
+        "name": name,
+        "platform_user_id": platform_user_id or None,
+        "is_active": is_active == "true",
+    }
+
+    # So atualiza o token se foi fornecido um valor nao vazio
+    # Isso evita apagar o token existente acidentalmente
+    if access_token and access_token.strip():
+        update_data["access_token"] = access_token.strip()
+
+    await repo.update(integration, update_data)
+
+    # Redireciona para a lista com mensagem de sucesso
+    return RedirectResponse(
+        url="/admin/integrations",
+        status_code=status.HTTP_303_SEE_OTHER,
     )

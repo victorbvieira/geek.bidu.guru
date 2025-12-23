@@ -1,0 +1,161 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Integracoes{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Integracoes</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <div class="admin-page-header-left">
+        <h1 class="admin-page-title">Integracoes com Redes Sociais</h1>
+        <p class="admin-page-subtitle">Configure credenciais de API para publicacao automatica</p>
+    </div>
+</div>
+
+<!-- Info -->
+<div class="admin-card" style="margin-bottom: 1.5rem; background: var(--admin-bg-tertiary);">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <span style="font-size: 2rem;">🔗</span>
+        <div>
+            <strong>Configuracoes de Integracao</strong>
+            <br>
+            <small style="color: var(--admin-text-muted);">
+                Configure o IG_USER_ID e o Access Token para cada plataforma.
+                Os tokens nunca sao exibidos por completo por seguranca.
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Integracoes -->
+<div class="admin-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Plataforma</th>
+                <th>Nome</th>
+                <th>User ID</th>
+                <th>Token</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for integration in integrations %}
+            <tr>
+                <td>
+                    {% set platform_icons = {'instagram': '📸'} %}
+                    {% set platform_colors = {'instagram': 'primary'} %}
+                    <span class="admin-badge admin-badge-{{ platform_colors.get(integration.platform.value, 'secondary') }}">
+                        {{ platform_icons.get(integration.platform.value, '🔗') }}
+                        {{ integration.platform.value|title }}
+                    </span>
+                </td>
+                <td>
+                    <strong>{{ integration.name }}</strong>
+                </td>
+                <td>
+                    {% if integration.platform_user_id %}
+                    <code class="admin-code">{{ integration.platform_user_id }}</code>
+                    {% else %}
+                    <span style="color: var(--admin-text-muted);">Nao configurado</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if integration.access_token %}
+                    <code class="admin-code">{{ integration.token_preview }}</code>
+                    <span class="admin-badge admin-badge-success" style="margin-left: 0.5rem;">Configurado</span>
+                    {% else %}
+                    <span class="admin-badge admin-badge-warning">Nao configurado</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if integration.is_active %}
+                    <span class="admin-badge admin-badge-success">Ativo</span>
+                    {% else %}
+                    <span class="admin-badge admin-badge-secondary">Inativo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/admin/integrations/{{ integration.id }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        Editar
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="admin-empty-state">
+                    Nenhuma integracao encontrada.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Help -->
+<div class="admin-card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Como Obter Credenciais</h3>
+
+    <h4 style="margin: 1.5rem 0 0.75rem; color: var(--admin-primary);">📸 Instagram</h4>
+    <div style="padding-left: 1rem;">
+        <ol style="color: var(--admin-text-muted); font-size: 0.875rem; line-height: 1.8;">
+            <li>Acesse o <a href="https://developers.facebook.com/" target="_blank" style="color: var(--admin-primary);">Facebook Developers</a></li>
+            <li>Crie um App do tipo "Business" ou use um existente</li>
+            <li>Adicione o produto "Instagram Graph API" ao app</li>
+            <li>Configure uma conta comercial do Instagram vinculada a uma Pagina do Facebook</li>
+            <li>No Explorador de Graficos (Graph API Explorer):
+                <ul style="margin-top: 0.5rem;">
+                    <li>Selecione seu App</li>
+                    <li>Adicione a permissao <code>instagram_basic</code> e <code>instagram_content_publish</code></li>
+                    <li>Gere um <strong>User Access Token</strong></li>
+                    <li>Use o endpoint <code>/me/accounts</code> para encontrar o ID da Pagina</li>
+                    <li>Use <code>/{page-id}?fields=instagram_business_account</code> para obter o <strong>IG_USER_ID</strong></li>
+                </ul>
+            </li>
+            <li>Para tokens de longa duracao:
+                <ul style="margin-top: 0.5rem;">
+                    <li>Troque o token de curta duracao por um de longa duracao via API</li>
+                    <li>Tokens de longa duracao duram 60 dias e precisam ser renovados</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <h4 style="margin: 1.5rem 0 0.75rem; color: var(--admin-warning);">⚠️ Importante</h4>
+    <ul style="color: var(--admin-text-muted); font-size: 0.875rem;">
+        <li>Tokens de acesso <strong>expiram</strong> - configure alertas para renovacao</li>
+        <li>Nunca compartilhe tokens de acesso publicamente</li>
+        <li>Use tokens de <strong>longa duracao</strong> para producao (60 dias)</li>
+        <li>O sistema n8n usa estas credenciais para publicacao automatica</li>
+    </ul>
+</div>
+
+<!-- API Info -->
+<div class="admin-card" style="margin-top: 1rem;">
+    <h3 style="margin-bottom: 1rem;">Endpoints da API</h3>
+    <p style="color: var(--admin-text-muted); font-size: 0.875rem; margin-bottom: 1rem;">
+        Estes endpoints estao disponiveis para integracao com n8n ou outros sistemas:
+    </p>
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div>
+            <code class="admin-code">GET /api/v1/social-integrations/platform/instagram</code>
+            <span style="color: var(--admin-text-muted); font-size: 0.875rem;"> - Busca config do Instagram</span>
+        </div>
+        <div>
+            <code class="admin-code">PATCH /api/v1/social-integrations/{id}/token</code>
+            <span style="color: var(--admin-text-muted); font-size: 0.875rem;"> - Atualiza apenas o token</span>
+        </div>
+        <div>
+            <code class="admin-code">PATCH /api/v1/social-integrations/{id}/credentials</code>
+            <span style="color: var(--admin-text-muted); font-size: 0.875rem;"> - Atualiza user_id e token</span>
+        </div>
+    </div>
+    <p style="color: var(--admin-text-muted); font-size: 0.875rem; margin-top: 1rem;">
+        <strong>Autenticacao:</strong> Requer token JWT com role ADMIN
+    </p>
+</div>
+{% endblock %}

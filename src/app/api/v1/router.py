@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     newsletter,
     posts,
     products,
+    social_integrations,
     users,
 )
 
@@ -28,3 +29,4 @@ api_router.include_router(products.router)
 api_router.include_router(newsletter.router)
 api_router.include_router(clicks.router)
 api_router.include_router(instagram.router)
+api_router.include_router(social_integrations.router)

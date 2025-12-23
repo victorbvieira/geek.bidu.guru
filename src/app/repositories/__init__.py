@@ -14,6 +14,7 @@ from app.repositories.click import ClickRepository
 from app.repositories.session import SessionRepository
 from app.repositories.newsletter import NewsletterRepository
 from app.repositories.ai_config import AIConfigRepository
+from app.repositories.social_integration import SocialIntegrationRepository
 
 __all__ = [
     "BaseRepository",
@@ -26,4 +27,5 @@ __all__ = [
     "SessionRepository",
     "NewsletterRepository",
     "AIConfigRepository",
+    "SocialIntegrationRepository",
 ]

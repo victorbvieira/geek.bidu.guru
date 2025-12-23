@@ -18,6 +18,7 @@ from app.models.newsletter import NewsletterSignup
 from app.models.redirect import Redirect
 from app.models.ai_config import AIConfig, AIProvider, AIUseCase
 from app.models.instagram_post import InstagramPostHistory
+from app.models.social_integration import SocialIntegration, SocialPlatform
 
 __all__ = [
     # Mixins e Tipos
@@ -43,4 +44,6 @@ __all__ = [
     "AIProvider",
     "AIUseCase",
     "InstagramPostHistory",
+    "SocialIntegration",
+    "SocialPlatform",
 ]

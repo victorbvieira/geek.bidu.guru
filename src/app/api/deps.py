@@ -42,6 +42,7 @@ from app.repositories import (
     PostRepository,
     ProductRepository,
     SessionRepository,
+    SocialIntegrationRepository,
     UserRepository,
 )
 
@@ -181,6 +182,19 @@ async def get_ai_config_repo(db: DBSession) -> AIConfigRepository:
     return AIConfigRepository(db)
 
 
+async def get_social_integration_repo(db: DBSession) -> SocialIntegrationRepository:
+    """
+    Factory para repositório de integrações sociais.
+
+    Args:
+        db: Sessão do banco injetada automaticamente
+
+    Returns:
+        Instância do SocialIntegrationRepository pronta para uso
+    """
+    return SocialIntegrationRepository(db)
+
+
 # =============================================================================
 # Type Aliases para Injeção Automática
 # =============================================================================
@@ -200,6 +214,9 @@ ClickRepo = Annotated[ClickRepository, Depends(get_click_repo)]
 SessionRepo = Annotated[SessionRepository, Depends(get_session_repo)]
 NewsletterRepo = Annotated[NewsletterRepository, Depends(get_newsletter_repo)]
 AIConfigRepo = Annotated[AIConfigRepository, Depends(get_ai_config_repo)]
+SocialIntegrationRepo = Annotated[
+    SocialIntegrationRepository, Depends(get_social_integration_repo)
+]
 
 
 # =============================================================================

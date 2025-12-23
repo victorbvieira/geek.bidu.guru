@@ -1,0 +1,201 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Editar {{ integration.name }}{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/integrations">Integracoes</a>
+<span>/</span>
+<span class="current">{{ integration.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Editar: {{ integration.name }}</h1>
+    <p class="admin-page-subtitle">
+        Plataforma:
+        <span class="admin-badge admin-badge-primary">
+            {% if integration.platform.value == 'instagram' %}📸{% else %}🔗{% endif %}
+            {{ integration.platform.value|title }}
+        </span>
+    </p>
+</div>
+
+<form method="POST" action="/admin/integrations/{{ integration.id }}" class="admin-form">
+    <div class="admin-form-grid">
+        <!-- Main Content -->
+        <div class="admin-form-main">
+            <!-- Credenciais -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Credenciais da API</h3>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="platform_user_id" class="admin-form-label">
+                        {% if integration.platform.value == 'instagram' %}
+                        IG User ID (Instagram Business Account ID)
+                        {% else %}
+                        ID do Usuario na Plataforma
+                        {% endif %}
+                    </label>
+                    <input
+                        type="text"
+                        id="platform_user_id"
+                        name="platform_user_id"
+                        class="admin-form-input"
+                        value="{{ integration.platform_user_id or '' }}"
+                        placeholder="{% if integration.platform.value == 'instagram' %}17841400000000000{% else %}ID do usuario{% endif %}"
+                    >
+                    <div class="admin-form-hint">
+                        {% if integration.platform.value == 'instagram' %}
+                        O ID da conta comercial do Instagram vinculada a sua Pagina do Facebook.
+                        Obtenha via Graph API Explorer: <code>/{page-id}?fields=instagram_business_account</code>
+                        {% else %}
+                        Identificador unico do usuario na plataforma
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="access_token" class="admin-form-label">
+                        {% if integration.platform.value == 'instagram' %}
+                        Access Token (Facebook Graph API)
+                        {% else %}
+                        Token de Acesso
+                        {% endif %}
+                    </label>
+                    <textarea
+                        id="access_token"
+                        name="access_token"
+                        class="admin-form-textarea"
+                        style="min-height: 100px; font-family: monospace; font-size: 0.875rem;"
+                        placeholder="Cole aqui o novo token (deixe vazio para manter o atual)"
+                    ></textarea>
+                    <div class="admin-form-hint">
+                        {% if integration.access_token %}
+                        <span class="admin-badge admin-badge-success">Token atual:</span>
+                        <code class="admin-code">{{ integration.token_preview }}</code>
+                        <br><br>
+                        {% endif %}
+                        {% if integration.platform.value == 'instagram' %}
+                        Token de acesso de longa duracao do Facebook Graph API.
+                        <strong>Deixe em branco para manter o token atual.</strong>
+                        {% else %}
+                        Token de autenticacao para a API da plataforma.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aviso de Seguranca -->
+            <div class="admin-card" style="background: rgba(234, 179, 8, 0.1); border: 1px solid var(--admin-warning);">
+                <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <div>
+                        <strong style="color: var(--admin-warning);">Seguranca</strong>
+                        <ul style="color: var(--admin-text-muted); font-size: 0.875rem; margin-top: 0.5rem; margin-bottom: 0;">
+                            <li>O token completo <strong>nunca</strong> e exibido apos salvo</li>
+                            <li>Certifique-se de copiar e guardar o token em local seguro antes de salvar</li>
+                            <li>Tokens expiram - configure alertas para renovacao</li>
+                            <li>Revogue tokens comprometidos imediatamente</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="admin-form-sidebar">
+            <!-- Info -->
+            <div class="admin-card">
+                <div class="admin-form-group">
+                    <label for="name" class="admin-form-label">Nome da Integracao *</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="admin-form-input"
+                        value="{{ integration.name }}"
+                        required
+                    >
+                    <div class="admin-form-hint">
+                        Nome identificador (ex: "Instagram Principal", "Conta Secundaria")
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label class="admin-checkbox-label">
+                        <input
+                            type="checkbox"
+                            name="is_active"
+                            value="true"
+                            {% if integration.is_active %}checked{% endif %}
+                        >
+                        <span>Integracao ativa</span>
+                    </label>
+                    <div class="admin-form-hint">
+                        Desativar impede que o sistema use esta integracao
+                    </div>
+                </div>
+
+                <div class="admin-form-actions">
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
+                        Salvar Alteracoes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Status da Integracao</h3>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--admin-text-muted);">User ID:</span>
+                        {% if integration.platform_user_id %}
+                        <span class="admin-badge admin-badge-success">Configurado</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-warning">Pendente</span>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--admin-text-muted);">Token:</span>
+                        {% if integration.access_token %}
+                        <span class="admin-badge admin-badge-success">Configurado</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-warning">Pendente</span>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--admin-text-muted);">Pronto para uso:</span>
+                        {% if integration.has_credentials and integration.is_active %}
+                        <span class="admin-badge admin-badge-success">Sim</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-danger">Nao</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timestamps -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3 class="admin-card-title">Informacoes</h3>
+                </div>
+                <div style="font-size: 0.875rem; color: var(--admin-text-muted);">
+                    <p><strong>Criado em:</strong><br>{{ integration.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p style="margin-top: 0.5rem;"><strong>Atualizado em:</strong><br>{{ integration.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
+            </div>
+
+            <!-- Back -->
+            <a href="/admin/integrations" class="admin-btn admin-btn-secondary admin-btn-block">
+                Voltar para Lista
+            </a>
+        </div>
+    </div>
+</form>
+{% endblock %}
