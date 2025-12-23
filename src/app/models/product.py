@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from app.models.click import AffiliateClick
     from app.models.instagram_post import InstagramPostHistory
     from app.models.post_product import PostProduct
+    from app.models.price_history import PriceHistory
 
 
 class ProductPlatform(str, enum.Enum):
@@ -251,6 +252,14 @@ class Product(Base, UUIDMixin, TimestampMixin):
         lazy="selectin",
         cascade="all, delete-orphan",
         order_by="desc(InstagramPostHistory.posted_at)",
+    )
+
+    price_history: Mapped[list["PriceHistory"]] = relationship(
+        "PriceHistory",
+        back_populates="product",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        order_by="desc(PriceHistory.recorded_at)",
     )
 
     # Indices

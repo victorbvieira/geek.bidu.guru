@@ -1784,3 +1784,217 @@ async def api_update_product_ai_cost(
         },
         status_code=http_status.HTTP_200_OK,
     )
+
+
+# -----------------------------------------------------------------------------
+# API: Atualizar preco de produto (inline)
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/products/{product_id}/price", response_class=JSONResponse)
+async def api_update_product_price(
+    request: Request,
+    product_id: UUID,
+    current_user: AdminUser,
+    product_repo: ProductRepo,
+    db: DBSession,
+):
+    """
+    Atualiza o preco de um produto de forma inline (via AJAX).
+
+    Registra o historico de alteracao de preco automaticamente.
+
+    Body JSON:
+        - price: float - Novo preco do produto
+
+    Returns:
+        JSON com dados atualizados do produto e historico de preco
+    """
+    from decimal import Decimal
+    from datetime import UTC
+    from app.repositories.price_history import PriceHistoryRepository
+
+    data = await request.json()
+
+    product = await product_repo.get(product_id)
+    if not product:
+        return JSONResponse(
+            content={"detail": "Produto nao encontrado"},
+            status_code=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    new_price_str = data.get("price")
+    if new_price_str is None:
+        return JSONResponse(
+            content={"detail": "Campo 'price' e obrigatorio"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        new_price = Decimal(str(new_price_str))
+        if new_price < 0:
+            raise ValueError("Preco nao pode ser negativo")
+    except (ValueError, TypeError) as e:
+        return JSONResponse(
+            content={"detail": f"Preco invalido: {str(e)}"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Guarda o preco anterior para historico
+    previous_price = product.price
+
+    # Atualiza o produto
+    product.price = float(new_price)
+    product.last_price_update = datetime.now(UTC)
+    product.update_price_range()
+
+    await db.commit()
+    await db.refresh(product)
+
+    # Registra no historico de precos (apenas se houve alteracao de preco real)
+    price_history_record = None
+    if previous_price is None or Decimal(str(previous_price)) != new_price:
+        price_history_repo = PriceHistoryRepository(db)
+        price_history_record = await price_history_repo.create_price_record(
+            product_id=product_id,
+            price=new_price,
+            previous_price=Decimal(str(previous_price)) if previous_price else None,
+            source="manual",
+            notes="Atualizado via painel admin",
+        )
+
+    return JSONResponse(
+        content={
+            "success": True,
+            "product": {
+                "id": str(product.id),
+                "name": product.name,
+                "price": float(product.price) if product.price else None,
+                "price_range": product.price_range.value if product.price_range else None,
+                "last_price_update": product.last_price_update.isoformat() if product.last_price_update else None,
+            },
+            "price_history": {
+                "id": str(price_history_record.id) if price_history_record else None,
+                "previous_price": float(price_history_record.previous_price) if price_history_record and price_history_record.previous_price else None,
+                "price_change": float(price_history_record.price_change) if price_history_record and price_history_record.price_change else None,
+                "recorded_at": price_history_record.recorded_at.isoformat() if price_history_record else None,
+            } if price_history_record else None,
+        },
+        status_code=http_status.HTTP_200_OK,
+    )
+
+
+# -----------------------------------------------------------------------------
+# API: Confirmar preco atual (sem alteracao)
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/products/{product_id}/confirm-price", response_class=JSONResponse)
+async def api_confirm_product_price(
+    product_id: UUID,
+    current_user: AdminUser,
+    product_repo: ProductRepo,
+    db: DBSession,
+):
+    """
+    Confirma que o preco atual do produto esta correto.
+
+    Apenas atualiza o last_price_update sem criar registro de historico,
+    sinalizando que o preco foi verificado e continua o mesmo.
+
+    Returns:
+        JSON com dados atualizados do produto
+    """
+    from datetime import UTC
+
+    product = await product_repo.get(product_id)
+    if not product:
+        return JSONResponse(
+            content={"detail": "Produto nao encontrado"},
+            status_code=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    # Atualiza apenas o timestamp de ultima verificacao
+    product.last_price_update = datetime.now(UTC)
+
+    await db.commit()
+    await db.refresh(product)
+
+    return JSONResponse(
+        content={
+            "success": True,
+            "message": "Preco confirmado com sucesso",
+            "product_id": str(product.id),
+            "last_price_update": product.last_price_update.isoformat(),
+        },
+        status_code=http_status.HTTP_200_OK,
+    )
+
+
+# -----------------------------------------------------------------------------
+# API: Atualizar disponibilidade de produto (inline)
+# -----------------------------------------------------------------------------
+
+
+@router.post("/api/products/{product_id}/availability", response_class=JSONResponse)
+async def api_update_product_availability(
+    request: Request,
+    product_id: UUID,
+    current_user: AdminUser,
+    product_repo: ProductRepo,
+    db: DBSession,
+):
+    """
+    Atualiza a disponibilidade de um produto de forma inline (via AJAX).
+
+    Body JSON:
+        - availability: str - Nova disponibilidade (available, unavailable, out_of_stock, discontinued)
+
+    Returns:
+        JSON com dados atualizados do produto
+    """
+    data = await request.json()
+
+    product = await product_repo.get(product_id)
+    if not product:
+        return JSONResponse(
+            content={"detail": "Produto nao encontrado"},
+            status_code=http_status.HTTP_404_NOT_FOUND,
+        )
+
+    availability_str = data.get("availability")
+    if not availability_str:
+        return JSONResponse(
+            content={"detail": "Campo 'availability' e obrigatorio"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Mapeia string para enum
+    availability_map = {
+        "available": ProductAvailability.AVAILABLE,
+        "unavailable": ProductAvailability.UNAVAILABLE,
+        "out_of_stock": ProductAvailability.OUT_OF_STOCK,
+        "discontinued": ProductAvailability.DISCONTINUED,
+    }
+
+    new_availability = availability_map.get(availability_str.lower())
+    if not new_availability:
+        return JSONResponse(
+            content={"detail": f"Disponibilidade invalida: {availability_str}"},
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Atualiza o produto
+    product.availability = new_availability
+
+    await db.commit()
+    await db.refresh(product)
+
+    return JSONResponse(
+        content={
+            "success": True,
+            "product_id": str(product.id),
+            "availability": product.availability.value,
+        },
+        status_code=http_status.HTTP_200_OK,
+    )

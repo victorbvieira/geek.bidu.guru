@@ -15,6 +15,7 @@ from app.repositories.session import SessionRepository
 from app.repositories.newsletter import NewsletterRepository
 from app.repositories.ai_config import AIConfigRepository
 from app.repositories.social_integration import SocialIntegrationRepository
+from app.repositories.price_history import PriceHistoryRepository
 
 __all__ = [
     "BaseRepository",
@@ -28,4 +29,5 @@ __all__ = [
     "NewsletterRepository",
     "AIConfigRepository",
     "SocialIntegrationRepository",
+    "PriceHistoryRepository",
 ]

@@ -19,6 +19,7 @@ from app.models.redirect import Redirect
 from app.models.ai_config import AIConfig, AIProvider, AIUseCase
 from app.models.instagram_post import InstagramPostHistory
 from app.models.social_integration import SocialIntegration, SocialPlatform
+from app.models.price_history import PriceHistory
 
 __all__ = [
     # Mixins e Tipos
@@ -46,4 +47,5 @@ __all__ = [
     "InstagramPostHistory",
     "SocialIntegration",
     "SocialPlatform",
+    "PriceHistory",
 ]

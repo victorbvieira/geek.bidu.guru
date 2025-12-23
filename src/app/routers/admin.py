@@ -7,11 +7,13 @@ Renderiza templates HTML para:
 - Login/logout do admin
 """
 
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Response, status
+from sqlalchemy import func
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -456,6 +458,145 @@ async def new_product(
             "current_user": current_user,
             "product": None,
             "categories": categories,
+        },
+    )
+
+
+# -----------------------------------------------------------------------------
+# Atualizacao de Precos (pagina de manutencao rapida)
+# IMPORTANTE: Esta rota deve vir ANTES de /products/{product_id}
+# -----------------------------------------------------------------------------
+
+
+@router.get("/products/prices", response_class=HTMLResponse)
+async def price_update_page(
+    request: Request,
+    current_user: AdminUser,
+    product_repo: ProductRepo,
+    category_repo: CategoryRepo,
+    db: DBSession,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+    category: Optional[str] = None,
+    platform: str = Query("amazon", alias="platform"),
+    outdated_only: bool = Query(False, alias="outdated"),
+):
+    """
+    Pagina de atualizacao rapida de precos de produtos.
+
+    Permite filtrar por categoria, plataforma e mostrar apenas precos
+    desatualizados (mais de 24 horas sem atualizacao).
+
+    Args:
+        category: Slug da categoria para filtrar
+        platform: Plataforma (amazon, mercadolivre, shopee) - padrao: amazon
+        outdated_only: Se True, mostra apenas produtos com preco desatualizado
+    """
+    from datetime import timedelta, UTC, timezone
+    from sqlalchemy import select, or_, cast
+    from sqlalchemy.dialects.postgresql import JSONB
+    from app.models import Product
+    from app.models.product import ProductPlatform, ProductAvailability
+
+    skip = (page - 1) * per_page
+
+    # Mapeia string para enum de plataforma
+    platform_map = {
+        "amazon": ProductPlatform.AMAZON,
+        "mercadolivre": ProductPlatform.MERCADOLIVRE,
+        "shopee": ProductPlatform.SHOPEE,
+    }
+    selected_platform = platform_map.get(platform.lower(), ProductPlatform.AMAZON)
+
+    # Query base - filtra por plataforma e disponibilidade
+    query = (
+        select(Product)
+        .where(Product.platform == selected_platform)
+        .where(Product.availability == ProductAvailability.AVAILABLE)
+    )
+
+    # Filtro por categoria
+    if category:
+        category_json = cast([category], JSONB)
+        query = query.where(Product.categories.op("@>")(category_json))
+
+    # Filtro de precos desatualizados (mais de 24 horas)
+    if outdated_only:
+        cutoff_time = datetime.now(UTC) - timedelta(hours=24)
+        query = query.where(
+            or_(
+                Product.last_price_update.is_(None),
+                Product.last_price_update < cutoff_time,
+            )
+        )
+
+    # Conta total antes de paginar
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await db.execute(count_query)
+    total = total_result.scalar_one()
+
+    # Aplica ordenacao e paginacao
+    query = (
+        query
+        .order_by(Product.last_price_update.asc().nulls_first(), Product.name.asc())
+        .offset(skip)
+        .limit(per_page)
+    )
+
+    result = await db.execute(query)
+    products = list(result.scalars().all())
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    # Busca categorias para o filtro
+    categories = await category_repo.get_all()
+
+    # Conta produtos com preco desatualizado para a plataforma selecionada
+    cutoff_time = datetime.now(UTC) - timedelta(hours=24)
+    outdated_count_query = (
+        select(func.count())
+        .select_from(Product)
+        .where(Product.platform == selected_platform)
+        .where(Product.availability == ProductAvailability.AVAILABLE)
+        .where(
+            or_(
+                Product.last_price_update.is_(None),
+                Product.last_price_update < cutoff_time,
+            )
+        )
+    )
+    if category:
+        category_json = cast([category], JSONB)
+        outdated_count_query = outdated_count_query.where(
+            Product.categories.op("@>")(category_json)
+        )
+    outdated_result = await db.execute(outdated_count_query)
+    outdated_count = outdated_result.scalar_one()
+
+    # Funcao now() para o template calcular tempo desde ultima atualizacao
+    def now_utc():
+        return datetime.now(timezone.utc)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/products/prices.html",
+        context={
+            "title": "Atualizar Precos - Admin",
+            "current_user": current_user,
+            "products": products,
+            "categories": categories,
+            "selected_category": category,
+            "selected_platform": platform.lower(),
+            "outdated_only": outdated_only,
+            "outdated_count": outdated_count,
+            "active_page": "products",
+            "now": now_utc,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "total_pages": total_pages,
+            },
         },
     )
 

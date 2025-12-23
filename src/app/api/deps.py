@@ -40,6 +40,7 @@ from app.repositories import (
     NewsletterRepository,
     OccasionRepository,
     PostRepository,
+    PriceHistoryRepository,
     ProductRepository,
     SessionRepository,
     SocialIntegrationRepository,
@@ -195,6 +196,19 @@ async def get_social_integration_repo(db: DBSession) -> SocialIntegrationReposit
     return SocialIntegrationRepository(db)
 
 
+async def get_price_history_repo(db: DBSession) -> PriceHistoryRepository:
+    """
+    Factory para repositório de histórico de preços.
+
+    Args:
+        db: Sessão do banco injetada automaticamente
+
+    Returns:
+        Instância do PriceHistoryRepository pronta para uso
+    """
+    return PriceHistoryRepository(db)
+
+
 # =============================================================================
 # Type Aliases para Injeção Automática
 # =============================================================================
@@ -216,6 +230,9 @@ NewsletterRepo = Annotated[NewsletterRepository, Depends(get_newsletter_repo)]
 AIConfigRepo = Annotated[AIConfigRepository, Depends(get_ai_config_repo)]
 SocialIntegrationRepo = Annotated[
     SocialIntegrationRepository, Depends(get_social_integration_repo)
+]
+PriceHistoryRepo = Annotated[
+    PriceHistoryRepository, Depends(get_price_history_repo)
 ]
 
 

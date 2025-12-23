@@ -1,0 +1,501 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Atualizar Precos{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/products">Produtos</a>
+<span>/</span>
+<span class="current">Atualizar Precos</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/products" class="admin-btn admin-btn-secondary">
+    Voltar para Produtos
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Atualizar Precos{% if selected_platform == 'amazon' %} - Amazon{% elif selected_platform == 'mercadolivre' %} - Mercado Livre{% elif selected_platform == 'shopee' %} - Shopee{% endif %}</h1>
+    <p style="color: var(--admin-text-muted); margin-top: 0.5rem;">
+        Atualize os precos e disponibilidade dos produtos de forma rapida.
+        {% if outdated_count > 0 %}
+        <span style="color: var(--admin-warning);">{{ outdated_count }} produto(s) com preco desatualizado.</span>
+        {% endif %}
+    </p>
+</div>
+
+<!-- Filtros -->
+<div class="admin-card" style="margin-bottom: 1rem;">
+    <form method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label class="admin-form-label">Plataforma</label>
+            <select name="platform" class="admin-form-select">
+                <option value="amazon" {% if selected_platform == 'amazon' %}selected{% endif %}>Amazon</option>
+                <option value="mercadolivre" {% if selected_platform == 'mercadolivre' %}selected{% endif %}>Mercado Livre</option>
+                <option value="shopee" {% if selected_platform == 'shopee' %}selected{% endif %}>Shopee</option>
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 200px;">
+            <label class="admin-form-label">Categoria</label>
+            <select name="category" class="admin-form-select">
+                <option value="">Todas as categorias</option>
+                {% for cat in categories %}
+                <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0;">
+            <label class="admin-form-label" style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" name="outdated" value="true" {% if outdated_only %}checked{% endif %} style="width: auto;">
+                Apenas desatualizados (24h+)
+            </label>
+        </div>
+        <button type="submit" class="admin-btn admin-btn-primary">Filtrar</button>
+        <a href="/admin/products/prices" class="admin-btn admin-btn-secondary">Limpar</a>
+    </form>
+</div>
+
+<!-- Tabela de Produtos -->
+<div class="admin-card">
+    <div class="admin-table-wrapper">
+        <table class="admin-table" id="prices-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">Imagem</th>
+                    <th style="min-width: 180px;">Produto</th>
+                    <th style="width: 110px;">ID</th>
+                    <th style="width: 80px;">Link</th>
+                    <th style="width: 150px;">Preco (R$)</th>
+                    <th style="width: 130px;">Disponibilidade</th>
+                    <th style="width: 110px;">Atualizado</th>
+                    <th style="width: 70px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr data-product-id="{{ product.id }}">
+                    <!-- Imagem -->
+                    <td>
+                        {% if product.main_image_url %}
+                        <img src="{{ product.main_image_url }}" alt="{{ product.name }}"
+                             style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                        {% else %}
+                        <div style="width: 40px; height: 40px; background: var(--admin-border); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                            🎁
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <!-- Nome do Produto -->
+                    <td>
+                        <a href="/admin/products/{{ product.id }}"
+                           style="color: var(--admin-text); text-decoration: none;"
+                           title="{{ product.name }}">
+                            {{ product.name[:40] }}{% if product.name|length > 40 %}...{% endif %}
+                        </a>
+                    </td>
+
+                    <!-- Platform Product ID (ASIN, etc) -->
+                    <td>
+                        {% if product.platform_product_id %}
+                        <code style="font-size: 0.7rem; padding: 0.125rem 0.25rem; background: var(--admin-bg-secondary); border-radius: 3px;">
+                            {{ product.platform_product_id[:12] }}{% if product.platform_product_id|length > 12 %}...{% endif %}
+                        </code>
+                        {% else %}
+                        <span style="color: var(--admin-text-muted);">-</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Link de Afiliado -->
+                    <td>
+                        <a href="/goto/{{ product.affiliate_redirect_slug }}"
+                           target="_blank"
+                           class="admin-btn admin-btn-sm admin-btn-secondary"
+                           title="Abrir link de afiliado"
+                           style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                            🔗
+                        </a>
+                    </td>
+
+                    <!-- Input de Preco -->
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                            <span style="color: var(--admin-text-muted); font-size: 0.8rem;">R$</span>
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   class="admin-form-input price-input"
+                                   data-product-id="{{ product.id }}"
+                                   data-original-price="{{ product.price if product.price else '' }}"
+                                   value="{{ '%.2f'|format(product.price) if product.price else '' }}"
+                                   placeholder="0.00"
+                                   style="width: 85px; padding: 0.25rem 0.375rem; text-align: right; font-size: 0.85rem;">
+                            <button type="button"
+                                    class="admin-btn admin-btn-sm confirm-price-btn"
+                                    data-product-id="{{ product.id }}"
+                                    title="Confirmar que o preco esta correto (sem alteracao)"
+                                    style="padding: 0.2rem 0.4rem; font-size: 0.7rem;">
+                                ✓
+                            </button>
+                            <span class="price-status" data-product-id="{{ product.id }}" style="width: 16px; font-size: 0.8rem;"></span>
+                        </div>
+                    </td>
+
+                    <!-- Disponibilidade -->
+                    <td>
+                        <select class="admin-form-select availability-select"
+                                data-product-id="{{ product.id }}"
+                                data-original-value="{{ product.availability.value }}"
+                                style="padding: 0.25rem 0.375rem; font-size: 0.8rem; min-width: 100px;">
+                            <option value="available" {% if product.availability.value == 'available' %}selected{% endif %}>Disponivel</option>
+                            <option value="unavailable" {% if product.availability.value == 'unavailable' %}selected{% endif %}>Indisponivel</option>
+                            <option value="out_of_stock" {% if product.availability.value == 'out_of_stock' %}selected{% endif %}>Sem estoque</option>
+                            <option value="discontinued" {% if product.availability.value == 'discontinued' %}selected{% endif %}>Descontinuado</option>
+                        </select>
+                    </td>
+
+                    <!-- Data de Atualizacao -->
+                    <td class="last-update-cell" data-product-id="{{ product.id }}">
+                        {% if product.last_price_update %}
+                        {% set hours_ago = ((now() - product.last_price_update).total_seconds() / 3600)|int %}
+                        <span style="font-size: 0.8rem; {% if hours_ago > 24 %}color: var(--admin-warning);{% endif %}">
+                            {{ product.last_price_update.strftime('%d/%m %H:%M') }}
+                            {% if hours_ago > 24 %}
+                            <br><small>({{ hours_ago }}h)</small>
+                            {% endif %}
+                        </span>
+                        {% else %}
+                        <span style="color: var(--admin-danger); font-size: 0.8rem;">Nunca</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        {% if not product.last_price_update %}
+                        <span class="admin-badge admin-badge-danger" style="font-size: 0.7rem;">Novo</span>
+                        {% elif (now() - product.last_price_update).total_seconds() > 86400 %}
+                        <span class="admin-badge admin-badge-warning" style="font-size: 0.7rem;">Antigo</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-success" style="font-size: 0.7rem;">OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                        Nenhum produto encontrado com os filtros selecionados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Info de resultados -->
+    {% if pagination %}
+    <div style="padding: 0.75rem 1rem; color: var(--admin-text-muted); font-size: 0.875rem; border-top: 1px solid var(--admin-border);">
+        {{ pagination.total }} produto(s) encontrado(s)
+        {% if selected_category %}
+         na categoria selecionada
+        {% endif %}
+        {% if outdated_only %}
+         (apenas desatualizados)
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Paginacao -->
+    {% if pagination and pagination.total_pages > 1 %}
+    <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--admin-border);">
+        {% if pagination.page > 1 %}
+        <a href="?page={{ pagination.page - 1 }}&platform={{ selected_platform }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if outdated_only %}&outdated=true{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        {% endif %}
+
+        <span style="padding: 0.5rem 1rem; color: var(--admin-text-muted);">
+            Pagina {{ pagination.page }} de {{ pagination.total_pages }}
+        </span>
+
+        {% if pagination.page < pagination.total_pages %}
+        <a href="?page={{ pagination.page + 1 }}&platform={{ selected_platform }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if outdated_only %}&outdated=true{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Instrucoes -->
+<div class="admin-card" style="margin-top: 1rem; background: var(--admin-bg-secondary);">
+    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+        <span style="font-size: 1.5rem;">💡</span>
+        <div>
+            <strong>Como usar:</strong>
+            <ul style="margin: 0.5rem 0 0 1rem; color: var(--admin-text-muted);">
+                <li>Clique no link 🔗 para abrir o produto na loja e verificar preco e disponibilidade</li>
+                <li><strong>Se o preco mudou:</strong> Digite o novo preco e saia do campo (Tab ou clique fora)</li>
+                <li><strong>Se o preco NAO mudou:</strong> Clique no botao <code>✓</code> para confirmar que esta correto</li>
+                <li><strong>Disponibilidade:</strong> Altere o status e ele sera salvo automaticamente</li>
+                <li>Produtos com status "Antigo" ou "Novo" precisam de verificacao</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adiciona listener para todos os inputs de preco
+    const priceInputs = document.querySelectorAll('.price-input');
+
+    priceInputs.forEach(function(input) {
+        // Salva valor original para comparacao
+        input.dataset.lastSavedPrice = input.value;
+
+        // Ao sair do campo (blur), atualiza o preco
+        input.addEventListener('blur', function() {
+            updatePrice(this);
+        });
+
+        // Ao pressionar Enter, atualiza o preco
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur();
+            }
+        });
+    });
+
+    // Adiciona listener para botoes de confirmacao de preco
+    const confirmButtons = document.querySelectorAll('.confirm-price-btn');
+
+    confirmButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            confirmPrice(this);
+        });
+    });
+
+    // Adiciona listener para selects de disponibilidade
+    const availabilitySelects = document.querySelectorAll('.availability-select');
+
+    availabilitySelects.forEach(function(select) {
+        select.addEventListener('change', function() {
+            updateAvailability(this);
+        });
+    });
+});
+
+async function updatePrice(input) {
+    const productId = input.dataset.productId;
+    const newPrice = input.value;
+    const lastSavedPrice = input.dataset.lastSavedPrice;
+    const statusSpan = document.querySelector(`.price-status[data-product-id="${productId}"]`);
+
+    // Se o preco nao mudou, nao faz nada
+    if (newPrice === lastSavedPrice) {
+        return;
+    }
+
+    // Validacao basica
+    if (newPrice && (isNaN(newPrice) || parseFloat(newPrice) < 0)) {
+        statusSpan.innerHTML = '❌';
+        statusSpan.title = 'Preco invalido';
+        input.style.borderColor = 'var(--admin-danger)';
+        return;
+    }
+
+    // Mostra loading
+    statusSpan.innerHTML = '⏳';
+    statusSpan.title = 'Salvando...';
+    input.disabled = true;
+
+    try {
+        const response = await fetch(`/admin/api/products/${productId}/price`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                price: newPrice ? parseFloat(newPrice) : null
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // Sucesso!
+            statusSpan.innerHTML = '✅';
+            statusSpan.title = 'Salvo com sucesso!';
+            input.style.borderColor = 'var(--admin-success)';
+            input.dataset.lastSavedPrice = newPrice;
+
+            // Atualiza a celula de data
+            const dateCell = document.querySelector(`.last-update-cell[data-product-id="${productId}"]`);
+            if (dateCell && data.product.last_price_update) {
+                const date = new Date(data.product.last_price_update);
+                dateCell.innerHTML = `<span>${date.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})} ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>`;
+            }
+
+            // Mostra diferenca de preco se houve mudanca
+            if (data.price_history && data.price_history.price_change) {
+                const change = data.price_history.price_change;
+                const symbol = change > 0 ? '+' : '';
+                console.log(`Preco atualizado! Variacao: ${symbol}R$ ${change.toFixed(2)}`);
+            }
+
+            // Limpa o estilo apos 2 segundos
+            setTimeout(() => {
+                input.style.borderColor = '';
+                statusSpan.innerHTML = '';
+            }, 2000);
+        } else {
+            throw new Error(data.detail || 'Erro ao salvar');
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar preco:', error);
+        statusSpan.innerHTML = '❌';
+        statusSpan.title = error.message;
+        input.style.borderColor = 'var(--admin-danger)';
+    } finally {
+        input.disabled = false;
+    }
+}
+
+async function confirmPrice(button) {
+    const productId = button.dataset.productId;
+    const statusSpan = document.querySelector(`.price-status[data-product-id="${productId}"]`);
+    const priceInput = document.querySelector(`.price-input[data-product-id="${productId}"]`);
+
+    // Mostra loading
+    statusSpan.innerHTML = '⏳';
+    statusSpan.title = 'Confirmando...';
+    button.disabled = true;
+
+    try {
+        const response = await fetch(`/admin/api/products/${productId}/confirm-price`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // Sucesso!
+            statusSpan.innerHTML = '✅';
+            statusSpan.title = 'Preco confirmado!';
+
+            // Atualiza a celula de data
+            const dateCell = document.querySelector(`.last-update-cell[data-product-id="${productId}"]`);
+            if (dateCell && data.last_price_update) {
+                const date = new Date(data.last_price_update);
+                dateCell.innerHTML = `<span>${date.toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})} ${date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>`;
+            }
+
+            // Limpa o estilo apos 2 segundos
+            setTimeout(() => {
+                statusSpan.innerHTML = '';
+            }, 2000);
+        } else {
+            throw new Error(data.detail || 'Erro ao confirmar');
+        }
+    } catch (error) {
+        console.error('Erro ao confirmar preco:', error);
+        statusSpan.innerHTML = '❌';
+        statusSpan.title = error.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function updateAvailability(select) {
+    const productId = select.dataset.productId;
+    const newAvailability = select.value;
+    const originalValue = select.dataset.originalValue;
+    const statusSpan = document.querySelector(`.price-status[data-product-id="${productId}"]`);
+
+    // Se nao mudou, nao faz nada
+    if (newAvailability === originalValue) {
+        return;
+    }
+
+    // Mostra loading
+    statusSpan.innerHTML = '⏳';
+    statusSpan.title = 'Salvando...';
+    select.disabled = true;
+
+    try {
+        const response = await fetch(`/admin/api/products/${productId}/availability`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                availability: newAvailability
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            // Sucesso!
+            statusSpan.innerHTML = '✅';
+            statusSpan.title = 'Disponibilidade atualizada!';
+            select.dataset.originalValue = newAvailability;
+
+            // Atualiza estilo do select baseado no valor
+            select.style.borderColor = 'var(--admin-success)';
+
+            // Limpa o estilo apos 2 segundos
+            setTimeout(() => {
+                statusSpan.innerHTML = '';
+                select.style.borderColor = '';
+            }, 2000);
+        } else {
+            throw new Error(data.detail || 'Erro ao salvar');
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar disponibilidade:', error);
+        statusSpan.innerHTML = '❌';
+        statusSpan.title = error.message;
+        // Reverte para o valor original
+        select.value = originalValue;
+    } finally {
+        select.disabled = false;
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.price-input:focus {
+    border-color: var(--admin-primary);
+    outline: none;
+}
+
+.price-input:disabled {
+    background: var(--admin-bg-secondary);
+    opacity: 0.7;
+}
+
+.price-status {
+    display: inline-block;
+    text-align: center;
+}
+
+/* Animacao suave para mudancas de cor */
+.price-input {
+    transition: border-color 0.2s ease;
+}
+
+/* Destaque para linhas com precos desatualizados */
+tr:has(.admin-badge-danger),
+tr:has(.admin-badge-warning) {
+    background: rgba(255, 193, 7, 0.05);
+}
+</style>
+{% endblock %}
