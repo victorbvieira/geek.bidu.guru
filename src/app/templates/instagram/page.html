@@ -1,0 +1,632 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Header da pagina -->
+<section class="insta-header">
+    <div class="container">
+        <div class="insta-header-content">
+            <div class="insta-logo">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+            </div>
+            <div class="insta-header-text">
+                <h1>Siga-nos no Instagram</h1>
+                <p class="insta-subtitle">Produtos geek incriveis compartilhados diariamente</p>
+                <a href="https://instagram.com/geekbidu" target="_blank" rel="noopener" class="btn btn-instagram">
+                    <span>@geekbidu</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Barra de busca -->
+<section class="insta-search">
+    <div class="container">
+        <div class="search-box">
+            <form action="/busca" method="GET" class="search-form">
+                <input type="text" name="q" placeholder="Buscar produtos geek..." class="search-input" aria-label="Buscar produtos">
+                <button type="submit" class="search-btn" aria-label="Buscar">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+            </form>
+            <p class="search-hint">Procurando algo especifico? Use a busca para encontrar o presente perfeito!</p>
+        </div>
+    </div>
+</section>
+
+<!-- Destaque do ultimo post -->
+{% if last_posted %}
+<section class="insta-featured">
+    <div class="container">
+        <div class="featured-badge">
+            <span class="badge-icon">🔥</span>
+            <span class="badge-text">Ultimo Post</span>
+        </div>
+        <div class="featured-card">
+            <div class="featured-image-wrapper">
+                {% if last_posted.main_image_url %}
+                <a href="/produto/{{ last_posted.slug }}" class="featured-image-link">
+                    <img src="{{ last_posted.main_image_url }}" alt="{{ last_posted.name }}" class="featured-image" loading="lazy">
+                </a>
+                {% else %}
+                <div class="featured-image-placeholder">
+                    <span>Sem imagem</span>
+                </div>
+                {% endif %}
+                {% if last_posted.last_post_url %}
+                <a href="{{ last_posted.last_post_url }}" target="_blank" rel="noopener" class="featured-insta-link" title="Ver no Instagram">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    Ver no Instagram
+                </a>
+                {% endif %}
+            </div>
+            <div class="featured-content">
+                <span class="featured-platform platform-{{ last_posted.platform.value }}">
+                    {{ last_posted.platform.value | title }}
+                </span>
+                <h2 class="featured-title">
+                    <a href="/produto/{{ last_posted.slug }}">{{ last_posted.name }}</a>
+                </h2>
+                {% if last_posted.short_description %}
+                <p class="featured-description">{{ last_posted.short_description[:200] }}{% if last_posted.short_description|length > 200 %}...{% endif %}</p>
+                {% endif %}
+                <div class="featured-meta">
+                    {% if last_posted.price %}
+                    <span class="featured-price">{{ last_posted.price | format_price }}</span>
+                    {% endif %}
+                    {% if last_posted.rating %}
+                    <span class="featured-rating">
+                        <span class="stars">★</span>
+                        {{ "%.1f"|format(last_posted.rating) }}
+                    </span>
+                    {% endif %}
+                    {% if last_posted.last_post_date %}
+                    <span class="featured-date">
+                        Postado em {{ last_posted.last_post_date.strftime('%d/%m/%Y') }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="featured-actions">
+                    <a href="/goto/{{ last_posted.affiliate_redirect_slug }}" class="btn btn-cta" target="_blank" rel="noopener sponsored">
+                        Ver na {{ last_posted.platform.value | title }}
+                    </a>
+                    <a href="/produto/{{ last_posted.slug }}" class="btn btn-secondary">
+                        Mais detalhes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Listagem de produtos postados -->
+<section class="insta-products">
+    <div class="container">
+        <div class="section-header">
+            <h2>Produtos Compartilhados</h2>
+            <p class="section-description">Todos os produtos que ja postamos no nosso Instagram</p>
+        </div>
+
+        {% if products %}
+        <div class="products-grid-home">
+            {% for product in products %}
+            <article class="product-card-home">
+                {% if product.main_image_url %}
+                <a href="/produto/{{ product.slug }}" class="product-image-home">
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                </a>
+                {% else %}
+                <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
+                    <span>Sem imagem</span>
+                </a>
+                {% endif %}
+                <div class="product-content-home">
+                    <span class="product-platform platform-{{ product.platform.value }}">
+                        {{ product.platform.value | title }}
+                    </span>
+                    <h3 class="product-name-home">
+                        <a href="/produto/{{ product.slug }}">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</a>
+                    </h3>
+                    {% if product.price %}
+                    <span class="product-price-home">{{ product.price | format_price }}</span>
+                    {% endif %}
+                    <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-cta-home" target="_blank" rel="noopener sponsored">
+                        Ver oferta
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <!-- Paginacao -->
+        {% if pages > 1 %}
+        <nav class="pagination" aria-label="Paginacao">
+            {% if has_prev %}
+            <a href="/insta?page={{ page - 1 }}" class="pagination-link pagination-prev">
+                Anterior
+            </a>
+            {% endif %}
+
+            <span class="pagination-info">
+                Pagina {{ page }} de {{ pages }}
+            </span>
+
+            {% if has_next %}
+            <a href="/insta?page={{ page + 1 }}" class="pagination-link pagination-next">
+                Proxima
+            </a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📸</div>
+            <p>Ainda nao temos produtos postados no Instagram.</p>
+            <p>Em breve teremos novidades incriveis!</p>
+            <a href="/produtos" class="btn btn-primary">Ver todos os produtos</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA para seguir no Instagram -->
+<section class="insta-cta">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Nao perca nenhuma oferta!</h2>
+            <p>Siga nosso Instagram para receber as melhores dicas de presentes geek todos os dias.</p>
+            <a href="https://instagram.com/geekbidu" target="_blank" rel="noopener" class="btn btn-instagram btn-large">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                Seguir @geekbidu
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Header do Instagram */
+.insta-header {
+    background: linear-gradient(135deg, #833AB4 0%, #E1306C 50%, #F77737 100%);
+    color: white;
+    padding: 3rem 0;
+}
+
+.insta-header-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+}
+
+.insta-logo svg {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.insta-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+}
+
+.insta-subtitle {
+    margin: 0 0 1rem;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.btn-instagram {
+    background: white;
+    color: #E1306C;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-instagram:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn-instagram.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* Barra de busca */
+.insta-search {
+    background: var(--color-bg-alt);
+    padding: 2rem 0;
+}
+
+.search-box {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.875rem 1.25rem;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--color-bg-card);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.search-btn {
+    padding: 0.875rem 1.25rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.search-btn:hover {
+    background: var(--color-primary-dark);
+    transform: scale(1.02);
+}
+
+.search-hint {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Secao de destaque */
+.insta-featured {
+    padding: 3rem 0;
+    background: var(--color-bg);
+}
+
+.featured-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #E1306C, #F77737);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.badge-icon {
+    font-size: 1.1rem;
+}
+
+.featured-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    background: var(--color-bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.featured-image-wrapper {
+    position: relative;
+}
+
+.featured-image {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    object-fit: cover;
+}
+
+.featured-image-link {
+    display: block;
+    height: 100%;
+}
+
+.featured-image-placeholder {
+    width: 100%;
+    height: 400px;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.featured-insta-link {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+}
+
+.featured-insta-link:hover {
+    background: rgba(0,0,0,0.85);
+}
+
+.featured-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.featured-platform {
+    display: inline-block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    width: fit-content;
+}
+
+.featured-title {
+    font-size: 1.5rem;
+    margin: 0 0 1rem;
+    line-height: 1.3;
+}
+
+.featured-title a {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.featured-title a:hover {
+    color: var(--color-primary);
+}
+
+.featured-description {
+    color: var(--color-text-muted);
+    margin: 0 0 1.5rem;
+    line-height: 1.6;
+}
+
+.featured-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.featured-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.featured-rating {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.featured-rating .stars {
+    color: #f59e0b;
+}
+
+.featured-date {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.featured-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-cta {
+    display: inline-block;
+    padding: 0.875rem 1.5rem;
+    background: var(--color-cta, #ff6b00);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-cta:hover {
+    background: var(--color-cta-hover, #e55a00);
+    transform: scale(1.02);
+}
+
+.btn-secondary {
+    display: inline-block;
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    color: var(--color-text);
+    text-decoration: none;
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    font-weight: 600;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Listagem de produtos */
+.insta-products {
+    padding: 3rem 0;
+    background: var(--color-bg-alt);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.section-header h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+}
+
+.section-description {
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* Paginacao */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding: 1rem 0;
+}
+
+.pagination-link {
+    padding: 0.5rem 1rem;
+    background: var(--color-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.pagination-link:hover {
+    background: var(--color-primary-dark);
+}
+
+.pagination-info {
+    color: var(--color-text-muted);
+}
+
+/* Estado vazio */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-text-muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    margin: 0.5rem 0;
+}
+
+.empty-state .btn {
+    margin-top: 1.5rem;
+}
+
+/* CTA final */
+.insta-cta {
+    background: linear-gradient(135deg, #833AB4 0%, #E1306C 50%, #F77737 100%);
+    padding: 4rem 0;
+}
+
+.cta-content {
+    text-align: center;
+    color: white;
+}
+
+.cta-content h2 {
+    margin: 0 0 0.75rem;
+    font-size: 2rem;
+}
+
+.cta-content p {
+    margin: 0 0 1.5rem;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .insta-header-content {
+        flex-direction: column;
+    }
+
+    .insta-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .featured-card {
+        grid-template-columns: 1fr;
+    }
+
+    .featured-image {
+        min-height: 250px;
+    }
+
+    .featured-content {
+        padding: 1.5rem;
+    }
+
+    .featured-title {
+        font-size: 1.25rem;
+    }
+
+    .featured-actions {
+        flex-direction: column;
+    }
+
+    .featured-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .search-form {
+        flex-direction: column;
+    }
+
+    .search-btn {
+        width: 100%;
+    }
+
+    .cta-content h2 {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}

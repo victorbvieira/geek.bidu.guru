@@ -504,3 +504,75 @@ class ProductRepository(BaseRepository[Product]):
 
         result = await self.db.execute(stmt)
         return result.scalar_one()
+
+    # ==========================================================================
+    # Metodos para pagina publica de Instagram
+    # ==========================================================================
+
+    async def get_posted_on_instagram(
+        self,
+        skip: int = 0,
+        limit: int = 12,
+    ) -> list[Product]:
+        """
+        Busca produtos que ja foram postados no Instagram.
+
+        Retorna produtos ordenados pela data do ultimo post (mais recente primeiro).
+        Apenas produtos disponiveis sao retornados.
+
+        Args:
+            skip: Offset para paginacao
+            limit: Limite de resultados
+
+        Returns:
+            Lista de produtos postados no Instagram
+        """
+        stmt = (
+            select(Product)
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.last_post_date.isnot(None))
+            .where(Product.last_post_platform == "instagram")
+            .order_by(Product.last_post_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def count_posted_on_instagram(self) -> int:
+        """
+        Conta quantos produtos foram postados no Instagram.
+
+        Returns:
+            Quantidade de produtos postados
+        """
+        stmt = (
+            select(func.count())
+            .select_from(Product)
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.last_post_date.isnot(None))
+            .where(Product.last_post_platform == "instagram")
+        )
+
+        result = await self.db.execute(stmt)
+        return result.scalar_one()
+
+    async def get_last_posted_on_instagram(self) -> Product | None:
+        """
+        Busca o produto mais recentemente postado no Instagram.
+
+        Returns:
+            Produto mais recente ou None se nenhum foi postado
+        """
+        stmt = (
+            select(Product)
+            .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.last_post_date.isnot(None))
+            .where(Product.last_post_platform == "instagram")
+            .order_by(Product.last_post_date.desc())
+            .limit(1)
+        )
+
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()

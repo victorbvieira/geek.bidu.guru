@@ -417,3 +417,12 @@ app.include_router(webhooks_router)
 from app.routers.pages import router as pages_router
 
 app.include_router(pages_router)
+
+
+# -----------------------------------------------------------------------------
+# Pagina Publica do Instagram (/insta)
+# -----------------------------------------------------------------------------
+
+from app.routers.instagram import router as instagram_router
+
+app.include_router(instagram_router)
