@@ -37,8 +37,11 @@ do_deploy() {
     log "1/4 Rebuild da imagem Docker..."
     docker build -t "$DOCKER_IMAGE" -f "$SITE_DIR/docker/Dockerfile" "$SITE_DIR" --quiet
 
-    log "2/4 Reiniciando container..."
-    docker restart "$CONTAINER_NAME"
+    log "2/4 Recriando container com nova imagem..."
+    # Para e remove o container antigo, depois recria com a nova imagem
+    # Usa docker-compose para garantir que todas as configs (shm_size, etc) sejam aplicadas
+    cd "$SITE_DIR"
+    docker compose -f docker/docker-compose.easypanel.yml up -d --force-recreate app
 
     log "3/4 Aguardando health check..."
     sleep 10
