@@ -64,22 +64,31 @@ COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
 RUN pip install --no-cache-dir /wheels/*
 
-# Instalar Playwright e o navegador Chromium
-# Precisa ser feito apos instalar os wheels pois playwright precisa estar instalado
-# Define PLAYWRIGHT_BROWSERS_PATH para garantir que os navegadores sejam instalados no local correto
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN pip install playwright==1.49.1 && playwright install chromium
-
-# Copiar codigo fonte
-COPY src/ ./src/
+# Criar usuario nao-root para seguranca ANTES de instalar Playwright
+# Isso garante que o Chromium seja instalado com as permissoes corretas
+RUN useradd --create-home --shell /bin/bash appuser
 
 # Criar diretorio para uploads persistentes com subdiretorios
 # Em producao, configure UPLOAD_DIR=/app/uploads e monte um volume
 RUN mkdir -p /app/uploads/products /app/uploads/categories /app/uploads/posts /app/uploads/instagram
 
-# Criar usuario nao-root para seguranca
-RUN useradd --create-home --shell /bin/bash appuser \
-    && chown -R appuser:appuser /app
+# Instalar Playwright e o navegador Chromium
+# Define PLAYWRIGHT_BROWSERS_PATH em um diretorio acessivel pelo appuser
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright
+RUN mkdir -p /home/appuser/.cache/ms-playwright \
+    && chown -R appuser:appuser /home/appuser/.cache
+
+# Instalar playwright como appuser para evitar problemas de permissao
+USER appuser
+RUN pip install --user playwright==1.49.1 && python -m playwright install chromium
+USER root
+
+# Copiar codigo fonte
+COPY src/ ./src/
+
+# Ajustar permissoes finais
+RUN chown -R appuser:appuser /app
+
 USER appuser
 
 # Volume para uploads persistentes

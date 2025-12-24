@@ -57,11 +57,17 @@ services:
       # Analytics (opcional)
       - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
       - GA4_API_SECRET=${GA4_API_SECRET:-}
+      # Playwright - caminho dos navegadores (instalado como appuser)
+      - PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright
     volumes:
       # Volume para uploads persistentes
       - uploads_data:/app/uploads
     ports:
       - "8000:8000"
+    # Playwright/Chromium precisa de shm_size maior (padrao 64MB causa crash)
+    shm_size: '2gb'
+    security_opt:
+      - seccomp:unconfined
     depends_on:
       redis:
         condition: service_healthy

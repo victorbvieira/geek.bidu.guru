@@ -45,8 +45,8 @@ services:
       # Sobrescreve variaveis do .env se necessario
       - REDIS_URL=redis://redis:6379/0
       # Em desenvolvimento, nao define UPLOAD_DIR para usar /static/uploads
-      # Playwright - desabilita sandbox (necessario para rodar como root no container)
-      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      # Playwright - caminho dos navegadores (instalado como appuser)
+      - PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright
       # Fuso horario de Sao Paulo
       - TZ=America/Sao_Paulo
     volumes:
@@ -58,7 +58,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-    # Playwright precisa de IPC_LOCK e permissoes de seguranca
+    # Playwright/Chromium precisa de:
+    # 1. shm_size maior (padrao 64MB causa crash do Chromium)
+    # 2. seccomp:unconfined para funcionar em containers
+    shm_size: '2gb'
     security_opt:
       - seccomp:unconfined
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

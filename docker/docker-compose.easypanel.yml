@@ -57,9 +57,12 @@ services:
       # Analytics (opcional)
       - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
       - GA4_API_SECRET=${GA4_API_SECRET:-}
-      # Playwright - path dos navegadores instalados na imagem
-      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-    # Playwright precisa de permissoes especiais para o Chromium headless
+      # Playwright - caminho dos navegadores (instalado como appuser)
+      - PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright
+    # Playwright/Chromium precisa de:
+    # 1. shm_size maior (padrao 64MB causa crash do Chromium)
+    # 2. seccomp:unconfined para funcionar em containers
+    shm_size: '2gb'
     security_opt:
       - seccomp:unconfined
     healthcheck:
