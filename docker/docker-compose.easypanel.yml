@@ -19,6 +19,8 @@ services:
     container_name: geek_bidu_app
     restart: unless-stopped
     environment:
+      # Fuso horario de Sao Paulo
+      - TZ=America/Sao_Paulo
       # Banco de Dados
       - DATABASE_URL=postgresql+asyncpg://geek_app_prod:${DB_PASSWORD}@postgres:5432/geek_bidu_prod
       # Redis

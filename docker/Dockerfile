@@ -89,6 +89,8 @@ VOLUME ["/app/uploads"]
 ENV PYTHONPATH=/app/src
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+# Fuso horario de Sao Paulo
+ENV TZ=America/Sao_Paulo
 
 # Porta da aplicacao
 EXPOSE 8000

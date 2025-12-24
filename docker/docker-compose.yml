@@ -47,6 +47,8 @@ services:
       # Em desenvolvimento, nao define UPLOAD_DIR para usar /static/uploads
       # Playwright - desabilita sandbox (necessario para rodar como root no container)
       - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      # Fuso horario de Sao Paulo
+      - TZ=America/Sao_Paulo
     volumes:
       - ../src:/app/src
       # Volume para uploads persistentes (desenvolvimento)
