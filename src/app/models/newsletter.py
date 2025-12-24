@@ -26,7 +26,7 @@ def generate_verification_token() -> str:
 
 class NewsletterSignup(Base, UUIDMixin):
     """
-    Inscricao em newsletter com double opt-in.
+    Inscricao em newsletter com double opt-in e compliance LGPD.
 
     Atributos:
         id: UUID primary key
@@ -38,9 +38,14 @@ class NewsletterSignup(Base, UUIDMixin):
         email_verified: Se o email foi verificado (double opt-in)
         verification_token: Token para verificacao de email
         verification_sent_at: Quando o email de verificacao foi enviado
-        verified_at: Quando o email foi verificado
+        verified_at: Quando o email foi verificado (data do consentimento LGPD)
         subscribed_at: Data de inscricao
         unsubscribed_at: Data de cancelamento (se houver)
+
+    LGPD Compliance:
+        signup_ip: IP do usuario no momento da inscricao
+        consent_ip: IP do usuario no momento do consentimento (click no email)
+        verified_at: Timestamp do consentimento
     """
 
     __tablename__ = "newsletter_signups"
@@ -52,6 +57,14 @@ class NewsletterSignup(Base, UUIDMixin):
     # Origem
     session_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     source: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    # LGPD Compliance - IPs para rastreabilidade do consentimento
+    signup_ip: Mapped[Optional[str]] = mapped_column(
+        String(45), nullable=True, comment="IP do usuario na inscricao"
+    )
+    consent_ip: Mapped[Optional[str]] = mapped_column(
+        String(45), nullable=True, comment="IP do usuario ao confirmar email (consentimento LGPD)"
+    )
 
     # Status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
@@ -107,10 +120,16 @@ class NewsletterSignup(Base, UUIDMixin):
         self.verification_sent_at = utc_now()
         return self.verification_token
 
-    def verify_email(self) -> None:
-        """Marca o email como verificado."""
+    def verify_email(self, consent_ip: Optional[str] = None) -> None:
+        """
+        Marca o email como verificado e registra o consentimento LGPD.
+
+        Args:
+            consent_ip: IP do usuario no momento da confirmacao (consentimento)
+        """
         self.email_verified = True
         self.verified_at = utc_now()
+        self.consent_ip = consent_ip  # LGPD: registra IP do consentimento
         self.verification_token = None  # Remove token apos uso
 
     def is_token_expired(self, expire_hours: int = 48) -> bool:

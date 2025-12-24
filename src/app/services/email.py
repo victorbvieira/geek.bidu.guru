@@ -219,5 +219,124 @@ Para cancelar sua inscricao, acesse: {unsubscribe_url}
         )
 
 
+    async def send_newsletter_email(
+        self,
+        to_email: str,
+        subject: str,
+        heading: str,
+        content_html: str,
+        preview_text: Optional[str] = None,
+        cta_text: Optional[str] = None,
+        cta_url: Optional[str] = None,
+    ) -> bool:
+        """
+        Envia email de newsletter para um destinatario.
+
+        Args:
+            to_email: Email do destinatario
+            subject: Assunto do email
+            heading: Titulo principal do email (H1)
+            content_html: Conteudo do email em HTML (ja convertido de Markdown)
+            preview_text: Texto de preview (aparece ao lado do assunto)
+            cta_text: Texto do botao de acao (opcional)
+            cta_url: URL do botao de acao (opcional)
+
+        Returns:
+            True se enviado com sucesso, False caso contrario
+        """
+        current_year = datetime.now().year
+
+        # URL de descadastro com email pre-preenchido
+        from urllib.parse import quote
+        unsubscribe_url = f"{settings.app_url}/newsletter/descadastro?email={quote(to_email)}"
+
+        # Monta o botao CTA se fornecido
+        cta_html = ""
+        cta_text_plain = ""
+        if cta_text and cta_url:
+            cta_html = f"""
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{cta_url}"
+                       style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                        {cta_text}
+                    </a>
+                </div>
+            """
+            cta_text_plain = f"\n\n{cta_text}: {cta_url}\n"
+
+        # Preview text oculto (aparece no preview do email mas nao no corpo)
+        preview_html = ""
+        if preview_text:
+            preview_html = f"""
+                <div style="display: none; max-height: 0px; overflow: hidden;">
+                    {preview_text}
+                </div>
+            """
+
+        html_body = f"""
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{subject}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+    {preview_html}
+
+    <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">geek.bidu.guru</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Presentes Geek com Curadoria</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 30px;">
+            <h2 style="color: #1f2937; margin-top: 0; font-size: 24px;">{heading}</h2>
+
+            <div style="color: #4b5563; line-height: 1.8;">
+                {content_html}
+            </div>
+
+            {cta_html}
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px; background: #f9fafb; color: #9ca3af; font-size: 12px;">
+            <p style="margin: 0;">&copy; {current_year} geek.bidu.guru - Todos os direitos reservados</p>
+            <p style="margin-top: 8px;">
+                <a href="{unsubscribe_url}" style="color: #9ca3af; text-decoration: underline;">Cancelar inscricao</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+        # Versao texto plano (remove tags HTML do conteudo)
+        import re
+        content_plain = re.sub(r"<[^>]+>", "", content_html)
+        content_plain = re.sub(r"\s+", " ", content_plain).strip()
+
+        text_body = f"""
+{heading}
+
+{content_plain}
+{cta_text_plain}
+---
+(c) {current_year} geek.bidu.guru - Presentes Geek com Curadoria
+
+Para cancelar sua inscricao, acesse: {unsubscribe_url}
+"""
+
+        return await self.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_body=html_body,
+            text_body=text_body,
+        )
+
+
 # Instancia global do servico
 email_service = EmailService()

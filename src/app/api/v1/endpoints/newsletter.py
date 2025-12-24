@@ -52,6 +52,39 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/newsletter", tags=["newsletter"])
 
 
+def get_client_ip(request: Request) -> str:
+    """
+    Extrai o IP real do cliente considerando proxies reversos.
+
+    Ordem de prioridade:
+    1. X-Forwarded-For (primeiro IP da lista)
+    2. X-Real-IP
+    3. request.client.host
+
+    Args:
+        request: Request do FastAPI
+
+    Returns:
+        IP do cliente como string
+    """
+    # X-Forwarded-For pode ter multiplos IPs separados por virgula
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        # Pega o primeiro IP (cliente original)
+        return forwarded_for.split(",")[0].strip()
+
+    # X-Real-IP é mais simples
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+
+    # Fallback para o host do cliente direto
+    if request.client:
+        return request.client.host
+
+    return "unknown"
+
+
 # =============================================================================
 # Endpoints Públicos (Subscribe/Unsubscribe)
 # =============================================================================
@@ -165,11 +198,13 @@ async def subscribe(
                 needs_verification=not existing.email_verified,
             )
 
-    # Nova inscrição - captura origem da inscrição
+    # Nova inscrição - captura origem da inscrição e IP (LGPD)
+    client_ip = get_client_ip(request)
     signup_data = {
         "email": data.email,
         "name": data.name,
         "source": request.headers.get("referer", "direct"),
+        "signup_ip": client_ip,  # LGPD: IP da inscricao
         "email_verified": False,  # Aguardando verificação
     }
 
@@ -251,12 +286,17 @@ async def verify_email(token: str, repo: NewsletterRepo, request: Request):
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    # Marca email como verificado
-    signup.verify_email()
+    # Marca email como verificado e registra IP do consentimento (LGPD)
+    consent_ip = get_client_ip(request)
+    signup.verify_email(consent_ip=consent_ip)
     await repo.db.commit()
     await repo.db.refresh(signup)
 
-    logger.info("Email verificado com sucesso: %s", signup.email)
+    logger.info(
+        "Email verificado com sucesso: %s (IP consentimento: %s)",
+        signup.email,
+        consent_ip,
+    )
 
     # Redireciona para página de confirmação
     return RedirectResponse(
@@ -266,7 +306,7 @@ async def verify_email(token: str, repo: NewsletterRepo, request: Request):
 
 
 @router.get("/verify-status/{token}", response_model=NewsletterVerifyResponse)
-async def verify_email_api(token: str, repo: NewsletterRepo):
+async def verify_email_api(token: str, repo: NewsletterRepo, request: Request):
     """
     Verifica email via API (retorna JSON em vez de redirect).
 
@@ -275,6 +315,7 @@ async def verify_email_api(token: str, repo: NewsletterRepo):
     Args:
         token: Token de verificação enviado por email
         repo: Repositório de newsletter (injetado automaticamente)
+        request: Request do FastAPI (para capturar IP LGPD)
 
     Returns:
         NewsletterVerifyResponse com status da verificação
@@ -295,8 +336,9 @@ async def verify_email_api(token: str, repo: NewsletterRepo):
             verified=False,
         )
 
-    # Marca email como verificado
-    signup.verify_email()
+    # Marca email como verificado e registra IP do consentimento (LGPD)
+    consent_ip = get_client_ip(request)
+    signup.verify_email(consent_ip=consent_ip)
     await repo.db.commit()
     await repo.db.refresh(signup)
 

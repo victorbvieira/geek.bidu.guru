@@ -20,23 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =============================================================================
-// Newsletter Form (placeholder)
+// Newsletter Form
 // =============================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    const newsletterForm = document.querySelector('.newsletter-form');
-
-    if (newsletterForm) {
-        newsletterForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const email = newsletterForm.querySelector('input[type="email"]').value;
-
-            // TODO: Implementar integracao com backend
-            console.log('Newsletter signup:', email);
-            alert('Em breve voce recebera nossas novidades!');
-        });
-    }
-});
+// NOTA: O handler do formulario de newsletter foi movido para templates/home.html
+// onde ha uma implementacao completa com AJAX e modal animado.
+// Este bloco foi removido para evitar conflito de event listeners.
 
 // =============================================================================
 // Smooth Scroll para links internos

@@ -240,9 +240,75 @@
     </div>
 </section>
 
+<!-- Modal de Sucesso da Newsletter -->
+<div id="newsletter-modal" class="newsletter-modal">
+    <div class="newsletter-modal-content">
+        <button class="newsletter-modal-close" onclick="closeNewsletterModal()">&times;</button>
+        <div class="newsletter-modal-icon">
+            <span class="modal-emoji" id="modal-emoji">🎮</span>
+            <div class="modal-sparkles">
+                <span class="sparkle">✨</span>
+                <span class="sparkle">⭐</span>
+                <span class="sparkle">✨</span>
+            </div>
+        </div>
+        <h3 class="newsletter-modal-title" id="modal-title">Level Up!</h3>
+        <p class="newsletter-modal-message" id="modal-message">Quase la! Verifique seu email para confirmar a inscricao.</p>
+        <div class="newsletter-modal-footer" id="modal-hint">
+            <span>📬 Confira sua caixa de entrada (e spam!)</span>
+        </div>
+        <button class="btn btn-primary newsletter-modal-btn" onclick="closeNewsletterModal()">Entendido!</button>
+    </div>
+</div>
+
 <script>
 // Seta timestamp quando pagina carrega (anti-spam)
 document.getElementById('form-timestamp').value = Math.floor(Date.now() / 1000);
+
+// Funcoes do modal
+function showNewsletterModal(message, isSuccess) {
+    const modal = document.getElementById('newsletter-modal');
+    const messageEl = document.getElementById('modal-message');
+    const titleEl = document.getElementById('modal-title');
+    const iconEl = document.getElementById('modal-emoji');
+    const hintEl = document.getElementById('modal-hint');
+
+    if (isSuccess) {
+        titleEl.textContent = 'Level Up!';
+        iconEl.textContent = '🎮';
+        hintEl.style.display = 'block';
+        modal.classList.remove('error');
+    } else {
+        titleEl.textContent = 'Oops!';
+        iconEl.textContent = '😅';
+        hintEl.style.display = 'none';
+        modal.classList.add('error');
+    }
+
+    messageEl.textContent = message;
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNewsletterModal() {
+    const modal = document.getElementById('newsletter-modal');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Fecha modal ao clicar fora
+document.getElementById('newsletter-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeNewsletterModal();
+    }
+});
+
+// Fecha modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeNewsletterModal();
+    }
+});
 
 // Submit via AJAX para melhor UX
 document.getElementById('newsletter-form').addEventListener('submit', async function(e) {
@@ -278,18 +344,16 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
         const result = await response.json();
 
         if (response.ok) {
-            feedback.textContent = result.message;
-            feedback.className = 'newsletter-feedback success';
             form.reset();
             // Reseta timestamp para proximo envio
             document.getElementById('form-timestamp').value = Math.floor(Date.now() / 1000);
+            // Mostra modal de sucesso
+            showNewsletterModal(result.message, true);
         } else {
-            feedback.textContent = result.detail || 'Erro ao inscrever. Tente novamente.';
-            feedback.className = 'newsletter-feedback error';
+            showNewsletterModal(result.detail || 'Erro ao inscrever. Tente novamente.', false);
         }
     } catch (error) {
-        feedback.textContent = 'Erro de conexao. Tente novamente.';
-        feedback.className = 'newsletter-feedback error';
+        showNewsletterModal('Erro de conexao. Tente novamente.', false);
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
@@ -555,6 +619,183 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
     .newsletter-form input[type="email"],
     .newsletter-form button {
         width: 100%;
+    }
+}
+
+/* Newsletter Modal - Feedback Animado */
+.newsletter-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.newsletter-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.newsletter-modal-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    transform: scale(0.8) translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.newsletter-modal.show .newsletter-modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.newsletter-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.newsletter-modal-close:hover {
+    color: white;
+}
+
+.newsletter-modal-icon {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.modal-emoji {
+    font-size: 4rem;
+    display: block;
+    animation: bounce 0.6s ease-out;
+}
+
+.modal-sparkles {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.sparkle {
+    position: absolute;
+    font-size: 1.2rem;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.sparkle:nth-child(1) {
+    top: 0;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.sparkle:nth-child(2) {
+    top: 10%;
+    right: 15%;
+    animation-delay: 0.3s;
+}
+
+.sparkle:nth-child(3) {
+    bottom: 20%;
+    left: 10%;
+    animation-delay: 0.6s;
+}
+
+@keyframes bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+.newsletter-modal-title {
+    color: #a78bfa;
+    font-size: 1.75rem;
+    margin: 0 0 0.75rem 0;
+    font-weight: 700;
+}
+
+.newsletter-modal.error .newsletter-modal-title {
+    color: #f87171;
+}
+
+.newsletter-modal-message {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0 0 1.5rem 0;
+}
+
+.newsletter-modal-footer {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.newsletter-modal-footer span {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.newsletter-modal-btn {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    color: white;
+    padding: 0.875rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.newsletter-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+@media (max-width: 480px) {
+    .newsletter-modal-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .modal-emoji {
+        font-size: 3rem;
+    }
+
+    .newsletter-modal-title {
+        font-size: 1.5rem;
     }
 }
 </style>

@@ -52,6 +52,14 @@
                     </a>
                 </div>
 
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">Marketing</div>
+                    <a href="/admin/newsletter" class="admin-nav-item {% if active_page == 'newsletter' %}active{% endif %}">
+                        <span class="icon">📧</span>
+                        <span>Newsletter</span>
+                    </a>
+                </div>
+
                 {% if current_user and current_user.role.value == 'admin' %}
                 <div class="admin-nav-section">
                     <div class="admin-nav-title">Administracao</div>

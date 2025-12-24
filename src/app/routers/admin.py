@@ -22,6 +22,7 @@ from app.api.deps import (
     AIConfigRepo,
     CategoryRepo,
     DBSession,
+    NewsletterRepo,
     OccasionRepo,
     Pagination,
     PostRepo,
@@ -1205,5 +1206,368 @@ async def update_integration(
     # Redireciona para a lista com mensagem de sucesso
     return RedirectResponse(
         url="/admin/integrations",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+# -----------------------------------------------------------------------------
+# Newsletter (gerenciamento de inscritos)
+# -----------------------------------------------------------------------------
+
+
+@router.get("/newsletter", response_class=HTMLResponse)
+async def list_newsletter(
+    request: Request,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=100),
+    q: Optional[str] = None,
+    status_filter: Optional[str] = Query("verified", alias="status"),
+):
+    """
+    Listagem de inscritos na newsletter com filtros.
+
+    Filtros disponiveis:
+    - q: Busca por email
+    - status: verified (padrao), pending, unsubscribed, ou vazio para todos
+    """
+    skip = (page - 1) * per_page
+
+    # Busca inscritos com filtros
+    from sqlalchemy import select, and_, or_
+    from app.models import NewsletterSignup
+
+    query = select(NewsletterSignup)
+
+    # Filtro de busca por email
+    if q:
+        query = query.where(NewsletterSignup.email.ilike(f"%{q}%"))
+
+    # Filtro de status (verified é o padrao)
+    if status_filter == "verified":
+        query = query.where(
+            and_(
+                NewsletterSignup.is_active == True,  # noqa: E712
+                NewsletterSignup.email_verified == True,  # noqa: E712
+            )
+        )
+    elif status_filter == "pending":
+        query = query.where(
+            and_(
+                NewsletterSignup.is_active == True,  # noqa: E712
+                NewsletterSignup.email_verified == False,  # noqa: E712
+            )
+        )
+    elif status_filter == "unsubscribed":
+        query = query.where(NewsletterSignup.is_active == False)  # noqa: E712
+
+    # Conta total
+    count_query = select(func.count()).select_from(query.subquery())
+    total_result = await repo.db.execute(count_query)
+    total = total_result.scalar_one()
+
+    # Aplica ordenacao e paginacao
+    query = (
+        query
+        .order_by(NewsletterSignup.subscribed_at.desc())
+        .offset(skip)
+        .limit(per_page)
+    )
+
+    result = await repo.db.execute(query)
+    subscribers = list(result.scalars().all())
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    # Estatisticas
+    stats = await repo.get_stats()
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/newsletter/list.html",
+        context={
+            "title": "Newsletter - Admin",
+            "current_user": current_user,
+            "subscribers": subscribers,
+            "stats": stats,
+            "active_page": "newsletter",
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total,
+                "total_pages": total_pages,
+            },
+        },
+    )
+
+
+@router.get("/newsletter/send", response_class=HTMLResponse)
+async def send_newsletter_form(
+    request: Request,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+    selected_ids: list[str] = Query(None),
+):
+    """
+    Formulario para envio de email em massa.
+
+    Pode receber IDs pre-selecionados via query params.
+    """
+    from uuid import UUID
+
+    # Conta verificados
+    total_verified = await repo.count_verified()
+
+    # Se tem IDs selecionados, busca os inscritos
+    selected_subscribers = []
+    if selected_ids:
+        for sid in selected_ids:
+            try:
+                subscriber = await repo.get(UUID(sid))
+                if subscriber and subscriber.is_active and subscriber.email_verified:
+                    selected_subscribers.append(subscriber)
+            except ValueError:
+                pass
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/newsletter/send.html",
+        context={
+            "title": "Enviar Email - Admin",
+            "current_user": current_user,
+            "total_verified": total_verified,
+            "selected_ids": selected_ids or [],
+            "selected_subscribers": selected_subscribers,
+            "current_year": datetime.now().year,
+            "active_page": "newsletter",
+        },
+    )
+
+
+@router.post("/newsletter/send", response_class=HTMLResponse)
+async def send_newsletter_submit(
+    request: Request,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+    subject: str = Form(...),
+    heading: str = Form(...),
+    content: str = Form(""),
+    preview_text: str = Form(None),
+    cta_text: str = Form(None),
+    cta_url: str = Form(None),
+    recipient_type: str = Form("all"),
+    selected_ids: list[str] = Form(None),
+    test_email: str = Form(None),
+    is_test: str = Form(None),
+):
+    """
+    Processa envio de email em massa.
+
+    Modos de envio:
+    - is_test=true: Envia apenas para test_email
+    - recipient_type=all: Envia para todos os verificados
+    - recipient_type=selected: Envia para IDs selecionados
+    """
+    from uuid import UUID
+    from app.services.email import email_service
+
+    # Determina destinatarios
+    recipients = []
+
+    if is_test == "true" and test_email:
+        # Modo teste: apenas um email
+        recipients = [test_email]
+    elif recipient_type == "all":
+        # Todos os verificados
+        verified = await repo.get_active_subscribers(limit=10000)
+        recipients = [s.email for s in verified]
+    elif recipient_type == "selected" and selected_ids:
+        # Apenas selecionados
+        for sid in selected_ids:
+            try:
+                subscriber = await repo.get(UUID(sid))
+                if subscriber and subscriber.is_active and subscriber.email_verified:
+                    recipients.append(subscriber.email)
+            except ValueError:
+                pass
+
+    if not recipients:
+        return templates.TemplateResponse(
+            request=request,
+            name="admin/newsletter/send.html",
+            context={
+                "title": "Enviar Email - Admin",
+                "current_user": current_user,
+                "total_verified": await repo.count_verified(),
+                "selected_ids": [],
+                "selected_subscribers": [],
+                "current_year": datetime.now().year,
+                "active_page": "newsletter",
+                "error": "Nenhum destinatario encontrado.",
+                "subject": subject,
+                "heading": heading,
+                "content": content,
+                "preview_text": preview_text,
+                "cta_text": cta_text,
+                "cta_url": cta_url,
+            },
+        )
+
+    # Envia emails
+    success_count = 0
+    error_count = 0
+
+    for email_addr in recipients:
+        try:
+            sent = await email_service.send_newsletter_email(
+                to_email=email_addr,
+                subject=subject,
+                heading=heading,
+                content=content,
+                preview_text=preview_text,
+                cta_text=cta_text,
+                cta_url=cta_url,
+            )
+            if sent:
+                success_count += 1
+            else:
+                error_count += 1
+        except Exception as e:
+            error_count += 1
+
+    # Mensagem de resultado
+    if is_test == "true":
+        message = f"Email de teste enviado para {test_email}!"
+    else:
+        message = f"Enviado com sucesso para {success_count} destinatario(s)."
+        if error_count > 0:
+            message += f" {error_count} erro(s)."
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/newsletter/send.html",
+        context={
+            "title": "Enviar Email - Admin",
+            "current_user": current_user,
+            "total_verified": await repo.count_verified(),
+            "selected_ids": [],
+            "selected_subscribers": [],
+            "current_year": datetime.now().year,
+            "active_page": "newsletter",
+            "success": message,
+        },
+    )
+
+
+@router.post("/newsletter/{subscriber_id}/resend")
+async def resend_verification(
+    subscriber_id: UUID,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+):
+    """Reenvia email de verificacao para um inscrito."""
+    from app.config import settings
+    from app.services.email import email_service
+
+    subscriber = await repo.get(subscriber_id)
+    if not subscriber:
+        raise HTTPException(status_code=404, detail="Inscrito nao encontrado")
+
+    if subscriber.email_verified:
+        return RedirectResponse(
+            url="/admin/newsletter",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    # Gera novo token
+    token = subscriber.generate_verification_token()
+    await repo.db.commit()
+
+    # Envia email
+    verification_url = f"{settings.app_url}/api/v1/newsletter/verify/{token}"
+    await email_service.send_verification_email(
+        to_email=subscriber.email,
+        verification_url=verification_url,
+    )
+
+    return RedirectResponse(
+        url="/admin/newsletter",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/newsletter/{subscriber_id}/unsubscribe")
+async def admin_unsubscribe(
+    subscriber_id: UUID,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+):
+    """Desinscreve um inscrito via admin."""
+    subscriber = await repo.get(subscriber_id)
+    if not subscriber:
+        raise HTTPException(status_code=404, detail="Inscrito nao encontrado")
+
+    await repo.unsubscribe(subscriber.email)
+
+    return RedirectResponse(
+        url="/admin/newsletter",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/newsletter/{subscriber_id}/resubscribe")
+async def admin_resubscribe(
+    subscriber_id: UUID,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+):
+    """Reinscreve um inscrito via admin."""
+    subscriber = await repo.get(subscriber_id)
+    if not subscriber:
+        raise HTTPException(status_code=404, detail="Inscrito nao encontrado")
+
+    await repo.resubscribe(subscriber.email)
+
+    return RedirectResponse(
+        url="/admin/newsletter",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/newsletter/bulk-action")
+async def bulk_action(
+    request: Request,
+    current_user: AdminUser,
+    repo: NewsletterRepo,
+    action: str = Form(...),
+    selected_ids: list[str] = Form(None),
+):
+    """Executa acao em massa nos inscritos selecionados."""
+    from uuid import UUID
+
+    if not selected_ids:
+        return RedirectResponse(
+            url="/admin/newsletter",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
+    for sid in selected_ids:
+        try:
+            subscriber = await repo.get(UUID(sid))
+            if not subscriber:
+                continue
+
+            if action == "unsubscribe":
+                await repo.unsubscribe(subscriber.email)
+            elif action == "delete":
+                await repo.db.delete(subscriber)
+        except ValueError:
+            pass
+
+    await repo.db.commit()
+
+    return RedirectResponse(
+        url="/admin/newsletter",
         status_code=status.HTTP_303_SEE_OTHER,
     )

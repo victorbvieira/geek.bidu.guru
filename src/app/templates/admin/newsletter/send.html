@@ -1,0 +1,414 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Enviar Email{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/newsletter">Newsletter</a>
+<span>/</span>
+<span class="current">Enviar Email</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Enviar Email para Newsletter</h1>
+    <p style="color: var(--admin-text-muted); margin-top: 0.5rem;">
+        Envie emails para todos os inscritos verificados ou selecione destinatarios especificos.
+    </p>
+</div>
+
+<form method="POST" action="/admin/newsletter/send" id="send-form">
+    <div class="admin-card" style="margin-bottom: 1.5rem;">
+        <div class="admin-card-header" style="padding: 1rem; border-bottom: 1px solid var(--admin-border);">
+            <h2 style="margin: 0; font-size: 1.125rem;">Destinatarios</h2>
+        </div>
+        <div class="admin-card-body" style="padding: 1.5rem;">
+            <div class="admin-form-group" style="margin-bottom: 1rem;">
+                <label class="admin-label">
+                    <input type="radio" name="recipient_type" value="all" checked onchange="toggleRecipientOptions()">
+                    Todos os inscritos verificados ({{ total_verified }} destinatarios)
+                </label>
+            </div>
+            <div class="admin-form-group" style="margin-bottom: 1rem;">
+                <label class="admin-label">
+                    <input type="radio" name="recipient_type" value="selected" onchange="toggleRecipientOptions()">
+                    Apenas selecionados
+                </label>
+            </div>
+
+            <div id="selected-recipients" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--admin-bg-muted); border-radius: 8px;">
+                {% if selected_ids %}
+                <p style="margin-bottom: 0.5rem; color: var(--admin-text-muted);">
+                    {{ selected_ids | length }} destinatario(s) selecionado(s):
+                </p>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    {% for subscriber in selected_subscribers %}
+                    <div style="padding: 0.25rem 0; font-size: 0.875rem;">
+                        <input type="checkbox" name="selected_ids" value="{{ subscriber.id }}" checked>
+                        {{ subscriber.email }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: var(--admin-text-muted);">
+                    Nenhum destinatario selecionado. <a href="/admin/newsletter" style="color: var(--admin-primary);">Selecione na lista</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-card" style="margin-bottom: 1.5rem;">
+        <div class="admin-card-header" style="padding: 1rem; border-bottom: 1px solid var(--admin-border);">
+            <h2 style="margin: 0; font-size: 1.125rem;">Conteudo do Email</h2>
+        </div>
+        <div class="admin-card-body" style="padding: 1.5rem;">
+            <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label class="admin-label" for="subject">Assunto *</label>
+                <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    class="admin-input"
+                    placeholder="Ex: Novidades da semana - geek.bidu.guru"
+                    required
+                    value="{{ subject or '' }}"
+                >
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label class="admin-label" for="preview_text">Texto de Preview (opcional)</label>
+                <input
+                    type="text"
+                    id="preview_text"
+                    name="preview_text"
+                    class="admin-input"
+                    placeholder="Texto que aparece ao lado do assunto na caixa de entrada"
+                    maxlength="150"
+                    value="{{ preview_text or '' }}"
+                >
+                <small style="color: var(--admin-text-muted);">Maximo 150 caracteres</small>
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label class="admin-label" for="heading">Titulo do Email *</label>
+                <input
+                    type="text"
+                    id="heading"
+                    name="heading"
+                    class="admin-input"
+                    placeholder="Ex: As melhores ofertas da semana!"
+                    required
+                    value="{{ heading or '' }}"
+                >
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label class="admin-label" for="content">Conteudo (Markdown)</label>
+                <textarea
+                    id="content"
+                    name="content"
+                    class="admin-textarea"
+                    rows="12"
+                    placeholder="Escreva o conteudo do email em Markdown...
+
+Exemplo:
+Oi!
+
+Confira as **novidades** desta semana:
+
+- [Produto 1](https://geek.bidu.guru/produto/1) - R$ 99,90
+- [Produto 2](https://geek.bidu.guru/produto/2) - R$ 149,90
+
+Nao perca essas ofertas incriveis!
+
+Abracos,
+Equipe geek.bidu.guru"
+                >{{ content or '' }}</textarea>
+                <small style="color: var(--admin-text-muted);">Suporta Markdown: **negrito**, *italico*, [links](url), listas, etc.</small>
+            </div>
+
+            <div class="admin-form-group" style="margin-bottom: 1.5rem;">
+                <label class="admin-label" for="cta_text">Texto do Botao (opcional)</label>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+                    <input
+                        type="text"
+                        id="cta_text"
+                        name="cta_text"
+                        class="admin-input"
+                        placeholder="Ex: Ver Ofertas"
+                        value="{{ cta_text or '' }}"
+                    >
+                    <input
+                        type="url"
+                        id="cta_url"
+                        name="cta_url"
+                        class="admin-input"
+                        placeholder="https://geek.bidu.guru/ofertas"
+                        value="{{ cta_url or '' }}"
+                    >
+                </div>
+                <small style="color: var(--admin-text-muted);">Adiciona um botao de acao no final do email</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-card" style="margin-bottom: 1.5rem;">
+        <div class="admin-card-header" style="padding: 1rem; border-bottom: 1px solid var(--admin-border);">
+            <h2 style="margin: 0; font-size: 1.125rem;">Preview</h2>
+        </div>
+        <div class="admin-card-body" style="padding: 0;">
+            <div id="email-preview" style="background: #f9fafb; padding: 2rem;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+                        <h1 style="color: white; margin: 0; font-size: 28px;">geek.bidu.guru</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Presentes Geek com Curadoria</p>
+                    </div>
+
+                    <!-- Content -->
+                    <div style="padding: 30px;">
+                        <h2 id="preview-heading" style="color: #1f2937; margin-top: 0;">Titulo do email</h2>
+                        <div id="preview-content" style="color: #4b5563; line-height: 1.6;">
+                            <p>O conteudo do email aparecera aqui...</p>
+                        </div>
+                        <div id="preview-cta" style="text-align: center; margin: 30px 0; display: none;">
+                            <a href="#" id="preview-cta-link" style="display: inline-block; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600;">
+                                Botao
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="text-align: center; padding: 20px; background: #f9fafb; color: #9ca3af; font-size: 12px;">
+                        <p>&copy; {{ current_year }} geek.bidu.guru - Todos os direitos reservados</p>
+                        <p style="margin-top: 8px;">
+                            <a href="#" style="color: #9ca3af; text-decoration: underline;">Cancelar inscricao</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-form-actions" style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <a href="/admin/newsletter" class="admin-btn admin-btn-secondary">Cancelar</a>
+        <button type="button" class="admin-btn admin-btn-secondary" onclick="sendTestEmail()">
+            Enviar Teste
+        </button>
+        <button type="submit" class="admin-btn admin-btn-primary" onclick="return confirmSend()">
+            Enviar para Destinatarios
+        </button>
+    </div>
+</form>
+
+<!-- Modal de teste -->
+<div id="test-modal" class="admin-modal" style="display: none;">
+    <div class="admin-modal-content" style="max-width: 400px;">
+        <div class="admin-modal-header">
+            <h3>Enviar Email de Teste</h3>
+            <button type="button" class="admin-modal-close" onclick="closeTestModal()">&times;</button>
+        </div>
+        <div class="admin-modal-body">
+            <div class="admin-form-group">
+                <label class="admin-label" for="test_email">Email para teste:</label>
+                <input
+                    type="email"
+                    id="test_email"
+                    class="admin-input"
+                    placeholder="seu@email.com"
+                    value="{{ current_user.email }}"
+                >
+            </div>
+        </div>
+        <div class="admin-modal-footer" style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" class="admin-btn admin-btn-secondary" onclick="closeTestModal()">Cancelar</button>
+            <button type="button" class="admin-btn admin-btn-primary" onclick="confirmSendTest()">Enviar Teste</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.admin-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    margin: 1rem;
+}
+
+.admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-modal-header h3 {
+    margin: 0;
+}
+
+.admin-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--admin-text-muted);
+}
+
+.admin-modal-body {
+    padding: 1.5rem;
+}
+
+.admin-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.875rem;
+    resize: vertical;
+}
+
+.admin-textarea:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Atualiza preview em tempo real
+function updatePreview() {
+    const heading = document.getElementById('heading').value || 'Titulo do email';
+    const content = document.getElementById('content').value || 'O conteudo do email aparecera aqui...';
+    const ctaText = document.getElementById('cta_text').value;
+    const ctaUrl = document.getElementById('cta_url').value;
+
+    document.getElementById('preview-heading').textContent = heading;
+
+    // Converte markdown basico para HTML
+    let htmlContent = content
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color: #6366f1;">$1</a>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+
+    // Envolve listas
+    htmlContent = htmlContent.replace(/(<li>.*<\/li>)+/g, '<ul style="margin: 1rem 0; padding-left: 1.5rem;">$&</ul>');
+
+    document.getElementById('preview-content').innerHTML = '<p>' + htmlContent + '</p>';
+
+    // CTA button
+    const ctaDiv = document.getElementById('preview-cta');
+    if (ctaText && ctaUrl) {
+        document.getElementById('preview-cta-link').textContent = ctaText;
+        document.getElementById('preview-cta-link').href = ctaUrl;
+        ctaDiv.style.display = 'block';
+    } else {
+        ctaDiv.style.display = 'none';
+    }
+}
+
+// Mostra/esconde opcoes de destinatarios
+function toggleRecipientOptions() {
+    const selectedDiv = document.getElementById('selected-recipients');
+    const isSelected = document.querySelector('input[name="recipient_type"][value="selected"]').checked;
+    selectedDiv.style.display = isSelected ? 'block' : 'none';
+}
+
+// Modal de teste
+function sendTestEmail() {
+    document.getElementById('test-modal').style.display = 'flex';
+}
+
+function closeTestModal() {
+    document.getElementById('test-modal').style.display = 'none';
+}
+
+function confirmSendTest() {
+    const testEmail = document.getElementById('test_email').value;
+    if (!testEmail) {
+        alert('Informe um email para teste');
+        return;
+    }
+
+    // Adiciona campo oculto com email de teste
+    const form = document.getElementById('send-form');
+    let testInput = document.getElementById('test_email_hidden');
+    if (!testInput) {
+        testInput = document.createElement('input');
+        testInput.type = 'hidden';
+        testInput.name = 'test_email';
+        testInput.id = 'test_email_hidden';
+        form.appendChild(testInput);
+    }
+    testInput.value = testEmail;
+
+    // Adiciona flag de teste
+    let testFlag = document.getElementById('is_test');
+    if (!testFlag) {
+        testFlag = document.createElement('input');
+        testFlag.type = 'hidden';
+        testFlag.name = 'is_test';
+        testFlag.id = 'is_test';
+        form.appendChild(testFlag);
+    }
+    testFlag.value = 'true';
+
+    closeTestModal();
+    form.submit();
+}
+
+function confirmSend() {
+    const recipientType = document.querySelector('input[name="recipient_type"]:checked').value;
+    let count = {{ total_verified }};
+
+    if (recipientType === 'selected') {
+        count = document.querySelectorAll('input[name="selected_ids"]:checked').length;
+        if (count === 0) {
+            alert('Selecione pelo menos um destinatario');
+            return false;
+        }
+    }
+
+    return confirm('Enviar email para ' + count + ' destinatario(s)?');
+}
+
+// Listeners
+document.getElementById('heading').addEventListener('input', updatePreview);
+document.getElementById('content').addEventListener('input', updatePreview);
+document.getElementById('cta_text').addEventListener('input', updatePreview);
+document.getElementById('cta_url').addEventListener('input', updatePreview);
+
+// Inicializa
+document.addEventListener('DOMContentLoaded', function() {
+    updatePreview();
+    toggleRecipientOptions();
+});
+</script>
+{% endblock %}

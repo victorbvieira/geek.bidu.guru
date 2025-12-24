@@ -1,0 +1,230 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Newsletter{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Newsletter</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/newsletter/send" class="admin-btn admin-btn-primary">
+    Enviar Email
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Gerenciar Newsletter</h1>
+</div>
+
+<!-- Estatisticas -->
+<div class="admin-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    <div class="admin-card" style="padding: 1rem; text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: var(--admin-primary);">{{ stats.total_subscribers }}</div>
+        <div style="color: var(--admin-text-muted); font-size: 0.875rem;">Total</div>
+    </div>
+    <div class="admin-card" style="padding: 1rem; text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #22c55e;">{{ stats.verified_subscribers }}</div>
+        <div style="color: var(--admin-text-muted); font-size: 0.875rem;">Verificados</div>
+    </div>
+    <div class="admin-card" style="padding: 1rem; text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">{{ stats.pending_verification }}</div>
+        <div style="color: var(--admin-text-muted); font-size: 0.875rem;">Pendentes</div>
+    </div>
+    <div class="admin-card" style="padding: 1rem; text-align: center;">
+        <div style="font-size: 2rem; font-weight: 700; color: #ef4444;">{{ stats.unsubscribed }}</div>
+        <div style="color: var(--admin-text-muted); font-size: 0.875rem;">Desinscritos</div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-filters" style="padding: 1rem; border-bottom: 1px solid var(--admin-border);">
+        <form method="GET" action="/admin/newsletter" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <input
+                type="text"
+                name="q"
+                placeholder="Buscar por email..."
+                value="{{ request.query_params.get('q', '') }}"
+                class="admin-input"
+                style="flex: 1; min-width: 200px;"
+            >
+            <select name="status" class="admin-select" style="width: auto; min-width: 150px;">
+                <option value="">Todos os status</option>
+                <option value="verified" {{ 'selected' if request.query_params.get('status') == 'verified' else '' }}>Verificados</option>
+                <option value="pending" {{ 'selected' if request.query_params.get('status') == 'pending' else '' }}>Pendentes</option>
+                <option value="unsubscribed" {{ 'selected' if request.query_params.get('status') == 'unsubscribed' else '' }}>Desinscritos</option>
+            </select>
+            <button type="submit" class="admin-btn admin-btn-secondary">Filtrar</button>
+        </form>
+    </div>
+
+    <form id="bulk-form" method="POST" action="/admin/newsletter/bulk-action">
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)">
+                        </th>
+                        <th>Email</th>
+                        <th>Origem</th>
+                        <th>Inscrito em</th>
+                        <th>Verificado em</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subscriber in subscribers %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="selected_ids" value="{{ subscriber.id }}" class="subscriber-checkbox">
+                        </td>
+                        <td>
+                            <a href="mailto:{{ subscriber.email }}" style="color: var(--admin-primary);" title="IP inscricao: {{ subscriber.signup_ip or 'N/A' }}">
+                                {{ subscriber.email }}
+                            </a>
+                        </td>
+                        <td style="color: var(--admin-text-muted); font-size: 0.875rem;">
+                            {{ subscriber.source | truncate(30) if subscriber.source else 'Direto' }}
+                        </td>
+                        <td style="color: var(--admin-text-muted);">
+                            {{ subscriber.subscribed_at.strftime('%d/%m/%Y %H:%M') }}
+                        </td>
+                        <td style="color: var(--admin-text-muted);" title="IP consentimento: {{ subscriber.consent_ip or 'N/A' }}">
+                            {{ subscriber.verified_at.strftime('%d/%m/%Y %H:%M') if subscriber.verified_at else '-' }}
+                        </td>
+                        <td>
+                            {% if not subscriber.is_active %}
+                            <span class="admin-badge admin-badge-danger">Desinscrito</span>
+                            {% elif subscriber.email_verified %}
+                            <span class="admin-badge admin-badge-success">Verificado</span>
+                            {% else %}
+                            <span class="admin-badge admin-badge-warning">Pendente</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions">
+                            {% if subscriber.is_active and not subscriber.email_verified %}
+                            <form method="POST" action="/admin/newsletter/{{ subscriber.id }}/resend" style="display: inline;">
+                                <button type="submit" class="admin-btn admin-btn-sm admin-btn-secondary" title="Reenviar verificacao">
+                                    Reenviar
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% if subscriber.is_active %}
+                            <form method="POST" action="/admin/newsletter/{{ subscriber.id }}/unsubscribe" style="display: inline;" onsubmit="return confirm('Desinscrever {{ subscriber.email }}?')">
+                                <button type="submit" class="admin-btn admin-btn-sm admin-btn-danger" title="Desinscrever">
+                                    Desinscrever
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="/admin/newsletter/{{ subscriber.id }}/resubscribe" style="display: inline;">
+                                <button type="submit" class="admin-btn admin-btn-sm admin-btn-success" title="Reinscrever">
+                                    Reinscrever
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                            Nenhum inscrito encontrado com este filtro.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Acoes em massa -->
+        <div class="admin-bulk-actions" style="display: flex; gap: 1rem; padding: 1rem; border-top: 1px solid var(--admin-border); align-items: center;">
+            <span style="color: var(--admin-text-muted);">Com selecionados:</span>
+            <select name="action" class="admin-select" style="width: auto;">
+                <option value="">Escolha uma acao...</option>
+                <option value="send_email">Enviar email</option>
+                <option value="unsubscribe">Desinscrever</option>
+                <option value="delete">Excluir permanentemente</option>
+            </select>
+            <button type="submit" class="admin-btn admin-btn-secondary" onclick="return confirmBulkAction()">
+                Aplicar
+            </button>
+            <span id="selected-count" style="color: var(--admin-text-muted); margin-left: auto;">
+                0 selecionados
+            </span>
+        </div>
+    </form>
+
+    {% if pagination and pagination.total_pages > 1 %}
+    <div class="admin-pagination">
+        {% if pagination.page > 1 %}
+        <a href="?page={{ pagination.page - 1 }}&q={{ request.query_params.get('q', '') }}&status={{ request.query_params.get('status', '') }}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        {% endif %}
+
+        <span style="color: var(--admin-text-muted);">
+            Pagina {{ pagination.page }} de {{ pagination.total_pages }} ({{ pagination.total }} inscritos)
+        </span>
+
+        {% if pagination.page < pagination.total_pages %}
+        <a href="?page={{ pagination.page + 1 }}&q={{ request.query_params.get('q', '') }}&status={{ request.query_params.get('status', '') }}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.subscriber-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.subscriber-checkbox:checked').length;
+    document.getElementById('selected-count').textContent = checked + ' selecionados';
+}
+
+function confirmBulkAction() {
+    const action = document.querySelector('select[name="action"]').value;
+    const checked = document.querySelectorAll('.subscriber-checkbox:checked').length;
+
+    if (!action) {
+        alert('Selecione uma acao');
+        return false;
+    }
+
+    if (checked === 0) {
+        alert('Selecione pelo menos um inscrito');
+        return false;
+    }
+
+    if (action === 'delete') {
+        return confirm('Excluir permanentemente ' + checked + ' inscrito(s)? Esta acao nao pode ser desfeita.');
+    }
+
+    if (action === 'unsubscribe') {
+        return confirm('Desinscrever ' + checked + ' inscrito(s)?');
+    }
+
+    if (action === 'send_email') {
+        // Redireciona para pagina de envio com IDs selecionados
+        const form = document.getElementById('bulk-form');
+        form.action = '/admin/newsletter/send';
+        form.method = 'GET';
+        return true;
+    }
+
+    return true;
+}
+
+// Atualiza contagem ao clicar nos checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.subscriber-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSelectedCount);
+    });
+});
+</script>
+{% endblock %}
