@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="error-page">
+    <div class="container">
+        <div class="error-card">
+            <div class="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+
+            <h1>{{ error_title | default("Link Invalido") }}</h1>
+
+            <p class="error-message">
+                {{ error_message | default("O link que voce acessou e invalido ou ja foi utilizado.") }}
+            </p>
+
+            {% if error_type == "expired" %}
+            <div class="error-details">
+                <h2>O que aconteceu?</h2>
+                <p>O link de verificacao expirou. Links de verificacao sao validos por {{ expire_hours | default(48) }} horas por motivos de seguranca.</p>
+            </div>
+            {% elif error_type == "already_verified" %}
+            <div class="error-details">
+                <h2>Tudo certo!</h2>
+                <p>Seu email ja foi verificado anteriormente. Voce ja esta inscrito na nossa newsletter e vai receber nossas novidades.</p>
+            </div>
+            {% elif error_type == "invalid" %}
+            <div class="error-details">
+                <h2>O que aconteceu?</h2>
+                <p>Este link de verificacao nao existe ou ja foi utilizado. Cada link so pode ser usado uma vez.</p>
+            </div>
+            {% endif %}
+
+            <div class="error-cta">
+                {% if error_type == "expired" or error_type == "invalid" %}
+                <a href="/" class="btn btn-primary">Inscrever-se Novamente</a>
+                {% else %}
+                <a href="/" class="btn btn-primary">Explorar Presentes</a>
+                {% endif %}
+                <a href="/blog" class="btn btn-secondary">Ver Blog</a>
+            </div>
+
+            <p class="error-note">
+                Se precisar de ajuda, entre em contato pelo email <a href="mailto:contato-geek@bidu.guru">contato-geek@bidu.guru</a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.error-card {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.error-icon {
+    color: #ef4444;
+    margin-bottom: 1.5rem;
+}
+
+.error-icon svg {
+    width: 80px;
+    height: 80px;
+}
+
+.error-card h1 {
+    font-size: 2rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    font-size: 1.125rem;
+    color: #4b5563;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.error-details {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.error-details h2 {
+    font-size: 1.125rem;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
+}
+
+.error-details p {
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.error-cta {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.error-cta .btn {
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.error-cta .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.error-cta .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+}
+
+.error-cta .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.error-note {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.error-note a {
+    color: #6366f1;
+    text-decoration: none;
+}
+
+.error-note a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .error-card {
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+
+    .error-card h1 {
+        font-size: 1.5rem;
+    }
+
+    .error-cta {
+        flex-direction: column;
+    }
+
+    .error-cta .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

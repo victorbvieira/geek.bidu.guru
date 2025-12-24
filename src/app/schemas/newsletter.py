@@ -24,10 +24,23 @@ class NewsletterCreate(BaseSchema):
 
 
 class NewsletterSubscribe(BaseSchema):
-    """Schema simplificado para formulario publico."""
+    """Schema simplificado para formulario publico com campos anti-spam."""
 
     email: EmailStr = Field(..., description="Email do inscrito")
     name: str | None = Field(None, max_length=200, description="Nome (opcional)")
+
+    # Campos anti-spam (opcionais para compatibilidade)
+    # Honeypot: campo invisivel que bots preenchem
+    website: str | None = Field(
+        None,
+        max_length=100,
+        description="Honeypot - deve estar vazio (campo invisivel)",
+    )
+    # Timestamp de quando o formulario foi carregado
+    ts: str | None = Field(
+        None,
+        description="Timestamp anti-spam",
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -54,7 +67,9 @@ class NewsletterResponse(IDSchema):
     name: str | None
     source: str | None
     is_active: bool
+    email_verified: bool
     subscribed_at: datetime
+    verified_at: datetime | None
     unsubscribed_at: datetime | None
 
 
@@ -65,6 +80,7 @@ class NewsletterBrief(BaseSchema):
     email: EmailStr
     name: str | None
     is_active: bool
+    email_verified: bool
     subscribed_at: datetime
 
 
@@ -73,6 +89,15 @@ class NewsletterPublicResponse(BaseSchema):
 
     message: str = "Inscricao realizada com sucesso!"
     email: EmailStr
+    needs_verification: bool = True
+
+
+class NewsletterVerifyResponse(BaseSchema):
+    """Resposta apos verificacao de email."""
+
+    message: str
+    email: EmailStr
+    verified: bool
 
 
 # -----------------------------------------------------------------------------
@@ -85,6 +110,8 @@ class NewsletterStats(BaseSchema):
 
     total_subscribers: int
     active_subscribers: int
+    verified_subscribers: int
+    pending_verification: int
     unsubscribed: int
     subscriptions_today: int
     subscriptions_week: int

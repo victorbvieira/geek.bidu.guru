@@ -228,12 +228,74 @@
     <div class="container">
         <h2>Fique por dentro!</h2>
         <p>Receba as melhores ideias de presentes geek toda semana.</p>
-        <form class="newsletter-form" action="/api/v1/newsletter" method="POST">
+        <form class="newsletter-form" id="newsletter-form">
             <input type="email" name="email" placeholder="Seu melhor e-mail" required>
+            <!-- Honeypot anti-spam (invisivel para usuarios) -->
+            <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off">
+            <!-- Timestamp anti-spam -->
+            <input type="hidden" name="ts" id="form-timestamp">
             <button type="submit" class="btn btn-primary">Inscrever</button>
         </form>
+        <p class="newsletter-feedback" id="newsletter-feedback"></p>
     </div>
 </section>
+
+<script>
+// Seta timestamp quando pagina carrega (anti-spam)
+document.getElementById('form-timestamp').value = Math.floor(Date.now() / 1000);
+
+// Submit via AJAX para melhor UX
+document.getElementById('newsletter-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const feedback = document.getElementById('newsletter-feedback');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+
+    // Desabilita botao durante envio
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+    feedback.textContent = '';
+    feedback.className = 'newsletter-feedback';
+
+    try {
+        const formData = new FormData(form);
+        const data = {
+            email: formData.get('email'),
+            website: formData.get('website'),
+            ts: formData.get('ts')
+        };
+
+        const response = await fetch('/api/v1/newsletter/subscribe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            feedback.textContent = result.message;
+            feedback.className = 'newsletter-feedback success';
+            form.reset();
+            // Reseta timestamp para proximo envio
+            document.getElementById('form-timestamp').value = Math.floor(Date.now() / 1000);
+        } else {
+            feedback.textContent = result.detail || 'Erro ao inscrever. Tente novamente.';
+            feedback.className = 'newsletter-feedback error';
+        }
+    } catch (error) {
+        feedback.textContent = 'Erro de conexao. Tente novamente.';
+        feedback.className = 'newsletter-feedback error';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+});
+</script>
 {% endblock %}
 
 {% block extra_css %}
@@ -417,6 +479,82 @@
     .section-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+/* Newsletter form */
+.newsletter {
+    padding: 3rem 0;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    text-align: center;
+}
+
+.newsletter h2 {
+    margin-bottom: 0.5rem;
+}
+
+.newsletter p {
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.newsletter-form {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 500px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.newsletter-form input[type="email"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.875rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.newsletter-form button {
+    padding: 0.875rem 2rem;
+    white-space: nowrap;
+}
+
+/* Honeypot - invisivel para usuarios */
+.hp-field {
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Feedback da inscricao */
+.newsletter-feedback {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    min-height: 1.4em;
+}
+
+.newsletter-feedback.success {
+    color: #a7f3d0;
+}
+
+.newsletter-feedback.error {
+    color: #fecaca;
+}
+
+@media (max-width: 480px) {
+    .newsletter-form {
+        flex-direction: column;
+    }
+
+    .newsletter-form input[type="email"],
+    .newsletter-form button {
+        width: 100%;
     }
 }
 </style>

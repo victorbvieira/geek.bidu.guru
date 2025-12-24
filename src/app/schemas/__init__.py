@@ -112,6 +112,7 @@ from app.schemas.newsletter import (
     NewsletterStats,
     NewsletterSubscribe,
     NewsletterUpdate,
+    NewsletterVerifyResponse,
 )
 
 # AI Config
@@ -216,6 +217,7 @@ __all__ = [
     "NewsletterResponse",
     "NewsletterBrief",
     "NewsletterPublicResponse",
+    "NewsletterVerifyResponse",
     "NewsletterStats",
     "NewsletterBySource",
     "NewsletterByPeriod",

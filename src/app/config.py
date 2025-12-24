@@ -103,6 +103,21 @@ class Settings(BaseSettings):
     llm_cache_ttl: int = 60
 
     # -------------------------------------------------------------------------
+    # Amazon SES (Email)
+    # -------------------------------------------------------------------------
+    # Credenciais AWS para envio de emails via SES
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_region: str = "us-west-2"  # Regiao do SES
+
+    # Configuracoes de email
+    email_from_address: str = "contato-geek@bidu.guru"
+    email_from_name: str = "geek.bidu.guru"
+
+    # Token de validacao expira em X horas (padrao: 48h)
+    email_verification_expire_hours: int = 48
+
+    # -------------------------------------------------------------------------
     # Propriedades computadas
     # -------------------------------------------------------------------------
     @property

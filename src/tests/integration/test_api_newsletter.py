@@ -2,21 +2,24 @@
 Testes de integração para endpoints de Newsletter.
 
 Testa o fluxo completo HTTP -> API -> Banco de dados.
+Inclui testes para double opt-in (verificacao de email).
 """
 
 import pytest
+
+from app.models.newsletter import generate_verification_token
 
 
 class TestNewsletterEndpoints:
     """Testes para /api/v1/newsletter."""
 
     # -------------------------------------------------------------------------
-    # POST /newsletter/subscribe - Inscrever
+    # POST /newsletter/subscribe - Inscrever (com double opt-in)
     # -------------------------------------------------------------------------
 
     @pytest.mark.asyncio
     async def test_subscribe_success(self, client):
-        """Deve inscrever um novo email na newsletter."""
+        """Deve inscrever um novo email e solicitar verificacao."""
         # Arrange
         payload = {
             "email": "novo@example.com",
@@ -30,14 +33,27 @@ class TestNewsletterEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data["email"] == "novo@example.com"
-        assert "sucesso" in data["message"].lower()
+        # Com double opt-in, mensagem indica necessidade de verificacao
+        assert "verifique" in data["message"].lower() or "sucesso" in data["message"].lower()
+        assert data["needs_verification"] is True
 
     @pytest.mark.asyncio
-    async def test_subscribe_already_subscribed(self, client):
-        """Deve retornar mensagem informativa para email já inscrito."""
-        # Arrange - Inscreve primeiro
-        payload = {"email": "duplicado@example.com"}
+    async def test_subscribe_already_subscribed_and_verified(self, client, db_session):
+        """Deve retornar mensagem informativa para email ja verificado."""
+        # Arrange - Inscreve e verifica manualmente (simula clique no email)
+        payload = {"email": "verificado@example.com"}
         await client.post("/api/v1/newsletter/subscribe", json=payload)
+
+        # Verifica diretamente no banco (simula clique no link)
+        from app.models import NewsletterSignup
+        from sqlalchemy import select
+
+        result = await db_session.execute(
+            select(NewsletterSignup).where(NewsletterSignup.email == "verificado@example.com")
+        )
+        signup = result.scalar_one()
+        signup.verify_email()
+        await db_session.commit()
 
         # Act - Tenta inscrever novamente
         response = await client.post("/api/v1/newsletter/subscribe", json=payload)
@@ -46,10 +62,27 @@ class TestNewsletterEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert "ja esta inscrito" in data["message"].lower()
+        assert data["needs_verification"] is False
+
+    @pytest.mark.asyncio
+    async def test_subscribe_pending_verification_resends(self, client):
+        """Deve reenviar email de verificacao para inscricao pendente."""
+        # Arrange - Inscreve primeiro (pendente verificacao)
+        payload = {"email": "pendente@example.com"}
+        await client.post("/api/v1/newsletter/subscribe", json=payload)
+
+        # Act - Tenta inscrever novamente
+        response = await client.post("/api/v1/newsletter/subscribe", json=payload)
+
+        # Assert
+        assert response.status_code == 200
+        data = response.json()
+        assert "reenviado" in data["message"].lower()
+        assert data["needs_verification"] is True
 
     @pytest.mark.asyncio
     async def test_subscribe_reactivate(self, client):
-        """Deve reativar inscrição de email que foi desinscrito."""
+        """Deve reativar inscricao de email que foi desinscrito."""
         # Arrange - Inscreve e desinscreve
         email = "reativar@example.com"
         await client.post("/api/v1/newsletter/subscribe", json={"email": email})
@@ -234,7 +267,7 @@ class TestNewsletterEndpoints:
 
     @pytest.mark.asyncio
     async def test_get_newsletter_stats_with_data(self, client):
-        """Deve retornar estatísticas corretas com inscritos."""
+        """Deve retornar estatisticas corretas com inscritos."""
         # Arrange - Cria inscritos
         for i in range(3):
             await client.post(
@@ -253,3 +286,79 @@ class TestNewsletterEndpoints:
         assert data["total_subscribers"] == 3  # Total inclui inativos
         assert data["active_subscribers"] == 2  # Apenas ativos
         assert data["unsubscribed"] == 1  # Desinscritos
+        # Novos campos de verificacao
+        assert "verified_subscribers" in data
+        assert "pending_verification" in data
+
+    # -------------------------------------------------------------------------
+    # GET /newsletter/verify/{token} - Verificar email
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_verify_email_success(self, client, db_session):
+        """Deve verificar email com token valido."""
+        # Arrange - Inscreve
+        await client.post(
+            "/api/v1/newsletter/subscribe",
+            json={"email": "verificar@example.com"},
+        )
+
+        # Obtem token do banco
+        from app.models import NewsletterSignup
+        from sqlalchemy import select
+
+        result = await db_session.execute(
+            select(NewsletterSignup).where(NewsletterSignup.email == "verificar@example.com")
+        )
+        signup = result.scalar_one()
+        token = signup.verification_token
+
+        # Act - Usa endpoint de API (retorna JSON)
+        response = await client.get(f"/api/v1/newsletter/verify-status/{token}")
+
+        # Assert
+        assert response.status_code == 200
+        data = response.json()
+        assert data["verified"] is True
+        assert data["email"] == "verificar@example.com"
+
+    @pytest.mark.asyncio
+    async def test_verify_email_invalid_token(self, client):
+        """Deve retornar erro para token invalido."""
+        # Act
+        response = await client.get("/api/v1/newsletter/verify-status/token-invalido-123")
+
+        # Assert
+        assert response.status_code == 200
+        data = response.json()
+        assert data["verified"] is False
+        assert "invalido" in data["message"].lower()
+
+    @pytest.mark.asyncio
+    async def test_verify_email_redirect(self, client, db_session):
+        """Deve redirecionar para pagina de confirmacao."""
+        # Arrange - Inscreve
+        await client.post(
+            "/api/v1/newsletter/subscribe",
+            json={"email": "redirect@example.com"},
+        )
+
+        # Obtem token do banco
+        from app.models import NewsletterSignup
+        from sqlalchemy import select
+
+        result = await db_session.execute(
+            select(NewsletterSignup).where(NewsletterSignup.email == "redirect@example.com")
+        )
+        signup = result.scalar_one()
+        token = signup.verification_token
+
+        # Act - Usa endpoint que faz redirect
+        response = await client.get(
+            f"/api/v1/newsletter/verify/{token}",
+            follow_redirects=False,
+        )
+
+        # Assert - Deve retornar redirect (303)
+        assert response.status_code == 303
+        assert "/newsletter/confirmado" in response.headers.get("location", "")

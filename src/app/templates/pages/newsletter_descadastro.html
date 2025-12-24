@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="unsubscribe-page">
+    <div class="container">
+        <div class="unsubscribe-card">
+            {% if success %}
+            {# Estado: Descadastro realizado com sucesso #}
+            <div class="unsubscribe-icon success">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+
+            <h1>Descadastro Confirmado</h1>
+
+            <p class="unsubscribe-message">
+                Voce foi removido da nossa lista de emails com sucesso.
+            </p>
+
+            <div class="unsubscribe-details">
+                <p>Sentiremos sua falta! Se mudar de ideia, voce pode se inscrever novamente a qualquer momento.</p>
+            </div>
+
+            <div class="unsubscribe-cta">
+                <a href="/" class="btn btn-primary">Voltar para Home</a>
+            </div>
+
+            {% elif already_unsubscribed %}
+            {# Estado: Ja estava descadastrado #}
+            <div class="unsubscribe-icon info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </div>
+
+            <h1>Voce ja esta descadastrado</h1>
+
+            <p class="unsubscribe-message">
+                Este email ja nao faz parte da nossa lista de newsletter.
+            </p>
+
+            <div class="unsubscribe-cta">
+                <a href="/" class="btn btn-primary">Voltar para Home</a>
+                <a href="/" class="btn btn-secondary">Inscrever-se Novamente</a>
+            </div>
+
+            {% elif not_found %}
+            {# Estado: Email nao encontrado #}
+            <div class="unsubscribe-icon warning">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+
+            <h1>Email nao encontrado</h1>
+
+            <p class="unsubscribe-message">
+                Este email nao esta cadastrado na nossa newsletter.
+            </p>
+
+            <div class="unsubscribe-cta">
+                <a href="/" class="btn btn-primary">Voltar para Home</a>
+            </div>
+
+            {% else %}
+            {# Estado: Formulario de confirmacao #}
+            <div class="unsubscribe-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+            </div>
+
+            <h1>Cancelar inscricao</h1>
+
+            <p class="unsubscribe-message">
+                {% if email %}
+                Tem certeza que deseja cancelar sua inscricao para <strong>{{ email }}</strong>?
+                {% else %}
+                Informe seu email para cancelar a inscricao na newsletter.
+                {% endif %}
+            </p>
+
+            <form class="unsubscribe-form" method="POST" action="/newsletter/descadastro">
+                {% if not email %}
+                <div class="form-group">
+                    <label for="email">Seu email:</label>
+                    <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+                </div>
+                {% else %}
+                <input type="hidden" name="email" value="{{ email }}">
+                {% endif %}
+
+                <div class="unsubscribe-options">
+                    <p class="options-title">Motivo (opcional):</p>
+                    <label class="radio-option">
+                        <input type="radio" name="reason" value="too_many">
+                        <span>Recebo emails demais</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="reason" value="not_relevant">
+                        <span>Conteudo nao e relevante para mim</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="reason" value="never_signed">
+                        <span>Nunca me inscrevi</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="reason" value="other">
+                        <span>Outro motivo</span>
+                    </label>
+                </div>
+
+                <div class="unsubscribe-cta">
+                    <button type="submit" class="btn btn-danger">Confirmar Descadastro</button>
+                    <a href="/" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+
+            <p class="unsubscribe-note">
+                Voce pode se inscrever novamente a qualquer momento atraves do nosso site.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.unsubscribe-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e5e7eb 100%);
+}
+
+.unsubscribe-card {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.unsubscribe-icon {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.unsubscribe-icon.success {
+    color: #22c55e;
+}
+
+.unsubscribe-icon.info {
+    color: #3b82f6;
+}
+
+.unsubscribe-icon.warning {
+    color: #f59e0b;
+}
+
+.unsubscribe-icon svg {
+    width: 80px;
+    height: 80px;
+}
+
+.unsubscribe-card h1 {
+    font-size: 2rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.unsubscribe-message {
+    font-size: 1.125rem;
+    color: #4b5563;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.unsubscribe-message strong {
+    color: #1f2937;
+}
+
+.unsubscribe-details {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.unsubscribe-details p {
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.unsubscribe-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input[type="email"] {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input[type="email"]:focus {
+    outline: none;
+    border-color: #6366f1;
+}
+
+.unsubscribe-options {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.options-title {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    color: #4b5563;
+}
+
+.radio-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #6366f1;
+}
+
+.unsubscribe-cta {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.unsubscribe-cta .btn {
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.unsubscribe-cta .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.unsubscribe-cta .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+}
+
+.unsubscribe-cta .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.unsubscribe-cta .btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.unsubscribe-note {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .unsubscribe-card {
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+
+    .unsubscribe-card h1 {
+        font-size: 1.5rem;
+    }
+
+    .unsubscribe-cta {
+        flex-direction: column;
+    }
+
+    .unsubscribe-cta .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

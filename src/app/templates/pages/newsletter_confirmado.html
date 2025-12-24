@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="confirmation-page">
+    <div class="container">
+        <div class="confirmation-card">
+            <div class="confirmation-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+
+            <h1>Inscricao Confirmada!</h1>
+
+            <p class="confirmation-message">
+                Seu email foi verificado com sucesso. Agora voce faz parte da nossa comunidade geek!
+            </p>
+
+            <div class="confirmation-details">
+                <h2>O que esperar</h2>
+                <ul>
+                    <li>Dicas semanais de presentes geek para todas as ocasioes</li>
+                    <li>Alertas de promocoes e ofertas imperdíveis</li>
+                    <li>Novidades do universo geek: games, animes, HQs e tecnologia</li>
+                    <li>Guias exclusivos para ajudar nas suas escolhas</li>
+                </ul>
+            </div>
+
+            <div class="confirmation-cta">
+                <a href="/" class="btn btn-primary">Explorar Presentes</a>
+                <a href="/blog" class="btn btn-secondary">Ver Blog</a>
+            </div>
+
+            <p class="confirmation-note">
+                Voce pode cancelar sua inscricao a qualquer momento atraves do link no rodape dos nossos emails.
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.confirmation-page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e5e7eb 100%);
+}
+
+.confirmation-card {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-icon {
+    color: #22c55e;
+    margin-bottom: 1.5rem;
+}
+
+.confirmation-icon svg {
+    width: 80px;
+    height: 80px;
+}
+
+.confirmation-card h1 {
+    font-size: 2rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.confirmation-message {
+    font-size: 1.125rem;
+    color: #4b5563;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.confirmation-details {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.confirmation-details h2 {
+    font-size: 1.125rem;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.confirmation-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.confirmation-details li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #4b5563;
+}
+
+.confirmation-details li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #22c55e;
+    font-weight: bold;
+}
+
+.confirmation-cta {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.confirmation-cta .btn {
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.confirmation-cta .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.confirmation-cta .btn-primary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+}
+
+.confirmation-cta .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.confirmation-note {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .confirmation-card {
+        padding: 2rem 1.5rem;
+        margin: 0 1rem;
+    }
+
+    .confirmation-card h1 {
+        font-size: 1.5rem;
+    }
+
+    .confirmation-cta {
+        flex-direction: column;
+    }
+
+    .confirmation-cta .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
