@@ -430,24 +430,62 @@ class GenerateImageRequest(BaseModel):
     )
 
 
-class GenerateImageResponse(BaseModel):
+class ImageData(BaseModel):
     """
-    Resposta da geracao de imagem Instagram.
+    Dados de uma imagem gerada (post ou story).
 
-    Sempre retorna a URL publica da imagem salva no servidor.
-    Opcionalmente inclui a imagem em base64 se solicitado no request.
+    Contém a URL pública, dimensões e opcionalmente o base64.
     """
 
-    success: bool = Field(..., description="Se a geracao foi bem sucedida")
     image_url: str = Field(
         ...,
-        description="URL publica da imagem (para uso na Graph API do Instagram)",
+        description="URL pública da imagem (para uso na Graph API do Instagram)",
     )
     image_base64: str | None = Field(
         None,
         description="Imagem em base64 (apenas se include_base64=true no request)",
     )
-    format: str = Field(default="png", description="Formato da imagem")
-    width: int = Field(default=1080, description="Largura da imagem")
-    height: int = Field(default=1080, description="Altura da imagem")
+    width: int = Field(..., description="Largura da imagem em pixels")
+    height: int = Field(..., description="Altura da imagem em pixels")
     file_size_kb: int = Field(..., description="Tamanho do arquivo em KB")
+
+
+class GenerateImageResponse(BaseModel):
+    """
+    Resposta da geracao de imagens Instagram.
+
+    Retorna tanto o Post (1080x1080) quanto o Story (1080x1920).
+    Cada imagem é salva no servidor e a URL pública é retornada.
+    Opcionalmente inclui as imagens em base64 se solicitado no request.
+    """
+
+    success: bool = Field(..., description="Se a geracao foi bem sucedida")
+    format: str = Field(default="png", description="Formato das imagens")
+
+    # Imagem do Post (1080x1080) - feed do Instagram
+    post: ImageData = Field(
+        ...,
+        description="Imagem do Post para feed (1080x1080)",
+    )
+
+    # Imagem do Story (1080x1920) - stories do Instagram
+    story: ImageData = Field(
+        ...,
+        description="Imagem do Story (1080x1920)",
+    )
+
+    # Campos legados para compatibilidade (usam dados do post)
+    image_url: str | None = Field(
+        None,
+        description="[DEPRECATED] Use post.image_url. URL pública da imagem do post.",
+    )
+    image_base64: str | None = Field(
+        None,
+        description="[DEPRECATED] Use post.image_base64. Imagem do post em base64.",
+    )
+    width: int = Field(default=1080, description="[DEPRECATED] Largura do post")
+    height: int = Field(default=1080, description="[DEPRECATED] Altura do post")
+    file_size_kb: int | None = Field(
+        None,
+        description="[DEPRECATED] Use post.file_size_kb. Tamanho do arquivo do post em KB",
+    )

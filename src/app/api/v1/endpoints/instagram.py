@@ -58,6 +58,7 @@ from app.schemas.instagram import (
     GenerateImageResponse,
     HtmlToImageRequest,
     HtmlToImageResponse,
+    ImageData,
     InstagramPostHistoryListResponse,
     InstagramPostHistoryResponse,
     MarkPostedRequest,
@@ -190,8 +191,10 @@ def _prepare_template_with_embedded_assets(
         HTML com todos os assets embutidos como base64
     """
     # Mapeamento de arquivos estaticos locais para seus caminhos
+    # Inclui templates de Post (instagram_01.png) e Story (instagram_02.png)
     static_files = {
         "/static/images/template/instagram_01.png": STATIC_DIR / "images" / "template" / "instagram_01.png",
+        "/static/images/template/instagram_02.png": STATIC_DIR / "images" / "template" / "instagram_02.png",
         "/static/logo/mascot-only.png": STATIC_DIR / "logo" / "mascot-only.png",
         "/static/fonts/Bungee-Regular.ttf": STATIC_DIR / "fonts" / "Bungee-Regular.ttf",
         "/static/fonts/PressStart2P-Regular.ttf": STATIC_DIR / "fonts" / "PressStart2P-Regular.ttf",
@@ -630,21 +633,22 @@ async def generate_instagram_image(
     repo: ProductRepo,
 ):
     """
-    Gera imagem de post Instagram a partir de um produto.
+    Gera imagens de Post e Story para Instagram a partir de um produto.
 
     **Autenticacao**: Requer token JWT com role ADMIN ou AUTOMATION.
 
-    Este endpoint combina a renderizacao do template HTML com a conversao
-    para imagem em uma unica chamada. Ideal para uso no workflow n8n.
+    Este endpoint gera DUAS imagens em uma unica chamada:
+    - **Post** (1080x1080): Para o feed do Instagram
+    - **Story** (1080x1920): Para os stories do Instagram
 
     Fluxo interno:
     1. Busca o produto pelo ID
-    2. Renderiza o template HTML com os dados do produto
-    3. Converte o HTML para imagem PNG usando Playwright
-    4. Salva a imagem no servidor e retorna a URL publica
+    2. Renderiza os templates HTML (post_produto.html e story_produto.html)
+    3. Converte os HTMLs para imagens PNG usando Playwright
+    4. Salva as imagens no servidor e retorna as URLs publicas
 
-    A imagem e salva no diretorio de uploads (/uploads/instagram/) e a URL
-    publica e retornada para uso direto na Graph API do Instagram.
+    As imagens sao salvas no diretorio de uploads (/uploads/instagram/) e as URLs
+    publicas sao retornadas para uso direto na Graph API do Instagram.
 
     Se os campos de conteudo (headline, title, badge, hashtags) nao forem
     passados no request, usa os dados pre-cadastrados do produto.
@@ -655,7 +659,7 @@ async def generate_instagram_image(
         repo: Repositorio de produtos (injetado automaticamente)
 
     Returns:
-        GenerateImageResponse com URL publica da imagem (e base64 se solicitado)
+        GenerateImageResponse com URLs publicas das imagens (post e story)
 
     Raises:
         HTTPException 401: Token invalido ou ausente
@@ -713,8 +717,7 @@ async def generate_instagram_image(
     templates_dir = Path(__file__).parent.parent.parent.parent / "templates"
     templates = Jinja2Templates(directory=str(templates_dir))
 
-    # Prepara dados do template
-    # Nota: product_image_url usa URL original aqui, sera substituida depois
+    # Prepara dados do template (compartilhados entre post e story)
     template_data = {
         "request": request_obj,
         "product_name": product.name,
@@ -730,15 +733,22 @@ async def generate_instagram_image(
         "logo_url": "/static/logo/mascot-only.png",  # URL relativa, sera convertida
     }
 
-    # Renderiza o template HTML
-    html_content = templates.get_template("instagram/post_produto.html").render(
+    # Renderiza os templates HTML
+    # Template do Post (1080x1080)
+    html_post = templates.get_template("instagram/post_produto.html").render(
         **template_data
     )
+    html_post = _prepare_template_with_embedded_assets(
+        html_content=html_post,
+        product_image_data_uri=product_image_data_uri,
+    )
 
-    # Substitui todos os assets por data URIs (imagens, fontes, produto)
-    # Isso permite que o Playwright renderize sem precisar de servidor web
-    html_content = _prepare_template_with_embedded_assets(
-        html_content=html_content,
+    # Template do Story (1080x1920)
+    html_story = templates.get_template("instagram/story_produto.html").render(
+        **template_data
+    )
+    html_story = _prepare_template_with_embedded_assets(
+        html_content=html_story,
         product_image_data_uri=product_image_data_uri,
     )
 
@@ -765,65 +775,83 @@ async def generate_instagram_image(
                     "--no-zygote",  # Evita fork de processos (mais estavel em containers)
                 ],
             )
-            page = await browser.new_page(
+
+            # --- Gera imagem do POST (1080x1080) ---
+            page_post = await browser.new_page(
                 viewport={"width": 1080, "height": 1080}
             )
+            await page_post.set_content(html_post, wait_until="load")
+            await page_post.wait_for_timeout(500)  # Aguarda fontes carregarem
+            screenshot_post = await page_post.screenshot(type="png", full_page=False)
+            await page_post.close()
 
-            # Renderiza HTML com todos os assets embutidos como base64
-            await page.set_content(html_content, wait_until="load")
-
-            # Aguarda um pouco para garantir que fontes foram carregadas
-            await page.wait_for_timeout(500)
-
-            screenshot = await page.screenshot(
-                type="png",
-                full_page=False,
+            # --- Gera imagem do STORY (1080x1920) ---
+            page_story = await browser.new_page(
+                viewport={"width": 1080, "height": 1920}
             )
+            await page_story.set_content(html_story, wait_until="load")
+            await page_story.wait_for_timeout(500)  # Aguarda fontes carregarem
+            screenshot_story = await page_story.screenshot(type="png", full_page=False)
+            await page_story.close()
 
             await browser.close()
 
-        # Calcula tamanho do arquivo
-        file_size_kb = len(screenshot) // 1024
-
-        # Salva a imagem no diretorio de uploads para obter URL publica
-        # Usa subdiretorio 'instagram' para organizar as imagens geradas
+        # Diretorio de upload
         instagram_upload_dir = UPLOAD_DIR / "instagram"
         instagram_upload_dir.mkdir(parents=True, exist_ok=True)
 
-        # Gera nome unico para o arquivo
-        filename = f"{uuid_module.uuid4().hex}.png"
-        file_path = instagram_upload_dir / filename
+        # --- Salva imagem do POST ---
+        post_filename = f"post_{uuid_module.uuid4().hex}.png"
+        post_file_path = instagram_upload_dir / post_filename
+        with open(post_file_path, "wb") as f:
+            f.write(screenshot_post)
+        post_size_kb = len(screenshot_post) // 1024
+        post_url = f"{settings.app_url}{UPLOAD_URL_PREFIX}/instagram/{post_filename}"
 
-        # Salva a imagem
-        with open(file_path, "wb") as f:
-            f.write(screenshot)
+        # --- Salva imagem do STORY ---
+        story_filename = f"story_{uuid_module.uuid4().hex}.png"
+        story_file_path = instagram_upload_dir / story_filename
+        with open(story_file_path, "wb") as f:
+            f.write(screenshot_story)
+        story_size_kb = len(screenshot_story) // 1024
+        story_url = f"{settings.app_url}{UPLOAD_URL_PREFIX}/instagram/{story_filename}"
 
-        # Monta URL publica (relativa)
-        image_url_relative = f"{UPLOAD_URL_PREFIX}/instagram/{filename}"
-
-        # Monta URL absoluta para retornar
-        image_url = f"{settings.app_url}{image_url_relative}"
-
-        # Prepara resposta
-        response_data = {
-            "success": True,
-            "image_url": image_url,
-            "format": "png",
+        # Prepara dados do Post
+        post_data = {
+            "image_url": post_url,
             "width": 1080,
             "height": 1080,
-            "file_size_kb": file_size_kb,
+            "file_size_kb": post_size_kb,
+            "image_base64": base64.b64encode(screenshot_post).decode("utf-8") if data.include_base64 else None,
         }
 
-        # Inclui base64 apenas se solicitado
-        if data.include_base64:
-            response_data["image_base64"] = base64.b64encode(screenshot).decode("utf-8")
+        # Prepara dados do Story
+        story_data = {
+            "image_url": story_url,
+            "width": 1080,
+            "height": 1920,
+            "file_size_kb": story_size_kb,
+            "image_base64": base64.b64encode(screenshot_story).decode("utf-8") if data.include_base64 else None,
+        }
 
-        return GenerateImageResponse(**response_data)
+        # Monta resposta completa
+        return GenerateImageResponse(
+            success=True,
+            format="png",
+            post=ImageData(**post_data),
+            story=ImageData(**story_data),
+            # Campos legados para compatibilidade (usam dados do post)
+            image_url=post_url,
+            image_base64=post_data.get("image_base64"),
+            width=1080,
+            height=1080,
+            file_size_kb=post_size_kb,
+        )
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao gerar imagem: {str(e)}",
+            detail=f"Erro ao gerar imagens: {str(e)}",
         )
 
 

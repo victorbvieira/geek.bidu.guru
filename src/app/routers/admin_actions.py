@@ -559,6 +559,8 @@ async def instagram_preview(
     product_id: UUID,
     current_user: AdminUser,
     repo: ProductRepo,
+    type: str = "post",
+    fullscreen: str = "",
     headline: str = "",
     title: str = "",
     badge: str = "",
@@ -568,9 +570,13 @@ async def instagram_preview(
 
     Este endpoint usa autenticacao de sessao do admin (cookie),
     diferente do endpoint da API que usa JWT.
+
+    Args:
+        type: Tipo de template - 'post' (1080x1080) ou 'story' (1080x1920)
+        fullscreen: Se '1', aplica CSS para imagem ocupar 100% da viewport
     """
-    from fastapi.responses import HTMLResponse
     from fastapi.templating import Jinja2Templates
+    from fastapi.responses import HTMLResponse
     from pathlib import Path
 
     product = await repo.get(product_id)
@@ -607,11 +613,110 @@ async def instagram_preview(
         "logo_url": "/static/logo/mascot-only.png",
     }
 
-    # Renderiza template e retorna com headers que permitem iframe
-    response = templates.TemplateResponse(
-        "instagram/post_produto.html",
-        template_data,
-    )
+    # Seleciona template baseado no tipo (post ou story)
+    template_name = "instagram/story_produto.html" if type == "story" else "instagram/post_produto.html"
+
+    # Renderiza template
+    html_content = templates.get_template(template_name).render(**template_data)
+
+    # Se fullscreen=1, injeta CSS e JS para escalar o conteudo para caber na viewport
+    if fullscreen == "1":
+        # Determina as dimensoes originais do template
+        original_width = 1080
+        original_height = 1920 if type == "story" else 1080
+
+        # Envolve o body content em um wrapper e injeta estilos/scripts
+        # Precisamos encontrar o conteudo dentro de <body> e envolver
+        import re
+
+        # Estilo para fullscreen com wrapper externo
+        fullscreen_style = f"""
+<style id="fullscreen-style">
+    html, body {{
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        background: #1a1a2e !important;
+    }}
+    #fullscreen-wrapper {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }}
+    #fullscreen-scaler {{
+        width: {original_width}px;
+        height: {original_height}px;
+        transform-origin: center center;
+    }}
+</style>
+"""
+
+        # Script para calcular e aplicar escala dinamicamente
+        fullscreen_script = f"""
+<script>
+    (function() {{
+        const ow = {original_width};
+        const oh = {original_height};
+
+        function scaleToFit() {{
+            const scaler = document.getElementById('fullscreen-scaler');
+            if (!scaler) return;
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            // Calcula escala para caber na viewport mantendo proporcao
+            const scaleX = vw / ow;
+            const scaleY = vh / oh;
+            const scale = Math.min(scaleX, scaleY) * 0.95; // 95% para margem
+
+            scaler.style.transform = 'scale(' + scale + ')';
+        }}
+
+        // Executa quando DOM estiver pronto
+        if (document.readyState === 'loading') {{
+            document.addEventListener('DOMContentLoaded', scaleToFit);
+        }} else {{
+            scaleToFit();
+        }}
+
+        // Reescala ao redimensionar janela
+        window.addEventListener('resize', scaleToFit);
+    }})();
+</script>
+"""
+
+        # Injeta estilo no <head>
+        if "</head>" in html_content:
+            html_content = html_content.replace("</head>", fullscreen_style + "</head>")
+        else:
+            html_content = fullscreen_style + html_content
+
+        # Envolve o conteudo do body em wrappers
+        # Busca o conteudo entre <body> e </body>
+        body_match = re.search(r'(<body[^>]*>)(.*?)(</body>)', html_content, re.DOTALL)
+        if body_match:
+            body_open = body_match.group(1)
+            body_content = body_match.group(2)
+            body_close = body_match.group(3)
+
+            # Cria novo body com wrappers
+            new_body = f'{body_open}<div id="fullscreen-wrapper"><div id="fullscreen-scaler">{body_content}</div></div>{fullscreen_script}{body_close}'
+            html_content = html_content[:body_match.start()] + new_body + html_content[body_match.end():]
+
+        response = HTMLResponse(content=html_content)
+    else:
+        # Retorna template direto (para uso em iframe do admin)
+        response = HTMLResponse(content=html_content)
+
     # Permite que este conteudo seja carregado em iframe do mesmo dominio
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Content-Security-Policy"] = "frame-ancestors 'self'"
@@ -674,13 +779,20 @@ async def generate_instagram_image(
     repo: ProductRepo,
 ):
     """
-    Gera imagem PNG do post Instagram a partir do template HTML.
+    Gera imagens PNG do Post e/ou Story Instagram a partir do template HTML.
 
     Usa Playwright para navegar ate a URL do preview e capturar screenshot.
-    A imagem gerada é 1080x1080 px (formato Instagram).
+    - Post: 1080x1080 px (feed Instagram)
+    - Story: 1080x1920 px (stories Instagram)
+
+    Body (JSON):
+        type: 'post', 'story' ou 'both' (default: 'both')
+        headline: override da headline (opcional)
+        title: override do titulo (opcional)
+        badge: override do badge (opcional)
 
     Returns:
-        JSON com imagem em base64 e metadados
+        JSON com imagens em base64 e metadados (post e/ou story)
     """
     import base64
     from urllib.parse import urlencode
@@ -698,13 +810,13 @@ async def generate_instagram_image(
     headline = body.get("headline", "")
     title = body.get("title", "")
     badge = body.get("badge", "")
+    img_type = body.get("type", "both")  # 'post', 'story' ou 'both'
 
-    # Monta URL do preview com query params
-    # Usa localhost dentro do container para acessar a propria aplicacao
+    # Monta base da URL do preview
     base_url = "http://localhost:8000"
     preview_path = f"/admin/products/{product_id}/instagram-preview"
 
-    # Adiciona query params se houver overrides
+    # Params compartilhados
     params = {}
     if headline:
         params["headline"] = headline
@@ -712,10 +824,6 @@ async def generate_instagram_image(
         params["title"] = title
     if badge:
         params["badge"] = badge
-
-    preview_url = f"{base_url}{preview_path}"
-    if params:
-        preview_url += "?" + urlencode(params)
 
     # Converte HTML para imagem usando Playwright
     try:
@@ -729,13 +837,11 @@ async def generate_instagram_image(
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
-            page = await browser.new_page(viewport={"width": 1080, "height": 1080})
 
-            # Copia o cookie de sessao do usuario atual para o Playwright
-            # Isso permite que o preview seja acessado sem re-autenticacao
+            # Prepara cookies de autenticacao
             cookies = request.cookies
+            playwright_cookies = []
             if cookies:
-                playwright_cookies = []
                 for name, value in cookies.items():
                     playwright_cookies.append({
                         "name": name,
@@ -743,33 +849,61 @@ async def generate_instagram_image(
                         "domain": "localhost",
                         "path": "/",
                     })
-                await page.context.add_cookies(playwright_cookies)
 
-            # Navega para a URL do preview (carrega todas as imagens corretamente)
-            await page.goto(preview_url, wait_until="networkidle", timeout=30000)
+            result = {"success": True, "format": "png"}
 
-            # Aguarda um pouco mais para garantir que imagens externas carreguem
-            await page.wait_for_timeout(2000)
+            # Gera imagem do POST se necessario
+            if img_type in ("post", "both"):
+                page_post = await browser.new_page(viewport={"width": 1080, "height": 1080})
+                if playwright_cookies:
+                    await page_post.context.add_cookies(playwright_cookies)
 
-            # Captura screenshot
-            screenshot = await page.screenshot(type="png", full_page=False)
+                post_params = {**params, "type": "post"}
+                post_url = f"{base_url}{preview_path}?" + urlencode(post_params)
+                await page_post.goto(post_url, wait_until="networkidle", timeout=30000)
+                await page_post.wait_for_timeout(2000)
+                screenshot_post = await page_post.screenshot(type="png", full_page=False)
+                await page_post.close()
+
+                result["post"] = {
+                    "image_base64": base64.b64encode(screenshot_post).decode("utf-8"),
+                    "image_url": "",  # Admin nao salva no disco, apenas retorna base64
+                    "width": 1080,
+                    "height": 1080,
+                    "file_size_kb": len(screenshot_post) // 1024,
+                }
+
+            # Gera imagem do STORY se necessario
+            if img_type in ("story", "both"):
+                page_story = await browser.new_page(viewport={"width": 1080, "height": 1920})
+                if playwright_cookies:
+                    await page_story.context.add_cookies(playwright_cookies)
+
+                story_params = {**params, "type": "story"}
+                story_url = f"{base_url}{preview_path}?" + urlencode(story_params)
+                await page_story.goto(story_url, wait_until="networkidle", timeout=30000)
+                await page_story.wait_for_timeout(2000)
+                screenshot_story = await page_story.screenshot(type="png", full_page=False)
+                await page_story.close()
+
+                result["story"] = {
+                    "image_base64": base64.b64encode(screenshot_story).decode("utf-8"),
+                    "image_url": "",  # Admin nao salva no disco, apenas retorna base64
+                    "width": 1080,
+                    "height": 1920,
+                    "file_size_kb": len(screenshot_story) // 1024,
+                }
+
             await browser.close()
 
-        # Converte para base64
-        image_base64 = base64.b64encode(screenshot).decode("utf-8")
-        file_size_kb = len(screenshot) // 1024
+            # Campos legados para compatibilidade (usa dados do post)
+            if "post" in result:
+                result["image_base64"] = result["post"]["image_base64"]
+                result["width"] = 1080
+                result["height"] = 1080
+                result["file_size_kb"] = result["post"]["file_size_kb"]
 
-        return JSONResponse(
-            content={
-                "success": True,
-                "image_base64": image_base64,
-                "format": "png",
-                "width": 1080,
-                "height": 1080,
-                "file_size_kb": file_size_kb,
-            },
-            status_code=http_status.HTTP_200_OK,
-        )
+        return JSONResponse(content=result, status_code=http_status.HTTP_200_OK)
 
     except Exception as e:
         logger.error(f"Erro ao gerar imagem Instagram: {e}")

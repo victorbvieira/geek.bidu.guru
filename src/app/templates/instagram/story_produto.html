@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <title>Instagram Story - {{ product_name }}</title>
+    <style>
+        /* Fontes locais - carregadas do servidor para funcionar com Playwright */
+        @font-face {
+            font-family: 'Bungee';
+            src: url('/static/fonts/Bungee-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: block;
+        }
+
+        @font-face {
+            font-family: 'Press Start 2P';
+            src: url('/static/fonts/PressStart2P-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: block;
+        }
+
+        /* Reset e base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Anti-aliasing global para textos mais suaves */
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            width: 1080px;
+            height: 1920px;
+            overflow: hidden;
+            font-family: 'Russo One', sans-serif;
+        }
+
+        .container {
+            width: 1080px;
+            height: 1920px;
+            position: relative;
+            /* Imagem de fundo do template Story */
+            background-image: url('/static/images/template/instagram_02.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+        }
+
+        /* Header com logo e marca */
+        .header {
+            position: absolute;
+            top: 80px;
+            left: 0;
+            right: 0;
+            padding: 0 50px;
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .logo-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #F5B81C;
+            object-fit: cover;
+            background-color: #7B68EE;
+            padding: 0;
+        }
+
+        .brand-name {
+            font-family: 'Bungee', sans-serif;
+            font-size: 52px;
+            color: #F5B81C;
+            letter-spacing: 2px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Headline - topo centralizada */
+        .headline {
+            position: absolute;
+            top: 220px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-3deg);
+            background: #F5B81C;
+            color: #1a1a2e;
+            font-family: 'Bungee', sans-serif;
+            font-size: 52px;
+            font-weight: bold;
+            padding: 15px 35px;
+            border-radius: 0;
+            text-transform: uppercase;
+            letter-spacing: 0px;
+            line-height: 1.2;
+            text-align: center;
+            max-width: 900px;
+            outline: 4px solid #1a1a2e;
+            outline-offset: 5px;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+            z-index: 15;
+        }
+
+        /* Area principal do produto */
+        .product-area {
+            position: absolute;
+            top: 380px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 980px;
+            text-align: center;
+            z-index: 5;
+        }
+
+        /* Badge - estilo inclinado */
+        .badge {
+            display: inline-block;
+            background: #F5B81C;
+            color: #1a1a2e;
+            font-family: 'Bungee', sans-serif;
+            font-size: 40px;
+            font-weight: bold;
+            padding: 10px 25px;
+            text-transform: uppercase;
+            position: relative;
+            margin-bottom: 20px;
+            transform: skewY(-8deg);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .badge-text {
+            display: inline-block;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Semi-bordas do badge */
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 20px;
+            height: 20px;
+            border-top: 4px solid #F5B81C;
+            border-left: 4px solid #F5B81C;
+        }
+
+        .badge::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-bottom: 4px solid #F5B81C;
+            border-right: 4px solid #F5B81C;
+        }
+
+        /* Imagem do produto - maior no Story */
+        .product-image-container {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            margin: 30px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 5px solid #F5B81C;
+            border-radius: 25px;
+            transform: rotate(-2deg);
+        }
+
+        .product-image-frame-2 {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 5px solid #e94560;
+            border-radius: 25px;
+            transform: rotate(2deg);
+        }
+
+        .product-image {
+            max-width: 88%;
+            max-height: 88%;
+            object-fit: contain;
+            border-radius: 20px;
+            filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.5));
+            z-index: 2;
+            position: relative;
+        }
+
+        /* Titulo do produto - tarja azul */
+        .product-title {
+            font-family: 'Bungee', sans-serif;
+            font-size: 44px;
+            color: white;
+            background: linear-gradient(135deg, #2b69fb 0%, #2b33fb 100%);
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+            line-height: 1.3;
+            margin: 30px auto 20px;
+            padding: 20px 40px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+            position: relative;
+            border-left: 6px solid #F5B81C;
+            border-right: 6px solid #F5B81C;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            max-width: 90%;
+        }
+
+        .product-title::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #F5B81C;
+        }
+
+        .product-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #F5B81C;
+        }
+
+        /* Preco - tarja vermelha maior */
+        .price-container {
+            display: inline-block;
+            background: #E53935;
+            padding: 20px 70px 20px 50px;
+            position: relative;
+            margin: 20px 0;
+            min-width: 350px;
+            transform: skewY(-8deg);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .price-container::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: 28px;
+            height: 28px;
+            border-top: 4px solid #F5B81C;
+            border-left: 4px solid #F5B81C;
+        }
+
+        .price-container::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            right: -6px;
+            width: 28px;
+            height: 28px;
+            border-bottom: 4px solid #F5B81C;
+            border-right: 4px solid #F5B81C;
+        }
+
+        .price-value {
+            font-family: Impact, 'Arial Black', Haettenschweiler, sans-serif;
+            font-size: 90px;
+            color: white;
+            letter-spacing: 1px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            font-weight: bold;
+            text-align: left;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .price-cents {
+            font-size: 36px;
+            vertical-align: super;
+        }
+
+        /* Balao de quadrinhos - Link na Bio (maior no Story) */
+        .comic-bubble {
+            position: absolute;
+            left: 50px;
+            top: 750px;
+            z-index: 20;
+            transform: rotate(-6deg);
+        }
+
+        .comic-bubble-inner {
+            background: #FFFFFF;
+            border: 5px solid #1a1a2e;
+            border-radius: 50% 50% 50% 10%;
+            padding: 28px 38px;
+            position: relative;
+            box-shadow: 5px 5px 0 #1a1a2e;
+        }
+
+        .comic-bubble-inner::before {
+            content: '';
+            position: absolute;
+            bottom: -25px;
+            left: 18px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid #1a1a2e;
+            border-top: 25px solid #1a1a2e;
+            border-bottom: 0;
+            transform: rotate(-15deg);
+        }
+
+        .comic-bubble-inner::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 22px;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid #FFFFFF;
+            border-top: 20px solid #FFFFFF;
+            border-bottom: 0;
+            transform: rotate(-15deg);
+        }
+
+        .comic-bubble-text {
+            font-family: Impact, 'Arial Black', Haettenschweiler, sans-serif;
+            font-size: 46px;
+            color: #1a1a2e;
+            text-transform: uppercase;
+            line-height: 1.1;
+            text-align: center;
+            white-space: nowrap;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .comic-bubble-text .highlight {
+            color: #E53935;
+            display: block;
+            font-size: 52px;
+        }
+
+        /* Linhas decorativas ao redor do balao */
+        .comic-lines {
+            position: absolute;
+            left: 30px;
+            top: 720px;
+            width: 220px;
+            height: 180px;
+            z-index: 19;
+            pointer-events: none;
+        }
+
+        .comic-line {
+            position: absolute;
+            background: #F5B81C;
+            transform-origin: center;
+        }
+
+        .comic-line-1 {
+            width: 30px;
+            height: 5px;
+            top: 15px;
+            left: 170px;
+            transform: rotate(45deg);
+        }
+
+        .comic-line-2 {
+            width: 25px;
+            height: 5px;
+            top: 160px;
+            left: 175px;
+            transform: rotate(-30deg);
+        }
+
+        .comic-line-3 {
+            width: 22px;
+            height: 5px;
+            top: 90px;
+            left: 5px;
+            transform: rotate(15deg);
+        }
+
+        /* Footer - Swipe Up area */
+        .footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px 50px 80px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            z-index: 10;
+            text-align: center;
+        }
+
+        .url-bar {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px 40px;
+            border-radius: 40px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .url-text {
+            font-family: 'Russo One', sans-serif;
+            font-size: 26px;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .hashtags {
+            text-align: center;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 1px;
+        }
+
+        /* Elementos decorativos */
+        .star {
+            position: absolute;
+            color: #F5B81C;
+            font-size: 40px;
+            opacity: 0.9;
+        }
+
+        .star-1 {
+            top: 350px;
+            left: 60px;
+            transform: rotate(15deg);
+        }
+
+        .star-2 {
+            top: 600px;
+            right: 70px;
+            transform: rotate(-10deg);
+        }
+
+        .star-3 {
+            bottom: 400px;
+            left: 100px;
+            transform: rotate(5deg);
+        }
+
+        .star-4 {
+            top: 500px;
+            right: 50px;
+            transform: rotate(20deg);
+        }
+
+        /* Pixel corners maiores */
+        .pixel-corner {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #F5B81C;
+        }
+
+        .pixel-corner-tl {
+            top: 30px;
+            left: 30px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .pixel-corner-tr {
+            top: 30px;
+            right: 30px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .pixel-corner-bl {
+            bottom: 30px;
+            left: 30px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .pixel-corner-br {
+            bottom: 30px;
+            right: 30px;
+            border-left: none;
+            border-top: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Pixel corners -->
+        <div class="pixel-corner pixel-corner-tl"></div>
+        <div class="pixel-corner pixel-corner-tr"></div>
+        <div class="pixel-corner pixel-corner-bl"></div>
+        <div class="pixel-corner pixel-corner-br"></div>
+
+        <!-- Stars decoration -->
+        <div class="star star-1">★</div>
+        <div class="star star-2">★</div>
+        <div class="star star-3">★</div>
+        <div class="star star-4">★</div>
+
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-area">
+                <img src="{{ logo_url | default('/static/logo/mascot-only.png') }}" alt="Geek Bidu Guru"
+                    class="logo-img">
+                <span class="brand-name">GEEK.BIDU.GURU</span>
+            </div>
+        </div>
+
+        <!-- Headline -->
+        <div class="headline">{{ headline | default('DESPERTE SEU HERÓI!') }}</div>
+
+        <!-- Comic Bubble - Link na Bio -->
+        <div class="comic-lines">
+            <div class="comic-line comic-line-1"></div>
+            <div class="comic-line comic-line-2"></div>
+            <div class="comic-line comic-line-3"></div>
+        </div>
+        <div class="comic-bubble">
+            <div class="comic-bubble-inner">
+                <div class="comic-bubble-text">
+                    <span class="highlight">Link</span>
+                    na Bio!
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Area -->
+        <div class="product-area">
+            <!-- Badge -->
+            {% if badge %}
+            <div class="badge"><span class="badge-text">{{ badge }}</span></div>
+            {% endif %}
+
+            <!-- Product Image -->
+            <div class="product-image-container">
+                <div class="product-image-frame"></div>
+                <div class="product-image-frame-2"></div>
+                <img src="{{ product_image_url }}" alt="{{ product_name }}" class="product-image">
+            </div>
+
+            <!-- Product Title -->
+            <h1 class="product-title">{{ title | default(product_name) }}</h1>
+
+            <!-- Price -->
+            {% if price %}
+            <div class="price-container">
+                <div class="price-value">
+                    R$ {{ price_integer }}<span class="price-cents">,{{ price_cents }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="url-bar">
+                <span class="url-text">geek.bidu.guru</span>
+            </div>
+
+            {% if hashtags %}
+            <div class="hashtags">
+                {% for tag in hashtags %}#{{ tag }} {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
