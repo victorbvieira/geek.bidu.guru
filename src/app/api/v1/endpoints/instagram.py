@@ -761,40 +761,45 @@ async def generate_instagram_image(
             detail="Playwright nao instalado. Execute: pip install playwright && playwright install chromium",
         )
 
+    # Flags do Chromium para ambiente containerizado
+    # NOTA: --single-process foi removido pois causa crash ao criar multiplas paginas
+    chromium_args = [
+        "--no-sandbox",  # Necessario para rodar em containers
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",  # Usa /tmp em vez de /dev/shm
+        "--disable-gpu",  # GPU nao disponivel em containers
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-zygote",  # Evita fork de processos
+    ]
+
     try:
         async with async_playwright() as p:
-            # Inicia browser em modo headless com flags para ambiente containerizado
-            browser = await p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",  # Necessario para rodar como root em containers
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",  # Evita problemas de memoria compartilhada
-                    "--disable-gpu",  # Desabilita GPU (nao disponivel em containers)
-                    "--single-process",  # Reduz uso de memoria
-                    "--no-zygote",  # Evita fork de processos (mais estavel em containers)
-                ],
-            )
-
             # --- Gera imagem do POST (1080x1080) ---
-            page_post = await browser.new_page(
+            # Usa browser separado para cada imagem (mais estavel em containers)
+            browser_post = await p.chromium.launch(headless=True, args=chromium_args)
+            page_post = await browser_post.new_page(
                 viewport={"width": 1080, "height": 1080}
             )
             await page_post.set_content(html_post, wait_until="load")
             await page_post.wait_for_timeout(500)  # Aguarda fontes carregarem
             screenshot_post = await page_post.screenshot(type="png", full_page=False)
             await page_post.close()
+            await browser_post.close()
 
             # --- Gera imagem do STORY (1080x1920) ---
-            page_story = await browser.new_page(
+            browser_story = await p.chromium.launch(headless=True, args=chromium_args)
+            page_story = await browser_story.new_page(
                 viewport={"width": 1080, "height": 1920}
             )
             await page_story.set_content(html_story, wait_until="load")
             await page_story.wait_for_timeout(500)  # Aguarda fontes carregarem
             screenshot_story = await page_story.screenshot(type="png", full_page=False)
             await page_story.close()
-
-            await browser.close()
+            await browser_story.close()
 
         # Diretorio de upload
         instagram_upload_dir = UPLOAD_DIR / "instagram"
@@ -901,20 +906,23 @@ async def convert_html_to_image(request: HtmlToImageRequest):
             detail="Playwright nao instalado. Execute: pip install playwright && playwright install chromium",
         )
 
+    # Flags do Chromium para ambiente containerizado
+    chromium_args = [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--disable-background-networking",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-zygote",
+    ]
+
     try:
         async with async_playwright() as p:
-            # Inicia browser em modo headless com flags para ambiente containerizado
-            browser = await p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",  # Necessario para rodar como root em containers
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",  # Evita problemas de memoria compartilhada
-                    "--disable-gpu",  # Desabilita GPU (nao disponivel em containers)
-                    "--single-process",  # Reduz uso de memoria
-                    "--no-zygote",  # Evita fork de processos (mais estavel em containers)
-                ],
-            )
+            browser = await p.chromium.launch(headless=True, args=chromium_args)
             page = await browser.new_page(
                 viewport={"width": request.width, "height": request.height}
             )
@@ -928,6 +936,7 @@ async def convert_html_to_image(request: HtmlToImageRequest):
                 full_page=False,
             )
 
+            await page.close()
             await browser.close()
 
         # Converte para base64
