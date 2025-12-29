@@ -22,6 +22,8 @@ class CategoryBase(BaseSchema):
     name: str = Field(..., min_length=2, max_length=100, description="Nome da categoria")
     slug: str = Field(..., min_length=2, max_length=120, description="Slug para URL")
     description: str | None = Field(None, max_length=500, description="Descricao")
+    image_url: str | None = Field(None, max_length=500, description="URL da imagem da categoria (400x400)")
+    header_image_url: str | None = Field(None, max_length=500, description="URL da imagem de fundo do header (1920x400)")
     parent_id: UUID | None = Field(None, description="ID da categoria pai")
 
     @field_validator("name")
@@ -79,6 +81,8 @@ class CategoryUpdate(BaseSchema):
     name: str | None = Field(None, min_length=2, max_length=100)
     slug: str | None = Field(None, min_length=2, max_length=120)
     description: str | None = Field(None, max_length=500)
+    image_url: str | None = Field(None, max_length=500)
+    header_image_url: str | None = Field(None, max_length=500)
     parent_id: UUID | None = None
 
     @field_validator("name")

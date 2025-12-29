@@ -146,13 +146,14 @@
                 </div>
             </div>
 
+            <!-- Imagem do Card/Icone (400x400) -->
             <div class="admin-card">
                 <div class="admin-card-header">
-                    <h3>Imagem</h3>
+                    <h3>Imagem do Card</h3>
                 </div>
                 <div class="admin-card-body">
                     <div class="admin-form-group">
-                        <label class="admin-label">Upload de Imagem</label>
+                        <label class="admin-label">Icone/Miniatura da Categoria</label>
 
                         <!-- Preview da imagem -->
                         <div id="image-preview" class="admin-image-preview" style="margin-bottom: 1rem; {% if not (category and category.image_url) %}display: none;{% endif %}">
@@ -175,7 +176,7 @@
                             <button type="button" class="admin-btn admin-btn-secondary admin-btn-block" onclick="document.getElementById('image_file').click()">
                                 {{ 'Trocar Imagem' if category and category.image_url else 'Escolher Imagem' }}
                             </button>
-                            <small class="admin-help-text">Redimensionada automaticamente para 400x400 px. Max 10MB.</small>
+                            <small class="admin-help-text">Usada em cards de subcategoria. Redimensionada para 400x400 px. Max 10MB.</small>
                         </div>
                         <div id="upload-progress" style="display: none; margin-top: 0.5rem;">
                             <div class="admin-progress-bar">
@@ -191,6 +192,61 @@
                         id="image_url"
                         name="image_url"
                         value="{{ category.image_url if category and category.image_url else '' }}"
+                    >
+                </div>
+            </div>
+
+            <!-- Imagem do Header/Banner (1920x400) -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Imagem do Header</h3>
+                </div>
+                <div class="admin-card-body">
+                    <div class="admin-form-group">
+                        <label class="admin-label">Banner de Fundo da Pagina</label>
+
+                        <!-- Preview da imagem do header -->
+                        <div id="header-image-preview" class="admin-image-preview" style="margin-bottom: 1rem; {% if not (category and category.header_image_url) %}display: none;{% endif %}">
+                            <img
+                                id="header-preview-img"
+                                src="{{ category.header_image_url if category and category.header_image_url else '' }}"
+                                alt="Preview Header"
+                                style="max-width: 100%; border-radius: 4px; aspect-ratio: 4.8/1; object-fit: cover;"
+                            >
+                        </div>
+
+                        <div class="admin-upload-wrapper">
+                            <input
+                                type="file"
+                                id="header_image_file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                class="admin-file-input"
+                                style="display: none;"
+                            >
+                            <button type="button" class="admin-btn admin-btn-secondary admin-btn-block" onclick="document.getElementById('header_image_file').click()">
+                                {{ 'Trocar Banner' if category and category.header_image_url else 'Escolher Banner' }}
+                            </button>
+                            <small class="admin-help-text">
+                                <strong>Tamanho recomendado: 1920x400 px</strong><br>
+                                Aparece como fundo do header da pagina de categoria.<br>
+                                Responsivo: adapta automaticamente para mobile/tablet/desktop.<br>
+                                Max 10MB.
+                            </small>
+                        </div>
+                        <div id="header-upload-progress" style="display: none; margin-top: 0.5rem;">
+                            <div class="admin-progress-bar">
+                                <div class="admin-progress-fill" style="width: 0%"></div>
+                            </div>
+                            <small class="admin-help-text">Enviando...</small>
+                        </div>
+                    </div>
+
+                    <!-- Hidden input para URL da imagem do header -->
+                    <input
+                        type="hidden"
+                        id="header_image_url"
+                        name="header_image_url"
+                        value="{{ category.header_image_url if category and category.header_image_url else '' }}"
                     >
                 </div>
             </div>
@@ -311,6 +367,193 @@
         <div class="ai-loading-subtext">Aguarde, isso pode levar alguns segundos</div>
     </div>
 </div>
+
+<!-- Modal de Notificacao (Toast) -->
+<div id="notification-modal" class="notification-modal">
+    <div class="notification-content">
+        <div class="notification-icon">
+            <span class="icon-success">✓</span>
+            <span class="icon-error">✕</span>
+            <span class="icon-warning">⚠</span>
+            <span class="icon-info">ℹ</span>
+        </div>
+        <div class="notification-body">
+            <div class="notification-title"></div>
+            <div class="notification-message"></div>
+        </div>
+        <button type="button" class="notification-close" onclick="hideNotification()">&times;</button>
+    </div>
+    <div class="notification-progress"></div>
+</div>
+
+<style>
+/* =============================================================================
+   Modal de Notificacao (Toast Elegante)
+   ============================================================================= */
+
+.notification-modal {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 320px;
+    max-width: 450px;
+    background: var(--admin-card-bg, #1E293B);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    overflow: hidden;
+}
+
+.notification-modal.active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+}
+
+.notification-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.notification-icon span {
+    display: none;
+}
+
+/* Icone de sucesso */
+.notification-modal.success .notification-icon {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+}
+.notification-modal.success .icon-success { display: block; }
+
+/* Icone de erro */
+.notification-modal.error .notification-icon,
+.notification-modal.danger .notification-icon {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+}
+.notification-modal.error .icon-error,
+.notification-modal.danger .icon-error { display: block; }
+
+/* Icone de aviso */
+.notification-modal.warning .notification-icon {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+}
+.notification-modal.warning .icon-warning { display: block; }
+
+/* Icone de info */
+.notification-modal.info .notification-icon {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: white;
+}
+.notification-modal.info .icon-info { display: block; }
+
+.notification-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--admin-text, #F9FAFB);
+    margin-bottom: 4px;
+}
+
+.notification-message {
+    font-size: 0.85rem;
+    color: var(--admin-text-muted, #9CA3AF);
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.notification-close {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--admin-text-muted, #9CA3AF);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--admin-text, #F9FAFB);
+}
+
+/* Barra de progresso */
+.notification-progress {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.notification-progress::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    transform-origin: left;
+    animation: notification-timer 4s linear forwards;
+}
+
+.notification-modal.success .notification-progress::after {
+    background: linear-gradient(90deg, #10B981, #059669);
+}
+.notification-modal.error .notification-progress::after,
+.notification-modal.danger .notification-progress::after {
+    background: linear-gradient(90deg, #EF4444, #DC2626);
+}
+.notification-modal.warning .notification-progress::after {
+    background: linear-gradient(90deg, #F59E0B, #D97706);
+}
+.notification-modal.info .notification-progress::after {
+    background: linear-gradient(90deg, #3B82F6, #2563EB);
+}
+
+@keyframes notification-timer {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+/* Responsivo */
+@media (max-width: 480px) {
+    .notification-modal {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -342,8 +585,99 @@ function generateSlug(text) {
         .trim();
 }
 
-function showMessage(message, type) {
-    alert(message);
+// =============================================================================
+// Modal de Notificacao (Toast)
+// =============================================================================
+
+let notificationTimeout = null;
+const notificationModal = document.getElementById('notification-modal');
+
+/**
+ * Exibe uma notificacao elegante no canto superior direito.
+ *
+ * @param {string} message - Mensagem principal da notificacao
+ * @param {string} type - Tipo: 'success', 'error', 'danger', 'warning', 'info'
+ * @param {string} title - Titulo opcional (gerado automaticamente se nao fornecido)
+ * @param {number} duration - Duracao em ms (padrao: 4000)
+ */
+function showMessage(message, type = 'info', title = null, duration = 4000) {
+    if (!notificationModal) {
+        // Fallback para alert se o modal nao existir
+        alert(message);
+        return;
+    }
+
+    // Limpa timeout anterior se existir
+    if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+    }
+
+    // Define titulo padrao baseado no tipo
+    const defaultTitles = {
+        success: 'Sucesso!',
+        error: 'Erro',
+        danger: 'Erro',
+        warning: 'Atencao',
+        info: 'Informacao'
+    };
+
+    const titleText = title || defaultTitles[type] || 'Notificacao';
+
+    // Atualiza conteudo
+    const titleEl = notificationModal.querySelector('.notification-title');
+    const messageEl = notificationModal.querySelector('.notification-message');
+
+    if (titleEl) titleEl.textContent = titleText;
+    if (messageEl) messageEl.textContent = message;
+
+    // Remove classes anteriores e adiciona a nova
+    notificationModal.classList.remove('success', 'error', 'danger', 'warning', 'info', 'active');
+    notificationModal.classList.add(type);
+
+    // Reinicia animacao da barra de progresso
+    const progressBar = notificationModal.querySelector('.notification-progress');
+    if (progressBar) {
+        progressBar.style.animation = 'none';
+        progressBar.offsetHeight; // Trigger reflow
+        progressBar.style.animation = '';
+
+        // Ajusta duracao da animacao
+        const afterStyle = document.createElement('style');
+        afterStyle.id = 'notification-progress-style';
+        const existingStyle = document.getElementById('notification-progress-style');
+        if (existingStyle) existingStyle.remove();
+
+        afterStyle.textContent = `
+            .notification-progress::after {
+                animation-duration: ${duration}ms !important;
+            }
+        `;
+        document.head.appendChild(afterStyle);
+    }
+
+    // Exibe o modal com pequeno delay para garantir transicao
+    requestAnimationFrame(() => {
+        notificationModal.classList.add('active');
+    });
+
+    // Auto-hide apos duracao
+    notificationTimeout = setTimeout(() => {
+        hideNotification();
+    }, duration);
+}
+
+/**
+ * Esconde a notificacao atual.
+ */
+function hideNotification() {
+    if (!notificationModal) return;
+
+    notificationModal.classList.remove('active');
+
+    if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+        notificationTimeout = null;
+    }
 }
 
 // =============================================================================
@@ -486,6 +820,60 @@ document.addEventListener('DOMContentLoaded', function() {
             } finally {
                 uploadProgress.style.display = 'none';
                 fileInput.value = '';
+            }
+        });
+    }
+
+    // Upload de imagem do header (banner)
+    const headerFileInput = document.getElementById('header_image_file');
+    const headerImageUrlInput = document.getElementById('header_image_url');
+    const headerImagePreview = document.getElementById('header-image-preview');
+    const headerPreviewImg = document.getElementById('header-preview-img');
+    const headerUploadProgress = document.getElementById('header-upload-progress');
+
+    if (headerFileInput) {
+        headerFileInput.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file) return;
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showMessage('Tipo de arquivo nao permitido. Use JPG, PNG, WebP ou GIF.', 'danger');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage('Arquivo muito grande. Maximo 10MB.', 'danger');
+                return;
+            }
+
+            headerUploadProgress.style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/admin/upload/category-header-image', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    headerImageUrlInput.value = data.url;
+                    headerPreviewImg.src = data.url;
+                    headerImagePreview.style.display = 'block';
+                    showMessage('Imagem do header enviada com sucesso! (1920x400 px)', 'success');
+                } else {
+                    showMessage(data.detail || 'Erro ao enviar imagem do header', 'danger');
+                }
+            } catch (error) {
+                showMessage('Erro de conexao ao enviar imagem do header', 'danger');
+                console.error('Header upload error:', error);
+            } finally {
+                headerUploadProgress.style.display = 'none';
+                headerFileInput.value = '';
             }
         });
     }

@@ -931,6 +931,7 @@ async def create_category(
     seo_title: str = Form(""),
     seo_description: str = Form(""),
     image_url: str = Form(""),
+    header_image_url: str = Form(""),
 ):
     """Cria nova categoria."""
     # Gera slug automaticamente se nao fornecido
@@ -951,6 +952,7 @@ async def create_category(
         "description": description.strip() or None,
         "parent_id": UUID(parent_id) if parent_id else None,
         "image_url": image_url.strip() or None,
+        "header_image_url": header_image_url.strip() or None,
         "seo_focus_keyword": seo_focus_keyword.strip() or None,
         "seo_title": seo_title.strip() or None,
         "seo_description": seo_description.strip() or None,
@@ -978,6 +980,7 @@ async def update_category(
     seo_title: str = Form(""),
     seo_description: str = Form(""),
     image_url: str = Form(""),
+    header_image_url: str = Form(""),
 ):
     """Atualiza categoria existente."""
     category = await repo.get(category_id)
@@ -1007,6 +1010,7 @@ async def update_category(
         "description": description.strip() or None,
         "parent_id": new_parent_id,
         "image_url": image_url.strip() or None,
+        "header_image_url": header_image_url.strip() or None,
         "seo_focus_keyword": seo_focus_keyword.strip() or None,
         "seo_title": seo_title.strip() or None,
         "seo_description": seo_description.strip() or None,
@@ -1188,7 +1192,7 @@ async def upload_category_image(
     file: UploadFile = File(...),
 ):
     """
-    Upload de imagem para categorias.
+    Upload de imagem para categorias (card/icone).
 
     A imagem e automaticamente redimensionada para 400x400 px e comprimida.
     Aceita: JPEG, PNG, WebP, GIF
@@ -1203,6 +1207,34 @@ async def upload_category_image(
 
     return JSONResponse(
         content={"url": image_url, "message": "Imagem enviada com sucesso"},
+        status_code=http_status.HTTP_201_CREATED,
+    )
+
+
+@router.post("/upload/category-header-image")
+async def upload_category_header_image(
+    current_user: AdminUser,
+    file: UploadFile = File(...),
+):
+    """
+    Upload de imagem de header (banner) para categorias.
+
+    A imagem e automaticamente redimensionada para 1920x400 px e comprimida.
+    Formato otimizado para exibicao responsiva em desktop, tablet e mobile.
+
+    Tamanho recomendado: 1920x400 px ou maior
+    Aceita: JPEG, PNG, WebP, GIF
+    Tamanho maximo: 10MB (comprimido automaticamente)
+
+    Returns:
+        JSON com URL da imagem salva
+    """
+    from app.services.upload import save_category_header_image
+
+    image_url = await save_category_header_image(file)
+
+    return JSONResponse(
+        content={"url": image_url, "message": "Imagem do header enviada com sucesso"},
         status_code=http_status.HTTP_201_CREATED,
     )
 

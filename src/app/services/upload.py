@@ -36,6 +36,10 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 # Categorias: 400x400 px (1:1) - Usado em cards e listagens
 CATEGORY_IMAGE_SIZE = (400, 400)
 
+# Header de categoria: 1920x400 px (4.8:1) - Banner wide para desktop/tablet/mobile
+# Responsivo: usa object-fit: cover para adaptar em diferentes telas
+CATEGORY_HEADER_IMAGE_SIZE = (1920, 400)
+
 # Produtos: diferentes tamanhos para diferentes usos
 PRODUCT_IMAGE_SIZES = {
     "main": (800, 800),    # Imagem principal na pagina do produto
@@ -292,6 +296,65 @@ async def save_category_image(file: UploadFile) -> str:
 
     # Retorna URL relativa
     return get_upload_url("categories", filename)
+
+
+async def save_category_header_image(file: UploadFile) -> str:
+    """
+    Salva imagem de header de categoria com redimensionamento padronizado.
+
+    A imagem e redimensionada para 1920x400 px (formato banner wide)
+    otimizado para exibicao responsiva em desktop, tablet e mobile.
+
+    Tamanho recomendado para upload: 1920x400 px ou maior (sera redimensionado)
+    - Desktop: exibe 1920x400 px completo
+    - Tablet: usa object-fit: cover para adaptar
+    - Mobile: usa object-fit: cover para adaptar
+
+    Args:
+        file: Arquivo de imagem
+
+    Returns:
+        URL relativa da imagem salva (ex: /static/uploads/categories/headers/xxx.jpg)
+
+    Raises:
+        HTTPException: Se erro no upload
+    """
+    # Valida arquivo (extensao ignorada pois sempre salvamos como .jpg)
+    validate_image(file)
+
+    # Gera nome unico - sempre salva como .jpg apos processamento
+    filename = f"{uuid.uuid4().hex}.jpg"
+
+    # Caminho completo - subdiretorio headers dentro de categories
+    upload_path = UPLOAD_DIR / "categories" / "headers" / filename
+
+    # Garante que diretorio existe
+    upload_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Le conteudo e valida tamanho
+    content = await file.read()
+
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Arquivo muito grande. Tamanho maximo: {MAX_FILE_SIZE // (1024 * 1024)}MB",
+        )
+
+    # Redimensiona imagem para tamanho padrao de header
+    # Usa limite maior de tamanho de saida (800KB) por ser imagem maior
+    resized_content = resize_image(
+        content,
+        CATEGORY_HEADER_IMAGE_SIZE,
+        "JPEG",
+        max_output_size=800 * 1024,  # 800KB max para headers
+    )
+
+    # Salva arquivo
+    with open(upload_path, "wb") as f:
+        f.write(resized_content)
+
+    # Retorna URL relativa
+    return get_upload_url("categories/headers", filename)
 
 
 async def save_post_image(file: UploadFile) -> str:

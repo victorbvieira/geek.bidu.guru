@@ -263,6 +263,12 @@ async def list_by_category(
     # Busca subcategorias (se houver)
     subcategories = await category_repo.get_children(category.id)
 
+    # Busca contagem de sub-subcategorias para cada subcategoria
+    # Isso evita o erro MissingGreenlet ao acessar lazy-loaded relationships no template
+    subcategories_counts = {}
+    for subcat in subcategories:
+        subcategories_counts[str(subcat.id)] = await category_repo.count_children(subcat.id)
+
     # Busca produtos da categoria
     products = await product_repo.get_by_category(category.slug, skip=0, limit=12)
     total_products = await product_repo.count_by_category(category.slug)
@@ -292,6 +298,7 @@ async def list_by_category(
             "category": category,
             "posts": posts,
             "subcategories": subcategories,
+            "subcategories_counts": subcategories_counts,
             "products": products,
             "total_products": total_products,
             "page": page,

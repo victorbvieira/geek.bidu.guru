@@ -134,3 +134,18 @@ class CategoryRepository(BaseRepository[Category]):
             query = query.where(Category.id != exclude_id)
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
+
+    async def count_children(self, parent_id: UUID) -> int:
+        """
+        Conta subcategorias de uma categoria.
+
+        Args:
+            parent_id: ID da categoria pai
+
+        Returns:
+            Numero de subcategorias
+        """
+        result = await self.db.execute(
+            select(func.count(Category.id)).where(Category.parent_id == parent_id)
+        )
+        return result.scalar_one()
