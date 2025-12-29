@@ -104,9 +104,14 @@
                         class="admin-form-input"
                         value="{{ product.affiliate_redirect_slug if product else '' }}"
                         placeholder="produto-amazon"
+                        pattern="^[a-z0-9-]+$"
+                        title="Apenas letras minúsculas, números e hífens. Caractere '/' não é permitido."
                         required
                     >
                     <div class="admin-form-hint">URL: /goto/{{ product.affiliate_redirect_slug if product else 'seu-slug' }}</div>
+                    <div class="admin-form-error" id="redirect-slug-error" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 4px;">
+                        Caractere '/' não é permitido. Use apenas letras minúsculas, números e hífens.
+                    </div>
                 </div>
             </div>
 
@@ -870,13 +875,39 @@ if (productSlugInput) {
     });
 }
 
-// Marcar slug de redirecionamento como editado manualmente
+// Marcar slug de redirecionamento como editado manualmente e validar caracteres
 if (affiliateRedirectSlugInput) {
+    const redirectSlugError = document.getElementById('redirect-slug-error');
+    const slugPattern = /^[a-z0-9-]*$/;
+
     affiliateRedirectSlugInput.addEventListener('input', function() {
-        if (this.value.trim() !== '') {
+        const value = this.value;
+
+        // Marca como editado manualmente
+        if (value.trim() !== '') {
             redirectSlugManuallyEdited = true;
         } else {
             redirectSlugManuallyEdited = false;
+        }
+
+        // Valida caracteres - especialmente verifica se tem '/'
+        if (value.includes('/')) {
+            this.classList.add('is-invalid');
+            if (redirectSlugError) {
+                redirectSlugError.style.display = 'block';
+                redirectSlugError.textContent = "Caractere '/' não é permitido. Use apenas letras minúsculas, números e hífens.";
+            }
+        } else if (!slugPattern.test(value)) {
+            this.classList.add('is-invalid');
+            if (redirectSlugError) {
+                redirectSlugError.style.display = 'block';
+                redirectSlugError.textContent = "Use apenas letras minúsculas, números e hífens.";
+            }
+        } else {
+            this.classList.remove('is-invalid');
+            if (redirectSlugError) {
+                redirectSlugError.style.display = 'none';
+            }
         }
     });
 }

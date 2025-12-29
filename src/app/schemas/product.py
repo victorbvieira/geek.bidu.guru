@@ -139,6 +139,7 @@ class ProductUpdate(BaseSchema):
     main_image_url: str | None = None
     images: list[str] | None = None
     affiliate_url_raw: str | None = None
+    affiliate_redirect_slug: str | None = Field(None, max_length=150)
     platform_product_id: str | None = None
     categories: list[str] | None = None
     tags: list[str] | None = None
@@ -152,6 +153,23 @@ class ProductUpdate(BaseSchema):
     instagram_badge: str | None = Field(None, max_length=20)
     instagram_caption: str | None = None
     instagram_hashtags: list[str] | None = None
+
+    @field_validator("affiliate_redirect_slug")
+    @classmethod
+    def validate_redirect_slug(cls, v: str | None) -> str | None:
+        """
+        Valida slug de redirecionamento.
+        Nao permite caractere / pois quebra o redirecionamento.
+        Apenas letras minusculas, numeros e hifens sao permitidos.
+        """
+        if v is None:
+            return None
+        if not re.match(r"^[a-z0-9-]+$", v):
+            raise ValueError(
+                "Slug de redirecionamento deve conter apenas letras minusculas, "
+                "numeros e hifens (caractere '/' nao e permitido)"
+            )
+        return v
 
     @field_validator("name")
     @classmethod
@@ -280,3 +298,107 @@ class ProductCard(BaseSchema):
     affiliate_redirect_slug: str
     platform: ProductPlatform
     rating: Decimal | None
+
+
+# -----------------------------------------------------------------------------
+# Atualização por Plataforma (Bulk Update via API externa)
+# -----------------------------------------------------------------------------
+
+
+class ProductPlatformUpdate(BaseSchema):
+    """
+    Schema para atualizacao de produto via plataforma + ID.
+
+    Permite atualizar atributos de um produto identificado pela combinacao
+    de plataforma (amazon, mercadolivre, shopee) e ID do produto na plataforma.
+
+    Todos os campos sao opcionais, permitindo atualizacao parcial.
+    Se o preco for alterado, o historico de precos sera automaticamente registrado.
+
+    Atributos:
+        price: Novo preco do produto
+        availability: Status de disponibilidade
+        rating: Avaliacao do produto (0-5)
+        review_count: Numero de avaliacoes
+        name: Nome do produto (caso tenha mudado)
+        main_image_url: URL da imagem principal
+        affiliate_url_raw: URL de afiliado atualizada
+
+    Exemplo de uso (n8n workflow):
+        PATCH /api/v1/products/platform/amazon/B08N5WRWNW
+        {
+            "price": 129.90,
+            "availability": "available",
+            "rating": 4.5,
+            "review_count": 1250
+        }
+    """
+
+    # Campos de preco e disponibilidade (mais comuns em atualizacoes)
+    price: Decimal | None = Field(None, ge=0, decimal_places=2, description="Preco atual")
+    price_range: PriceRange | None = Field(None, description="Faixa de preco")
+    availability: ProductAvailability | None = Field(None, description="Disponibilidade")
+
+    # Campos de avaliacao
+    rating: Decimal | None = Field(
+        None, ge=0, le=5, decimal_places=2, description="Rating 0-5"
+    )
+    review_count: int | None = Field(None, ge=0, description="Numero de reviews")
+
+    # Campos opcionais que podem mudar
+    name: str | None = Field(None, min_length=5, max_length=300, description="Nome do produto")
+    short_description: str | None = Field(None, max_length=500, description="Descricao curta")
+    main_image_url: str | None = Field(None, max_length=500, description="URL imagem principal")
+    affiliate_url_raw: str | None = Field(None, description="URL do afiliado")
+
+    # Fonte da atualizacao (para historico de precos)
+    source: str = Field(
+        default="api",
+        max_length=50,
+        description="Fonte da atualizacao (api, api_amazon, api_ml, scraper, manual)",
+    )
+    notes: str | None = Field(None, description="Observacoes sobre a atualizacao")
+
+    @field_validator("name")
+    @classmethod
+    def sanitize_name(cls, v: str | None) -> str | None:
+        """Sanitiza nome removendo scripts/HTML malicioso."""
+        if v is None:
+            return None
+        sanitized = sanitize_text(v)
+        if not sanitized or len(sanitized) < 5:
+            raise ValueError("Nome invalido apos sanitizacao")
+        return sanitized
+
+    @field_validator("short_description")
+    @classmethod
+    def sanitize_short_description(cls, v: str | None) -> str | None:
+        """Sanitiza descricao curta removendo scripts/HTML malicioso."""
+        if v is None:
+            return None
+        return sanitize_text(v)
+
+
+class ProductPlatformUpdateResponse(BaseSchema):
+    """
+    Resposta de atualizacao de produto via plataforma.
+
+    Atributos:
+        success: Se a atualizacao foi bem sucedida
+        product_id: UUID do produto atualizado
+        platform: Plataforma do produto
+        platform_product_id: ID do produto na plataforma
+        updated_fields: Lista de campos que foram atualizados
+        price_history_created: Se foi criado registro no historico de precos
+        previous_price: Preco anterior (se houve alteracao de preco)
+        new_price: Novo preco (se houve alteracao de preco)
+    """
+
+    success: bool
+    product_id: UUID
+    platform: ProductPlatform
+    platform_product_id: str
+    updated_fields: list[str]
+    price_history_created: bool = False
+    previous_price: Decimal | None = None
+    new_price: Decimal | None = None

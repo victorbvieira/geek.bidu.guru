@@ -283,6 +283,43 @@ class ProductRepository(BaseRepository[Product]):
         result = await self.db.execute(query)
         return result.scalar_one_or_none() is not None
 
+    async def get_by_platform_product_id(
+        self,
+        platform: ProductPlatform,
+        platform_product_id: str,
+    ) -> Product | None:
+        """
+        Busca produto por plataforma e ID do produto na plataforma.
+
+        Usado para identificar produtos unicamente pela combinacao
+        de plataforma (amazon, mercadolivre, shopee) e o ID especifico
+        daquela plataforma (ex: ASIN da Amazon, MLB do Mercado Livre).
+
+        Args:
+            platform: Plataforma do produto (amazon, mercadolivre, shopee)
+            platform_product_id: ID do produto na plataforma (ex: B08N5WRWNW)
+
+        Returns:
+            Produto encontrado ou None se nao existir
+
+        Exemplo:
+            # Buscar produto da Amazon pelo ASIN
+            product = await repo.get_by_platform_product_id(
+                platform=ProductPlatform.AMAZON,
+                platform_product_id="B08N5WRWNW"
+            )
+        """
+        if not platform_product_id:
+            return None
+
+        result = await self.db.execute(
+            select(Product).where(
+                Product.platform == platform,
+                Product.platform_product_id == platform_product_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_max_price(
         self,
         max_price: float,

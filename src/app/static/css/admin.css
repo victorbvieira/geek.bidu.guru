@@ -469,6 +469,21 @@ input, select, textarea, button {
     border-color: var(--admin-primary);
 }
 
+/* Estado de erro para inputs invalidos */
+.admin-form-input.is-invalid,
+.admin-form-select.is-invalid,
+.admin-form-textarea.is-invalid {
+    border-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.admin-form-input.is-invalid:focus,
+.admin-form-select.is-invalid:focus,
+.admin-form-textarea.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
 .admin-form-textarea {
     min-height: 120px;
     resize: vertical;
