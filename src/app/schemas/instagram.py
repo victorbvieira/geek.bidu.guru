@@ -150,6 +150,10 @@ class ProductForPostingResponse(BaseModel):
     currency: str
     main_image_url: str | None
     platform: str
+    platform_product_id: str | None = Field(
+        None,
+        description="ID do produto na plataforma (ASIN Amazon, MLB Mercado Livre, etc)",
+    )
     affiliate_redirect_slug: str
     categories: list[str]
     tags: list[str]

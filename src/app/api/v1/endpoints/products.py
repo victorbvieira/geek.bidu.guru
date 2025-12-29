@@ -223,6 +223,159 @@ async def list_top_clicked(
     return [ProductResponse.model_validate(p) for p in products]
 
 
+# =============================================================================
+# Endpoints de Atualizacao por Plataforma (para integracao com APIs externas)
+# IMPORTANTE: Este endpoint deve vir ANTES dos endpoints com {product_id}
+# para evitar conflito de rotas no FastAPI
+# =============================================================================
+
+
+@router.patch(
+    "/platform/{platform}/{platform_product_id}",
+    response_model=ProductPlatformUpdateResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.AUTOMATION))],
+)
+async def update_product_by_platform(
+    platform: ProductPlatform,
+    platform_product_id: str,
+    data: ProductPlatformUpdate,
+    product_repo: ProductRepo,
+    price_history_repo: PriceHistoryRepo,
+):
+    """
+    Atualiza produto identificado por plataforma e ID do produto na plataforma.
+
+    **Autenticação**: Requer token JWT com role ADMIN ou AUTOMATION.
+
+    Este endpoint e projetado para integracao com workflows n8n e APIs externas
+    que precisam atualizar produtos usando o identificador da plataforma
+    (ex: ASIN da Amazon, MLB do Mercado Livre) em vez do UUID interno.
+
+    **Historico de Precos**:
+    Se o campo `price` for enviado e for diferente do preco atual, um novo
+    registro sera criado automaticamente no historico de precos com:
+    - Preco anterior
+    - Novo preco
+    - Fonte da atualizacao (campo `source`)
+    - Observacoes (campo `notes`)
+
+    Args:
+        platform: Plataforma do produto (amazon, mercadolivre, shopee)
+        platform_product_id: ID do produto na plataforma (ex: B08N5WRWNW)
+        data: Campos a serem atualizados (ProductPlatformUpdate schema)
+        product_repo: Repositório de produtos (injetado automaticamente)
+        price_history_repo: Repositório de histórico de preços (injetado automaticamente)
+
+    Returns:
+        ProductPlatformUpdateResponse com informacoes da atualizacao
+
+    Raises:
+        HTTPException 404: Se o produto nao for encontrado
+
+    Path Parameters:
+        platform (str): Plataforma (amazon, mercadolivre, shopee)
+        platform_product_id (str): ID do produto na plataforma
+
+    Body (JSON):
+        {
+            "price": 129.90,
+            "availability": "available",
+            "rating": 4.5,
+            "review_count": 1250,
+            "source": "api_amazon",
+            "notes": "Atualizacao automatica via PA-API"
+        }
+
+    Exemplo de uso (cURL):
+        curl -X PATCH "https://geek.bidu.guru/api/v1/products/platform/amazon/B08N5WRWNW" \\
+            -H "Authorization: Bearer {token}" \\
+            -H "Content-Type: application/json" \\
+            -d '{"price": 129.90, "availability": "available"}'
+
+    Exemplo n8n:
+        - HTTP Request node
+        - Method: PATCH
+        - URL: /api/v1/products/platform/{{ $json.platform }}/{{ $json.asin }}
+        - Body: { "price": {{ $json.price }}, "availability": "available" }
+    """
+    # Busca o produto pela combinacao plataforma + ID
+    product = await product_repo.get_by_platform_product_id(
+        platform=platform,
+        platform_product_id=platform_product_id,
+    )
+
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Produto nao encontrado: {platform.value}/{platform_product_id}",
+        )
+
+    # Extrai os campos que serao atualizados (ignora source e notes que sao para historico)
+    update_data = data.model_dump(exclude_unset=True, exclude={"source", "notes"})
+    updated_fields = list(update_data.keys())
+
+    # Variaveis para resposta
+    price_history_created = False
+    previous_price = None
+    new_price = None
+
+    # Se o preco esta sendo atualizado, registra no historico
+    if "price" in update_data and update_data["price"] is not None:
+        new_price = update_data["price"]
+
+        # Verifica se o preco realmente mudou
+        if product.price is None or product.price != new_price:
+            previous_price = product.price
+
+            # Cria registro no historico de precos
+            await price_history_repo.create_price_record(
+                product_id=product.id,
+                price=new_price,
+                previous_price=previous_price,
+                source=data.source,
+                notes=data.notes,
+            )
+            price_history_created = True
+
+            # Atualiza last_price_update no produto
+            update_data["last_price_update"] = datetime.now(UTC)
+
+    # Se price_range nao foi fornecido mas o preco foi atualizado,
+    # calcula automaticamente o price_range
+    if "price" in update_data and "price_range" not in update_data:
+        price = update_data["price"]
+        if price is not None:
+            if price < 50:
+                update_data["price_range"] = PriceRange.RANGE_0_50
+            elif price < 100:
+                update_data["price_range"] = PriceRange.RANGE_50_100
+            elif price < 200:
+                update_data["price_range"] = PriceRange.RANGE_100_200
+            else:
+                update_data["price_range"] = PriceRange.RANGE_200_PLUS
+
+    # Atualiza o produto
+    if update_data:
+        product = await product_repo.update(product, update_data)
+
+    return ProductPlatformUpdateResponse(
+        success=True,
+        product_id=product.id,
+        platform=platform,
+        platform_product_id=platform_product_id,
+        updated_fields=updated_fields,
+        price_history_created=price_history_created,
+        previous_price=previous_price,
+        new_price=new_price,
+        availability=product.availability,
+    )
+
+
+# =============================================================================
+# Endpoints com {product_id} - DEVEM vir DEPOIS dos endpoints com paths fixos
+# =============================================================================
+
+
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: UUID, repo: ProductRepo):
     """
@@ -575,150 +728,4 @@ async def update_instagram_metadata(
         updated_fields=updated_fields,
         llm_cost_registered=llm_cost_registered,
         total_llm_cost_usd=float(product.ai_cost_usd) if llm_cost_registered else None,
-    )
-
-
-# =============================================================================
-# Endpoints de Atualizacao por Plataforma (para integracao com APIs externas)
-# =============================================================================
-
-
-@router.patch(
-    "/platform/{platform}/{platform_product_id}",
-    response_model=ProductPlatformUpdateResponse,
-    dependencies=[Depends(require_role(UserRole.ADMIN, UserRole.AUTOMATION))],
-)
-async def update_product_by_platform(
-    platform: ProductPlatform,
-    platform_product_id: str,
-    data: ProductPlatformUpdate,
-    product_repo: ProductRepo,
-    price_history_repo: PriceHistoryRepo,
-):
-    """
-    Atualiza produto identificado por plataforma e ID do produto na plataforma.
-
-    **Autenticação**: Requer token JWT com role ADMIN ou AUTOMATION.
-
-    Este endpoint e projetado para integracao com workflows n8n e APIs externas
-    que precisam atualizar produtos usando o identificador da plataforma
-    (ex: ASIN da Amazon, MLB do Mercado Livre) em vez do UUID interno.
-
-    **Historico de Precos**:
-    Se o campo `price` for enviado e for diferente do preco atual, um novo
-    registro sera criado automaticamente no historico de precos com:
-    - Preco anterior
-    - Novo preco
-    - Fonte da atualizacao (campo `source`)
-    - Observacoes (campo `notes`)
-
-    Args:
-        platform: Plataforma do produto (amazon, mercadolivre, shopee)
-        platform_product_id: ID do produto na plataforma (ex: B08N5WRWNW)
-        data: Campos a serem atualizados (ProductPlatformUpdate schema)
-        product_repo: Repositório de produtos (injetado automaticamente)
-        price_history_repo: Repositório de histórico de preços (injetado automaticamente)
-
-    Returns:
-        ProductPlatformUpdateResponse com informacoes da atualizacao
-
-    Raises:
-        HTTPException 404: Se o produto nao for encontrado
-
-    Path Parameters:
-        platform (str): Plataforma (amazon, mercadolivre, shopee)
-        platform_product_id (str): ID do produto na plataforma
-
-    Body (JSON):
-        {
-            "price": 129.90,
-            "availability": "available",
-            "rating": 4.5,
-            "review_count": 1250,
-            "source": "api_amazon",
-            "notes": "Atualizacao automatica via PA-API"
-        }
-
-    Exemplo de uso (cURL):
-        curl -X PATCH "https://api.geek.bidu.guru/api/v1/products/platform/amazon/B08N5WRWNW" \\
-            -H "Authorization: Bearer {token}" \\
-            -H "Content-Type: application/json" \\
-            -d '{"price": 129.90, "availability": "available"}'
-
-    Exemplo n8n:
-        - HTTP Request node
-        - Method: PATCH
-        - URL: /api/v1/products/platform/{{ $json.platform }}/{{ $json.asin }}
-        - Body: { "price": {{ $json.price }}, "availability": "available" }
-    """
-    # Busca o produto pela combinacao plataforma + ID
-    product = await product_repo.get_by_platform_product_id(
-        platform=platform,
-        platform_product_id=platform_product_id,
-    )
-
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Produto nao encontrado: {platform.value}/{platform_product_id}",
-        )
-
-    # Extrai os campos que serao atualizados (ignora source e notes que sao para historico)
-    update_data = data.model_dump(exclude_unset=True, exclude={"source", "notes"})
-    updated_fields = list(update_data.keys())
-
-    # Variaveis para resposta
-    price_history_created = False
-    previous_price = None
-    new_price = None
-
-    # Se o preco esta sendo atualizado, registra no historico
-    if "price" in update_data and update_data["price"] is not None:
-        new_price = update_data["price"]
-
-        # Verifica se o preco realmente mudou
-        if product.price is None or product.price != new_price:
-            previous_price = product.price
-
-            # Cria registro no historico de precos
-            await price_history_repo.create_price_record(
-                product_id=product.id,
-                price=new_price,
-                previous_price=previous_price,
-                source=data.source,
-                notes=data.notes,
-            )
-            price_history_created = True
-
-            # Atualiza last_price_update no produto
-            update_data["last_price_update"] = datetime.now(UTC)
-
-    # Se price_range nao foi fornecido mas o preco foi atualizado,
-    # calcula automaticamente o price_range
-    if "price" in update_data and "price_range" not in update_data:
-        price = update_data["price"]
-        if price is not None:
-            if price < 50:
-                update_data["price_range"] = PriceRange.RANGE_0_50
-            elif price < 100:
-                update_data["price_range"] = PriceRange.RANGE_50_100
-            elif price < 200:
-                update_data["price_range"] = PriceRange.RANGE_100_200
-            else:
-                update_data["price_range"] = PriceRange.RANGE_200_PLUS
-
-    # Atualiza o produto
-    if update_data:
-        product = await product_repo.update(product, update_data)
-
-    return ProductPlatformUpdateResponse(
-        success=True,
-        product_id=product.id,
-        platform=platform,
-        platform_product_id=platform_product_id,
-        updated_fields=updated_fields,
-        price_history_created=price_history_created,
-        previous_price=previous_price,
-        new_price=new_price,
-        availability=product.availability,
     )
