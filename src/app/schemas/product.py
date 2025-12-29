@@ -392,6 +392,7 @@ class ProductPlatformUpdateResponse(BaseSchema):
         price_history_created: Se foi criado registro no historico de precos
         previous_price: Preco anterior (se houve alteracao de preco)
         new_price: Novo preco (se houve alteracao de preco)
+        availability: Status atual do produto (available, unavailable, unknown)
     """
 
     success: bool
@@ -402,3 +403,4 @@ class ProductPlatformUpdateResponse(BaseSchema):
     price_history_created: bool = False
     previous_price: Decimal | None = None
     new_price: Decimal | None = None
+    availability: ProductAvailability | None = None

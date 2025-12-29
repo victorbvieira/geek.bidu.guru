@@ -709,7 +709,7 @@ async def update_product_by_platform(
 
     # Atualiza o produto
     if update_data:
-        await product_repo.update(product, update_data)
+        product = await product_repo.update(product, update_data)
 
     return ProductPlatformUpdateResponse(
         success=True,
@@ -720,4 +720,5 @@ async def update_product_by_platform(
         price_history_created=price_history_created,
         previous_price=previous_price,
         new_price=new_price,
+        availability=product.availability,
     )
