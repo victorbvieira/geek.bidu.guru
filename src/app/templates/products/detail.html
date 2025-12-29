@@ -93,6 +93,12 @@
                     {% endif %}
                 </div>
 
+                {% if product.last_price_update %}
+                <p class="product-last-update">
+                    Preco atualizado em {{ product.last_price_update.strftime('%d/%m/%Y as %H:%M') }}
+                </p>
+                {% endif %}
+
                 <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-buy-btn" target="_blank" rel="noopener sponsored">
                     Comprar na {{ product.platform.value | title }}
                 </a>
@@ -431,6 +437,12 @@
 .availability.unknown {
     background: #fef3c7;
     color: #d97706;
+}
+
+.product-last-update {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
 }
 
 .product-buy-btn {
