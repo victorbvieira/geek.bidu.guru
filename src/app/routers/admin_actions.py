@@ -934,6 +934,23 @@ async def create_category(
     header_image_url: str = Form(""),
 ):
     """Cria nova categoria."""
+    # Validacao de campos SEO (limites conforme padrao SEO)
+    if seo_title.strip() and len(seo_title.strip()) > 60:
+        raise HTTPException(
+            status_code=400,
+            detail=f"SEO Title deve ter no maximo 60 caracteres (atual: {len(seo_title.strip())})"
+        )
+    if seo_description.strip() and len(seo_description.strip()) > 160:
+        raise HTTPException(
+            status_code=400,
+            detail=f"SEO Description deve ter no maximo 160 caracteres (atual: {len(seo_description.strip())})"
+        )
+    if seo_focus_keyword.strip() and len(seo_focus_keyword.strip()) > 100:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Keyword foco deve ter no maximo 100 caracteres (atual: {len(seo_focus_keyword.strip())})"
+        )
+
     # Gera slug automaticamente se nao fornecido
     category_slug = slug.strip() if slug.strip() else generate_slug(name)
 
@@ -986,6 +1003,23 @@ async def update_category(
     category = await repo.get(category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Categoria nao encontrada")
+
+    # Validacao de campos SEO (limites conforme padrao SEO)
+    if seo_title.strip() and len(seo_title.strip()) > 60:
+        raise HTTPException(
+            status_code=400,
+            detail=f"SEO Title deve ter no maximo 60 caracteres (atual: {len(seo_title.strip())})"
+        )
+    if seo_description.strip() and len(seo_description.strip()) > 160:
+        raise HTTPException(
+            status_code=400,
+            detail=f"SEO Description deve ter no maximo 160 caracteres (atual: {len(seo_description.strip())})"
+        )
+    if seo_focus_keyword.strip() and len(seo_focus_keyword.strip()) > 100:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Keyword foco deve ter no maximo 100 caracteres (atual: {len(seo_focus_keyword.strip())})"
+        )
 
     # Gera slug automaticamente se nao fornecido
     category_slug = slug.strip() if slug.strip() else generate_slug(name)
