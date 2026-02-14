@@ -1,92 +1,139 @@
 # =============================================================================
 # Docker Compose - geek.bidu.guru
-# DESENVOLVIMENTO LOCAL - Conecta ao PostgreSQL remoto (VPS)
+# PRODUÇÃO - Dokploy
 # =============================================================================
 #
-# NOTA: PostgreSQL NAO esta incluso pois usamos o banco remoto da VPS
-# tanto para desenvolvimento quanto producao (databases separados)
+# Configuração otimizada para deploy no Dokploy.
+# Baseado no compose do Easypanel que funcionava bem.
 #
-# Portas utilizadas (evitando conflitos):
-# - App: 8001 (8000 em uso por outro projeto)
-# - Redis: 6380 (6379 em uso por outro projeto)
+# IMPORTANTE:
+# - Configure as variáveis de ambiente no painel do Dokploy
+# - PostgreSQL é REMOTO (conecta via DATABASE_URL na rede dokploy-network)
+# - Redis é local (container no compose)
+# - Volumes persistentes para uploads e cache Redis
+#
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # Redis - Cache de sessoes e queries (opcional para dev)
+  # App FastAPI - Aplicação principal
+  # ---------------------------------------------------------------------------
+  app:
+    image: geek-bidu-app:latest
+    container_name: geek_bidu_app
+    restart: unless-stopped
+    environment:
+      # Banco de Dados (PostgreSQL remoto via rede dokploy-network)
+      - DATABASE_URL=postgresql+asyncpg://geek_app_prod:${DB_PASSWORD}@postgres:5432/geek_bidu_prod
+      # Redis (container local)
+      - REDIS_URL=redis://redis:6379/0
+      # Ambiente
+      - ENVIRONMENT=production
+      - DEBUG=false
+      # Segurança
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-120}
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      # Aplicação
+      - APP_NAME=${APP_NAME:-geek.bidu.guru}
+      - APP_URL=${APP_URL:-https://geek.bidu.guru}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-geek.bidu.guru,www.geek.bidu.guru}
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      # Uploads persistentes (volume montado em /app/uploads)
+      - UPLOAD_DIR=/app/uploads
+      # APIs de Afiliados (opcional)
+      - AMAZON_ACCESS_KEY=${AMAZON_ACCESS_KEY:-}
+      - AMAZON_SECRET_KEY=${AMAZON_SECRET_KEY:-}
+      - AMAZON_PARTNER_TAG=${AMAZON_PARTNER_TAG:-}
+      - AMAZON_REGION=${AMAZON_REGION:-BR}
+      - MELI_CLIENT_ID=${MELI_CLIENT_ID:-}
+      - MELI_CLIENT_SECRET=${MELI_CLIENT_SECRET:-}
+      - MELI_REDIRECT_URI=${MELI_REDIRECT_URI:-}
+      - SHOPEE_APP_ID=${SHOPEE_APP_ID:-}
+      - SHOPEE_SECRET_KEY=${SHOPEE_SECRET_KEY:-}
+      # IA / LLM (opcional)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      # Google Analytics (opcional)
+      - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
+      - GA4_API_SECRET=${GA4_API_SECRET:-}
+      - GOOGLE_SITE_VERIFICATION=${GOOGLE_SITE_VERIFICATION:-}
+      # Amazon SES (opcional)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-us-west-2}
+      - EMAIL_FROM_ADDRESS=${EMAIL_FROM_ADDRESS:-contato-geek@bidu.guru}
+      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME:-geek.bidu.guru}
+      - EMAIL_VERIFICATION_EXPIRE_HOURS=${EMAIL_VERIFICATION_EXPIRE_HOURS:-48}
+      # n8n (opcional)
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-}
+      - N8N_API_KEY=${N8N_API_KEY:-}
+      # Playwright - navegadores instalados como appuser
+      - PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright
+      # Fuso horário de São Paulo
+      - TZ=America/Sao_Paulo
+    # Playwright/Chromium precisa de:
+    # 1. shm_size maior (padrão 64MB causa crash)
+    # 2. seccomp:unconfined para funcionar em containers
+    shm_size: '2gb'
+    security_opt:
+      - seccomp:unconfined
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - geek_bidu_uploads:/app/uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - geek_network
+
+  # ---------------------------------------------------------------------------
+  # Redis - Cache de sessões e queries
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: geek_redis
+    container_name: geek_bidu_redis
+    restart: unless-stopped
     command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - geek_network
-
-  # ---------------------------------------------------------------------------
-  # App FastAPI - Aplicacao principal
-  # ---------------------------------------------------------------------------
-  app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    container_name: geek_app
-    env_file:
-      - ../.env
-    environment:
-      # Sobrescreve variaveis do .env se necessario
-      - REDIS_URL=redis://redis:6379/0
-      # Em desenvolvimento, nao define UPLOAD_DIR para usar /static/uploads
-      # Playwright - caminho dos navegadores (instalado como appuser)
-      - PLAYWRIGHT_BROWSERS_PATH=/home/appuser/.cache/ms-playwright
-      # Fuso horario de Sao Paulo
-      - TZ=America/Sao_Paulo
     volumes:
-      - ../src:/app/src
-      # Volume para uploads persistentes (desenvolvimento)
-      - uploads_data:/app/src/app/static/uploads
-    ports:
-      - "8001:8000"
-    depends_on:
-      redis:
-        condition: service_healthy
-    # Playwright/Chromium precisa de:
-    # 1. shm_size maior (padrao 64MB causa crash do Chromium)
-    # 2. seccomp:unconfined para funcionar em containers
-    shm_size: '2gb'
-    security_opt:
-      - seccomp:unconfined
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - geek_bidu_redis:/data
     networks:
       - geek_network
-      - interna  # Rede compartilhada para acessar PostgreSQL
 
 # -----------------------------------------------------------------------------
 # Volumes persistentes
 # -----------------------------------------------------------------------------
 volumes:
-  redis_data:
-    name: geek_redis_data
-  uploads_data:
-    name: geek_uploads_data
+  geek_bidu_uploads:
+    driver: local
+  geek_bidu_redis:
+    driver: local
 
 # -----------------------------------------------------------------------------
 # Redes
 # -----------------------------------------------------------------------------
 networks:
-  # Rede interna do projeto (para comunicação app <-> redis)
-  geek_network:
-    name: geek_network
-    driver: bridge
-  # Rede compartilhada com PostgreSQL e outros serviços da VPS
-  interna:
-    name: interna
+  # Rede do Dokploy (externa - gerenciada pelo Dokploy)
+  # Permite comunicação com PostgreSQL e outros serviços
+  dokploy-network:
     external: true
+  # Rede interna do projeto (comunicação app <-> redis)
+  geek_network:
+    driver: bridge
