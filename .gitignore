@@ -122,6 +122,7 @@ desktop.ini
 .env
 .env.*
 !.env.example
+!.env.*.example
 secrets/
 credentials/
 
