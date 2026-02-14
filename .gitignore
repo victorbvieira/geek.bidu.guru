@@ -119,10 +119,15 @@ desktop.ini
 # Projeto Especifico
 # -----------------------------------------------------------------------------
 # Credenciais e segredos (NUNCA commitar!)
+# Exceções: .env.example, .env.*.example, .env.docker (sem valores sensíveis)
 .env
+.env.local
+.env.dev
+.env.prod
 .env.*
 !.env.example
 !.env.*.example
+!.env.docker
 secrets/
 credentials/
 

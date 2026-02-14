@@ -11,6 +11,7 @@
 # - PostgreSQL é REMOTO (conecta via DATABASE_URL na rede dokploy-network)
 # - Redis é local (container no compose)
 # - Volumes persistentes para uploads e cache Redis
+# - Arquivo .env.docker contém apenas valores padrão (são sobrescritos pelo Dokploy)
 #
 # =============================================================================
 
@@ -19,9 +20,13 @@ services:
   # App FastAPI - Aplicação principal
   # ---------------------------------------------------------------------------
   app:
-    image: geek-bidu-app:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: geek_bidu_app
     restart: unless-stopped
+    env_file:
+      - ../.env.docker
     environment:
       # Banco de Dados (PostgreSQL remoto via rede dokploy-network)
       - DATABASE_URL=postgresql+asyncpg://geek_app_prod:${DB_PASSWORD}@postgres:5432/geek_bidu_prod
