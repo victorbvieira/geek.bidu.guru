@@ -90,10 +90,10 @@ LOG_FORMAT=json
 ### 1. Preparar o Repositório
 
 No Dokploy, configure:
-- **Repositório Git**: `https://github.com/seu-usuario/geek.bidu.guru`
+- **Repositório Git**: `https://github.com/victorbvieira/geek.bidu.guru`
 - **Branch**: `main`
 - **Dockerfile Path**: `docker/Dockerfile`
-- **Docker Compose Path**: `docker/docker-compose.dokploy.yml`
+- **Docker Compose Path**: `docker/docker-compose.yml`
 
 ### 2. Configurar Rede Externa
 
