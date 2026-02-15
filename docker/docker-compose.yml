@@ -7,11 +7,11 @@
 # Baseado no compose do Easypanel que funcionava bem.
 #
 # IMPORTANTE:
-# - Configure as variáveis de ambiente no painel do Dokploy
+# - Configure TODAS as variáveis de ambiente no painel do Dokploy
+# - Se faltar uma variável obrigatória (DATABASE_URL, SECRET_KEY), o deploy DEVE falhar
 # - PostgreSQL é REMOTO (conecta via DATABASE_URL na rede dokploy-network)
 # - Redis é local (container no compose)
 # - Volumes persistentes para uploads e cache Redis
-# - Arquivo .env.docker contém apenas valores padrão (são sobrescritos pelo Dokploy)
 #
 # =============================================================================
 
@@ -25,8 +25,6 @@ services:
       dockerfile: docker/Dockerfile
     container_name: geek_bidu_app
     restart: unless-stopped
-    env_file:
-      - ../.env.docker
     environment:
       # Banco de Dados (PostgreSQL remoto via rede dokploy-network)
       # Configure DATABASE_URL completa no painel do Dokploy
