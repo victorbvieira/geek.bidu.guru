@@ -29,7 +29,8 @@ services:
       - ../.env.docker
     environment:
       # Banco de Dados (PostgreSQL remoto via rede dokploy-network)
-      - DATABASE_URL=postgresql+asyncpg://geek_app_prod:${DB_PASSWORD}@postgres:5432/geek_bidu_prod
+      # Configure DATABASE_URL completa no painel do Dokploy
+      - DATABASE_URL=${DATABASE_URL}
       # Redis (container local)
       - REDIS_URL=redis://redis:6379/0
       # Ambiente

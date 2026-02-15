@@ -50,8 +50,12 @@ psql "postgresql://geek_app_prod:SuaSenhaSegura123!@IP_POSTGRES:5432/geek_bidu_p
 **Mínimo essencial** (configure no painel do Dokploy):
 
 ```bash
-# Database (OBRIGATÓRIO)
-DB_PASSWORD=SuaSenhaSegura123!
+# Database (OBRIGATÓRIO - URL COMPLETA!)
+# Opção A: Container PostgreSQL no Dokploy
+DATABASE_URL=postgresql+asyncpg://geek_app_prod:SUA_SENHA@NOME_CONTAINER_POSTGRES:5432/geek_bidu_prod
+
+# Opção B: PostgreSQL externo/VPS
+DATABASE_URL=postgresql+asyncpg://geek_app_prod:SUA_SENHA@IP_OU_HOST:5432/geek_bidu_prod
 
 # Segurança (OBRIGATÓRIO - gere uma chave nova!)
 SECRET_KEY=<execute: python -c "import secrets; print(secrets.token_urlsafe(32))">
@@ -59,6 +63,13 @@ SECRET_KEY=<execute: python -c "import secrets; print(secrets.token_urlsafe(32))
 # App (OBRIGATÓRIO)
 APP_URL=https://geek.bidu.guru
 ALLOWED_HOSTS=geek.bidu.guru,www.geek.bidu.guru
+```
+
+**Como descobrir o nome do container PostgreSQL:**
+```bash
+docker ps | grep postgres
+# Ou
+docker network inspect dokploy-network | grep postgres
 ```
 
 **Opcionais** (configure depois se precisar):
