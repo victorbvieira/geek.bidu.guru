@@ -66,15 +66,15 @@ async def create_api_token(
     if expires_in_days is not None:
         expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days)
 
-    record = ApiToken(
-        user_id=user_id,
-        name=name,
-        token_hash=token_hash,
-        token_prefix=prefix,
-        expires_at=expires_at,
-        created_by_user_id=created_by_user_id,
-    )
-    record = await repo.create(record)
+    # BaseRepository.create() faz `self.model(**obj_in)`, então passa dict
+    record = await repo.create({
+        "user_id": user_id,
+        "name": name,
+        "token_hash": token_hash,
+        "token_prefix": prefix,
+        "expires_at": expires_at,
+        "created_by_user_id": created_by_user_id,
+    })
     return GeneratedToken(record=record, token=token)
 
 
