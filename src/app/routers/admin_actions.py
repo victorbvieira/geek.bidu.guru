@@ -7,7 +7,7 @@ Processa formularios de criacao, edicao e exclusao de:
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -17,6 +17,7 @@ from starlette import status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
+    ApiTokenRepo,
     CategoryRepo,
     DBSession,
     OccasionRepo,
@@ -25,6 +26,7 @@ from app.api.deps import (
     ProductRepo,
     UserRepo,
 )
+from app.services.api_token import create_api_token
 from app.core.security import get_password_hash
 from app.models import User
 from app.models.post import PostStatus, PostType
@@ -1185,6 +1187,82 @@ async def delete_user(
 
     return RedirectResponse(
         url="/admin/users",
+        status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+# -----------------------------------------------------------------------------
+# API Tokens (sub-recurso de users)
+# -----------------------------------------------------------------------------
+
+
+@router.post("/users/{user_id}/api-tokens", response_class=None)
+async def create_user_api_token(
+    request: Request,
+    user_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    user_repo: UserRepo,
+    token_repo: ApiTokenRepo,
+    name: Annotated[str, Form()],
+    expires_in_days: Annotated[Optional[int], Form()] = 365,
+):
+    """Gera novo API token. Renderiza a página de tokens com valor exibido UMA vez."""
+    from pathlib import Path
+    from fastapi.templating import Jinja2Templates
+
+    user = await user_repo.get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado")
+
+    # 0 ou negativo significa "sem expiração" (mas o schema valida >=1; 0 => None aqui)
+    expires_arg: Optional[int] = expires_in_days if expires_in_days and expires_in_days > 0 else None
+
+    generated = await create_api_token(
+        token_repo,
+        user_id=user_id,
+        name=name.strip(),
+        expires_in_days=expires_arg,
+        created_by_user_id=current_user.id,
+    )
+
+    tokens = await token_repo.list_by_user(user_id, include_revoked=True)
+
+    templates_dir = Path(__file__).resolve().parent.parent / "templates"
+    templates = Jinja2Templates(directory=templates_dir)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/users/api_tokens.html",
+        context={
+            "title": f"API Tokens: {user.name} - Admin",
+            "current_user": current_user,
+            "user": user,
+            "tokens": tokens,
+            "generated_token": generated.token,
+            "generated_token_id": str(generated.record.id),
+            "now": datetime.now(timezone.utc),
+        },
+    )
+
+
+@router.post(
+    "/users/{user_id}/api-tokens/{token_id}/revoke",
+    response_class=RedirectResponse,
+)
+async def revoke_user_api_token(
+    user_id: UUID,
+    token_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    token_repo: ApiTokenRepo,
+):
+    """Revoga API token (soft delete)."""
+    record = await token_repo.get(token_id)
+    if record is None or record.user_id != user_id:
+        raise HTTPException(status_code=404, detail="Token nao encontrado")
+
+    await token_repo.revoke(token_id, datetime.now(timezone.utc))
+
+    return RedirectResponse(
+        url=f"/admin/users/{user_id}/api-tokens",
         status_code=http_status.HTTP_303_SEE_OTHER,
     )
 

@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import (
     AIConfigRepo,
+    ApiTokenRepo,
     CategoryRepo,
     DBSession,
     NewsletterRepo,
@@ -816,11 +817,14 @@ async def edit_user(
     user_id: UUID,
     current_user: Annotated[User, Depends(require_admin_role)],
     repo: UserRepo,
+    token_repo: ApiTokenRepo,
 ):
     """Formulario de edicao de usuario (apenas admin)."""
     user = await repo.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado")
+
+    active_tokens_count = await token_repo.count_by_user(user_id, include_revoked=False)
 
     return templates.TemplateResponse(
         request=request,
@@ -829,6 +833,39 @@ async def edit_user(
             "title": f"Editar: {user.name} - Admin",
             "current_user": current_user,
             "user": user,
+            "active_tokens_count": active_tokens_count,
+        },
+    )
+
+
+@router.get("/users/{user_id}/api-tokens", response_class=HTMLResponse)
+async def user_api_tokens(
+    request: Request,
+    user_id: UUID,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    user_repo: UserRepo,
+    token_repo: ApiTokenRepo,
+):
+    """Pagina dedicada para gerenciar API tokens de um usuario."""
+    user = await user_repo.get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado")
+
+    from datetime import timezone as _tz
+
+    tokens = await token_repo.list_by_user(user_id, include_revoked=True)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/users/api_tokens.html",
+        context={
+            "title": f"API Tokens: {user.name} - Admin",
+            "current_user": current_user,
+            "user": user,
+            "tokens": tokens,
+            "generated_token": None,
+            "generated_token_id": None,
+            "now": datetime.now(_tz.utc),
         },
     )
 

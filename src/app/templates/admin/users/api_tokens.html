@@ -1,0 +1,208 @@
+{% extends "admin/base.html" %}
+
+{% block title %}API Tokens - {{ user.name }}{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/users">Usuarios</a>
+<span>/</span>
+<a href="/admin/users/{{ user.id }}">{{ user.name }}</a>
+<span>/</span>
+<span class="current">API Tokens</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">API Tokens — {{ user.name }}</h1>
+    <p class="admin-page-subtitle">
+        Tokens de longa duracao para autenticacao programatica (agentes, n8n, scripts).
+        Formato <code>pcat_&lt;hex&gt;</code>. Use no header <code>Authorization: Bearer &lt;token&gt;</code>.
+    </p>
+</div>
+
+{% if generated_token %}
+<div class="admin-card" style="border: 2px solid #4ade80; margin-bottom: 24px;">
+    <div class="admin-card-header" style="background-color: #f0fdf4;">
+        <h3 style="color: #166534;">Token gerado com sucesso</h3>
+    </div>
+    <div class="admin-card-body">
+        <p style="color: #991b1b; font-weight: 600; margin-bottom: 12px;">
+            Atencao: copie o token agora. Ele NAO sera mostrado novamente.
+        </p>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <input
+                type="text"
+                id="generated-token-value"
+                value="{{ generated_token }}"
+                readonly
+                onclick="this.select()"
+                style="flex: 1; padding: 12px; font-family: monospace; font-size: 14px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb;"
+            >
+            <button
+                type="button"
+                onclick="
+                    const input = document.getElementById('generated-token-value');
+                    input.select();
+                    navigator.clipboard.writeText(input.value);
+                    this.innerText = 'Copiado';
+                    setTimeout(() => this.innerText = 'Copiar', 2000);
+                "
+                class="admin-btn admin-btn-primary"
+            >Copiar</button>
+        </div>
+        <p style="margin-top: 12px; color: #4b5563; font-size: 13px;">
+            Guarde no vault de senhas (Bitwarden / 1Password). Token ID:
+            <code>{{ generated_token_id }}</code>
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<div class="admin-form-grid">
+    <div class="admin-form-main">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3>Gerar novo token</h3>
+            </div>
+            <div class="admin-card-body">
+                <form
+                    method="POST"
+                    action="/admin/users/{{ user.id }}/api-tokens"
+                    class="admin-form"
+                >
+                    <div class="admin-form-group">
+                        <label for="name" class="admin-label">Descricao *</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            class="admin-input"
+                            placeholder="ex: paperclip-agents, n8n-daily-cron"
+                            maxlength="100"
+                            required
+                        >
+                        <small class="admin-help-text">
+                            Para identificar onde o token sera usado. Aparece na lista abaixo.
+                        </small>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="expires_in_days" class="admin-label">Validade (dias)</label>
+                        <input
+                            type="number"
+                            id="expires_in_days"
+                            name="expires_in_days"
+                            class="admin-input"
+                            value="365"
+                            min="0"
+                            max="3650"
+                        >
+                        <small class="admin-help-text">
+                            Padrao: 365 dias. Use 0 para nao expirar (so use 0 se necessario — rotacao periodica e melhor pratica).
+                        </small>
+                    </div>
+
+                    <button type="submit" class="admin-btn admin-btn-primary">
+                        Gerar token
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="admin-card" style="margin-top: 16px;">
+            <div class="admin-card-header">
+                <h3>Tokens existentes</h3>
+            </div>
+            <div class="admin-card-body" style="padding: 0;">
+                {% if tokens %}
+                <table class="admin-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Prefix</th>
+                            <th>Expira em</th>
+                            <th>Ultimo uso</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in tokens %}
+                        <tr {% if token.revoked_at %}style="opacity: 0.5;"{% endif %}>
+                            <td>{{ token.name }}</td>
+                            <td><code>{{ token.token_prefix }}…</code></td>
+                            <td>
+                                {% if token.expires_at %}
+                                    {{ token.expires_at.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    nunca
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if token.last_used_at %}
+                                    {{ token.last_used_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    nunca usado
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if token.revoked_at %}
+                                    <span style="color: #991b1b;">revogado em {{ token.revoked_at.strftime('%d/%m/%Y') }}</span>
+                                {% elif token.expires_at and token.expires_at < now %}
+                                    <span style="color: #92400e;">expirado</span>
+                                {% else %}
+                                    <span style="color: #166534;">ativo</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                {% if not token.revoked_at %}
+                                <form
+                                    method="POST"
+                                    action="/admin/users/{{ user.id }}/api-tokens/{{ token.id }}/revoke"
+                                    style="display: inline;"
+                                    onsubmit="return confirm('Revogar este token? Quem usa ele para de funcionar imediatamente.');"
+                                >
+                                    <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">
+                                        Revogar
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="padding: 24px; color: #6b7280; text-align: center;">
+                    Nenhum token ainda. Use o formulario acima para criar o primeiro.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-form-sidebar">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h3>Como usar</h3>
+            </div>
+            <div class="admin-card-body">
+                <p style="font-size: 14px; color: #4b5563; line-height: 1.5;">
+                    No cliente (agente paperclip, n8n, curl), envie:
+                </p>
+                <pre style="background: #1e293b; color: #f1f5f9; padding: 12px; border-radius: 6px; font-size: 12px; overflow-x: auto;">Authorization: Bearer pcat_…</pre>
+                <p style="font-size: 13px; color: #6b7280; margin-top: 12px;">
+                    O servidor aceita tanto JWT (login normal) quanto API tokens (prefixo
+                    <code>pcat_</code>) no mesmo header. Para agentes de longa duracao,
+                    prefira API token.
+                </p>
+            </div>
+        </div>
+
+        <a href="/admin/users/{{ user.id }}" class="admin-btn admin-btn-secondary admin-btn-block" style="margin-top: 16px;">
+            Voltar para editar usuario
+        </a>
+    </div>
+</div>
+
+{% endblock %}
