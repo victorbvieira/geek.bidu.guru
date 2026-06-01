@@ -53,11 +53,17 @@ Protecao de Endpoints:
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from app.api.deps import Pagination, PostRepo, ProductRepo
+from app.core.deps import require_role
 from app.models.post import PostStatus, PostType
+from app.models.user import UserRole
+
+# Roles autorizados a criar/editar posts (writers + automação).
+# Para ações destrutivas (delete) usar require_role(UserRole.ADMIN) só.
+WRITE_ROLES = (UserRole.ADMIN, UserRole.EDITOR, UserRole.AUTHOR, UserRole.AUTOMATION)
 from app.schemas import (
     MessageResponse,
     PaginatedResponse,
@@ -266,7 +272,12 @@ async def get_post_by_slug(slug: str, repo: PostRepo):
 # =============================================================================
 
 
-@router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=PostResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
 async def create_post(data: PostCreate, repo: PostRepo):
     """
     Cria um novo post.
@@ -307,7 +318,11 @@ async def create_post(data: PostCreate, repo: PostRepo):
     return PostResponse.model_validate(post)
 
 
-@router.patch("/{post_id}", response_model=PostResponse)
+@router.patch(
+    "/{post_id}",
+    response_model=PostResponse,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
 async def update_post(post_id: UUID, data: PostUpdate, repo: PostRepo):
     """
     Atualiza um post existente (atualização parcial).
@@ -347,7 +362,11 @@ async def update_post(post_id: UUID, data: PostUpdate, repo: PostRepo):
     return PostResponse.model_validate(post)
 
 
-@router.patch("/{post_id}/status", response_model=PostResponse)
+@router.patch(
+    "/{post_id}/status",
+    response_model=PostResponse,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
 async def update_post_status(
     post_id: UUID, data: PostUpdateStatus, repo: PostRepo
 ):
@@ -424,7 +443,11 @@ async def increment_view(post_id: UUID, repo: PostRepo):
     return MessageResponse(message="View registrada")
 
 
-@router.delete("/{post_id}", response_model=MessageResponse)
+@router.delete(
+    "/{post_id}",
+    response_model=MessageResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def delete_post(post_id: UUID, repo: PostRepo):
     """
     Remove um post do sistema.
