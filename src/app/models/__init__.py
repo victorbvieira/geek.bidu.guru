@@ -20,6 +20,7 @@ from app.models.ai_config import AIConfig, AIProvider, AIUseCase
 from app.models.instagram_post import InstagramPostHistory
 from app.models.social_integration import SocialIntegration, SocialPlatform
 from app.models.price_history import PriceHistory
+from app.models.api_token import ApiToken
 
 __all__ = [
     # Mixins e Tipos
@@ -48,4 +49,5 @@ __all__ = [
     "SocialIntegration",
     "SocialPlatform",
     "PriceHistory",
+    "ApiToken",
 ]

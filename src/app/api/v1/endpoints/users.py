@@ -49,7 +49,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from passlib.hash import bcrypt
 
 from app.api.deps import Pagination, UserRepo
-from app.core.deps import require_role
+from app.core.deps import ActiveUser, require_role
 from app.models.user import UserRole
 from app.schemas import (
     MessageResponse,
@@ -68,7 +68,11 @@ router = APIRouter(prefix="/users", tags=["users"])
 # =============================================================================
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get(
+    "",
+    response_model=PaginatedResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def list_users(
     repo: UserRepo,
     pagination: Pagination,
@@ -123,7 +127,11 @@ async def list_users(
     )
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get(
+    "/{user_id}",
+    response_model=UserResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def get_user(user_id: UUID, repo: UserRepo):
     """
     Busca um usuário específico por seu ID.
@@ -166,7 +174,12 @@ async def get_user(user_id: UUID, repo: UserRepo):
 # =============================================================================
 
 
-@router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def create_user(data: UserCreate, repo: UserRepo):
     """
     Cria um novo usuário no sistema.
@@ -216,7 +229,11 @@ async def create_user(data: UserCreate, repo: UserRepo):
     return UserResponse.model_validate(user)
 
 
-@router.patch("/{user_id}", response_model=UserResponse)
+@router.patch(
+    "/{user_id}",
+    response_model=UserResponse,
+    dependencies=[Depends(require_role(UserRole.ADMIN))],
+)
 async def update_user(user_id: UUID, data: UserUpdate, repo: UserRepo):
     """
     Atualiza um usuário existente (atualização parcial).

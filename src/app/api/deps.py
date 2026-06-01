@@ -46,6 +46,7 @@ from app.repositories import (
     SocialIntegrationRepository,
     UserRepository,
 )
+from app.repositories.api_token import ApiTokenRepository
 
 # =============================================================================
 # Sessão do Banco de Dados
@@ -234,6 +235,14 @@ SocialIntegrationRepo = Annotated[
 PriceHistoryRepo = Annotated[
     PriceHistoryRepository, Depends(get_price_history_repo)
 ]
+
+
+async def get_api_token_repo(db: DBSession) -> ApiTokenRepository:
+    """Factory para repositório de API tokens."""
+    return ApiTokenRepository(db)
+
+
+ApiTokenRepo = Annotated[ApiTokenRepository, Depends(get_api_token_repo)]
 
 
 # =============================================================================
