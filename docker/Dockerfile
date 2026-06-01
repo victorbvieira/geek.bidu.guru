@@ -83,8 +83,9 @@ USER appuser
 RUN pip install --user playwright==1.49.1 && python -m playwright install chromium
 USER root
 
-# Copiar codigo fonte
+# Copiar codigo fonte e scripts auxiliares
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 # Ajustar permissoes finais
 RUN chown -R appuser:appuser /app
@@ -109,5 +110,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Comando padrao (producao)
-# Executa migrations e depois inicia o servidor
-CMD ["sh", "-c", "cd /app/src && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# 1. check_alembic_state.py: aborta cedo se alembic_version está
+#    inconsistente (mais de 1 linha, revision desconhecida) — evita
+#    container ficar em loop de migration. Adicionado após incidente de
+#    2026-06-01 (restore de backup antigo deixou linha 0015 fantasma).
+# 2. alembic upgrade head: aplica migrations pendentes.
+# 3. uvicorn: sobe a aplicação.
+CMD ["sh", "-c", "cd /app && python scripts/check_alembic_state.py && cd /app/src && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
