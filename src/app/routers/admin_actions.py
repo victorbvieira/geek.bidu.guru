@@ -30,7 +30,7 @@ from app.services.api_token import create_api_token
 from app.core.security import get_password_hash
 from app.models import User
 from app.models.post import PostStatus, PostType
-from app.models.product import ProductAvailability, ProductPlatform
+from app.models.product import ProductAvailability, ProductPlatform, ProductStatus
 from app.models.user import UserRole
 from app.routers.admin import require_admin_user, require_admin_role
 
@@ -293,6 +293,7 @@ async def create_product(
     platform_product_id: str = Form(""),
     price: str = Form(""),
     availability: str = Form("available"),
+    status: str = Form("draft"),
     images: str = Form("[]"),
     rating: str = Form(""),
     review_count: str = Form(""),
@@ -360,6 +361,7 @@ async def create_product(
         "platform_product_id": platform_id,
         "price": float(price) if price else None,
         "availability": ProductAvailability(availability),
+        "status": ProductStatus(status),
         "main_image_url": main_image,
         "images": images_list,
         "categories": categories_list,
@@ -404,6 +406,7 @@ async def update_product(
     platform_product_id: str = Form(""),
     price: str = Form(""),
     availability: str = Form("available"),
+    status: str = Form("draft"),
     images: str = Form("[]"),
     rating: str = Form(""),
     review_count: str = Form(""),
@@ -511,6 +514,7 @@ async def update_product(
         "platform_product_id": platform_id,
         "price": price_value,
         "availability": ProductAvailability(availability),
+        "status": ProductStatus(status),
         "main_image_url": main_image,
         "images": images_list,
         "categories": categories_list,

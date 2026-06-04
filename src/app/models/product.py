@@ -38,6 +38,23 @@ class ProductAvailability(str, enum.Enum):
     UNKNOWN = "unknown"
 
 
+class ProductStatus(str, enum.Enum):
+    """
+    Status de publicacao do produto no portal.
+
+    Controla se o produto aparece ou nao nas paginas publicas.
+    Independente de `availability` (que indica estoque/disponibilidade).
+
+    - DRAFT: Rascunho. Produto recem-criado, nao aparece no portal.
+    - PUBLISHED: Publicado. Visivel nas paginas publicas.
+    - UNPUBLISHED: Despublicado. Retirado do portal (mas mantido no cadastro).
+    """
+
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    UNPUBLISHED = "unpublished"
+
+
 class PriceRange(str, enum.Enum):
     """Faixas de preco para filtros."""
 
@@ -121,6 +138,16 @@ class Product(Base, UUIDMixin, TimestampMixin):
     availability: Mapped[ProductAvailability] = mapped_column(
         Enum(ProductAvailability, name="product_availability", values_callable=lambda x: [e.value for e in x]),
         default=ProductAvailability.UNKNOWN,
+    )
+
+    # Status de publicacao no portal (rascunho -> publicado -> despublicado)
+    status: Mapped[ProductStatus] = mapped_column(
+        Enum(ProductStatus, name="product_status", values_callable=lambda x: [e.value for e in x]),
+        default=ProductStatus.DRAFT,
+        server_default=ProductStatus.DRAFT.value,
+        nullable=False,
+        index=True,
+        comment="Status de publicacao: draft (rascunho), published (publicado), unpublished (despublicado)",
     )
     rating: Mapped[Optional[float]] = mapped_column(Numeric(3, 2), nullable=True)
     review_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")

@@ -9,7 +9,7 @@ from uuid import UUID
 
 from pydantic import Field, field_validator
 
-from app.models.product import PriceRange, ProductAvailability, ProductPlatform
+from app.models.product import PriceRange, ProductAvailability, ProductPlatform, ProductStatus
 from app.schemas.base import BaseSchema, ResponseSchema
 from app.utils.sanitize import sanitize_text, sanitize_slug
 
@@ -91,6 +91,10 @@ class ProductCreate(ProductBase, ProductAffiliate):
         default=ProductAvailability.UNKNOWN,
         description="Disponibilidade",
     )
+    status: ProductStatus = Field(
+        default=ProductStatus.DRAFT,
+        description="Status de publicacao no portal (draft, published, unpublished)",
+    )
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2, description="Rating 0-5")
     review_count: int = Field(default=0, ge=0, description="Numero de reviews")
 
@@ -149,6 +153,7 @@ class ProductUpdate(BaseSchema):
     categories: list[str] | None = None
     tags: list[str] | None = None
     availability: ProductAvailability | None = None
+    status: ProductStatus | None = Field(None, description="Status de publicacao no portal")
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2)
     review_count: int | None = Field(None, ge=0)
 
@@ -239,6 +244,7 @@ class ProductResponse(ProductBase, ProductAffiliate, ResponseSchema):
     categories: list[str]
     tags: list[str]
     availability: ProductAvailability
+    status: ProductStatus
     rating: Decimal | None
     review_count: int
     internal_score: Decimal
@@ -272,6 +278,7 @@ class ProductBrief(BaseSchema):
     main_image_url: str | None
     platform: ProductPlatform
     availability: ProductAvailability
+    status: ProductStatus
     rating: Decimal | None
     click_count: int
 

@@ -509,6 +509,16 @@
                     </select>
                 </div>
 
+                <div class="admin-form-group">
+                    <label for="status" class="admin-form-label">Status de Publicacao</label>
+                    <select id="status" name="status" class="admin-form-select">
+                        <option value="draft" {% if not product or product.status.value == 'draft' %}selected{% endif %}>Rascunho</option>
+                        <option value="published" {% if product and product.status.value == 'published' %}selected{% endif %}>Publicado</option>
+                        <option value="unpublished" {% if product and product.status.value == 'unpublished' %}selected{% endif %}>Despublicado</option>
+                    </select>
+                    <div class="admin-form-hint">Somente produtos <strong>Publicados</strong> aparecem no portal.</div>
+                </div>
+
                 <div class="admin-form-actions">
                     <button type="submit" class="admin-btn admin-btn-primary admin-btn-block">
                         {{ 'Salvar' if product else 'Criar Produto' }}
