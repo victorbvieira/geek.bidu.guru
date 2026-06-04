@@ -36,11 +36,22 @@ class ProductRepository(BaseRepository[Product]):
         )
         return list(result.scalars().all())
 
-    async def get_by_slug(self, slug: str) -> Product | None:
-        """Busca produto por slug."""
-        result = await self.db.execute(
-            select(Product).where(Product.slug == slug)
-        )
+    async def get_by_slug(
+        self,
+        slug: str,
+        status: ProductStatus | None = ProductStatus.PUBLISHED,
+    ) -> Product | None:
+        """
+        Busca produto por slug.
+
+        Por padrao retorna apenas produtos PUBLICADOS (uso no portal publico).
+        Para buscar outro status, passe `status=ProductStatus.DRAFT` etc.
+        Para ignorar o filtro de status (qualquer status), passe `status=None`.
+        """
+        query = select(Product).where(Product.slug == slug)
+        if status is not None:
+            query = query.where(Product.status == status)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def get_by_redirect_slug(self, redirect_slug: str) -> Product | None:

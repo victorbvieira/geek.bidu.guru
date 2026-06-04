@@ -75,6 +75,10 @@ class ProductAffiliate(BaseSchema):
     affiliate_redirect_slug: str = Field(..., max_length=150, description="Slug para redirect")
     platform: ProductPlatform = Field(..., description="Plataforma (amazon, mercadolivre, shopee)")
     platform_product_id: str | None = Field(None, max_length=200, description="ID na plataforma")
+    amazon_clean_url: str | None = Field(
+        None,
+        description="Link limpo do produto na Amazon (sem tag de afiliado), para gerar o link de referenciado manualmente",
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -150,6 +154,10 @@ class ProductUpdate(BaseSchema):
     affiliate_url_raw: str | None = None
     affiliate_redirect_slug: str | None = Field(None, max_length=150)
     platform_product_id: str | None = None
+    amazon_clean_url: str | None = Field(
+        None,
+        description="Link limpo do produto na Amazon (sem tag de afiliado)",
+    )
     categories: list[str] | None = None
     tags: list[str] | None = None
     availability: ProductAvailability | None = None
@@ -368,6 +376,18 @@ class ProductPlatformUpdate(BaseSchema):
     short_description: str | None = Field(None, max_length=500, description="Descricao curta")
     main_image_url: str | None = Field(None, max_length=500, description="URL imagem principal")
     affiliate_url_raw: str | None = Field(None, description="URL do afiliado")
+    amazon_clean_url: str | None = Field(
+        None,
+        description="Link limpo do produto na Amazon (sem tag de afiliado)",
+    )
+
+    # Status de publicacao no portal e notas internas da equipe
+    status: ProductStatus | None = Field(
+        None, description="Status de publicacao (draft, published, unpublished)"
+    )
+    internal_notes: str | None = Field(
+        None, description="Notas internas para uso da equipe e comunicacao entre usuarios"
+    )
 
     # Fonte da atualizacao (para historico de precos)
     source: str = Field(

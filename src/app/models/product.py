@@ -119,6 +119,15 @@ class Product(Base, UUIDMixin, TimestampMixin):
 
     # Afiliado
     affiliate_url_raw: Mapped[str] = mapped_column(Text, nullable=False)
+    # Link "limpo" do produto na Amazon (sem tag de afiliado).
+    # Usado no fluxo onde um agente de IA cadastra o produto e um humano
+    # precisa abrir esse link para gerar manualmente o link de afiliado
+    # (ate termos acesso direto a API de afiliados).
+    amazon_clean_url: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Link limpo do produto na Amazon (sem tag de afiliado), para gerar o link de referenciado manualmente"
+    )
     affiliate_redirect_slug: Mapped[str] = mapped_column(
         String(150), unique=True, nullable=False
     )

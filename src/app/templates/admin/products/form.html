@@ -109,6 +109,24 @@
                 </div>
 
                 <div class="admin-form-group">
+                    <label for="amazon_clean_url" class="admin-form-label">
+                        Link Limpo da Amazon
+                        {% if product and product.amazon_clean_url %}
+                        <a href="{{ product.amazon_clean_url }}" target="_blank" rel="noopener" class="admin-btn-icon-sm" title="Abrir na Amazon para gerar o link de afiliado">🔗 Abrir</a>
+                        {% endif %}
+                    </label>
+                    <input
+                        type="url"
+                        id="amazon_clean_url"
+                        name="amazon_clean_url"
+                        class="admin-form-input"
+                        value="{{ product.amazon_clean_url if product else '' }}"
+                        placeholder="https://www.amazon.com.br/dp/... (sem tag de afiliado)"
+                    >
+                    <div class="admin-form-hint">Link sem tag de afiliado. Abra-o para gerar manualmente o link de referenciado (enquanto nao temos acesso a API).</div>
+                </div>
+
+                <div class="admin-form-group">
                     <label for="affiliate_redirect_slug" class="admin-form-label">Slug de Redirecionamento *</label>
                     <input
                         type="text"

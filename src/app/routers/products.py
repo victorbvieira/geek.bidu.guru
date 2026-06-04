@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse
 from app.api.deps import ProductRepo
 from app.config import settings
 from app.core.templates import setup_templates
-from app.models.product import ProductAvailability, ProductStatus
+from app.models.product import ProductAvailability
 
 # Router para rotas publicas de produtos
 router = APIRouter(tags=["products-ssr"])
@@ -270,12 +270,11 @@ async def get_product(
 
     Exibe detalhes do produto e link de afiliado.
     """
-    # Busca produto por slug
+    # Busca produto por slug (get_by_slug ja filtra apenas publicados por padrao,
+    # entao rascunhos/despublicados retornam 404 e nao vazam pela URL direta).
     product = await repo.get_by_slug(slug)
 
-    # Portal publico exibe apenas produtos publicados.
-    # Rascunhos e despublicados retornam 404 (nao vazam pela URL direta).
-    if not product or product.status != ProductStatus.PUBLISHED:
+    if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Produto nao encontrado",
