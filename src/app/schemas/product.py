@@ -7,11 +7,28 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
-from app.models.product import PriceRange, ProductAvailability, ProductPlatform
+from app.models.product import PriceRange, ProductAvailability, ProductPlatform, ProductStatus
 from app.schemas.base import BaseSchema, ResponseSchema
 from app.utils.sanitize import sanitize_text, sanitize_slug
+
+
+# Mensagem unica para a regra: publicar exige link de afiliado.
+PUBLISH_REQUIRES_AFFILIATE_MSG = (
+    "Para publicar o produto e necessario informar a URL do afiliado "
+    "(affiliate_url_raw)."
+)
+
+
+def is_publishable(status: ProductStatus | None, affiliate_url_raw: str | None) -> bool:
+    """
+    Valida a regra de negocio: um produto so pode ficar PUBLICADO se tiver
+    `affiliate_url_raw`. Para qualquer outro status, retorna True.
+    """
+    if status != ProductStatus.PUBLISHED:
+        return True
+    return bool(affiliate_url_raw and str(affiliate_url_raw).strip())
 
 
 # -----------------------------------------------------------------------------
@@ -71,10 +88,17 @@ class ProductBase(BaseSchema):
 class ProductAffiliate(BaseSchema):
     """Campos de afiliado do produto."""
 
-    affiliate_url_raw: str = Field(..., description="URL completa do afiliado")
+    affiliate_url_raw: str | None = Field(
+        None,
+        description="URL completa do afiliado (opcional no cadastro; obrigatoria para publicar)",
+    )
     affiliate_redirect_slug: str = Field(..., max_length=150, description="Slug para redirect")
     platform: ProductPlatform = Field(..., description="Plataforma (amazon, mercadolivre, shopee)")
     platform_product_id: str | None = Field(None, max_length=200, description="ID na plataforma")
+    amazon_clean_url: str | None = Field(
+        None,
+        description="Link limpo do produto na Amazon (sem tag de afiliado), para gerar o link de referenciado manualmente",
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -90,6 +114,10 @@ class ProductCreate(ProductBase, ProductAffiliate):
     availability: ProductAvailability = Field(
         default=ProductAvailability.UNKNOWN,
         description="Disponibilidade",
+    )
+    status: ProductStatus = Field(
+        default=ProductStatus.DRAFT,
+        description="Status de publicacao no portal (draft, published, unpublished)",
     )
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2, description="Rating 0-5")
     review_count: int = Field(default=0, ge=0, description="Numero de reviews")
@@ -111,6 +139,11 @@ class ProductCreate(ProductBase, ProductAffiliate):
         default_factory=list, description="Lista de hashtags (sem #)"
     )
 
+    # Notas internas (uso interno / comunicacao entre usuarios)
+    internal_notes: str | None = Field(
+        None, description="Notas internas para uso da equipe e comunicacao entre usuarios"
+    )
+
     @field_validator("affiliate_redirect_slug")
     @classmethod
     def validate_redirect_slug(cls, v: str) -> str:
@@ -119,6 +152,13 @@ class ProductCreate(ProductBase, ProductAffiliate):
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("Slug deve conter apenas letras minusculas, numeros e hifens")
         return v
+
+    @model_validator(mode="after")
+    def validate_publish_requires_affiliate(self) -> "ProductCreate":
+        """Nao permite criar ja publicado sem URL de afiliado."""
+        if not is_publishable(self.status, self.affiliate_url_raw):
+            raise ValueError(PUBLISH_REQUIRES_AFFILIATE_MSG)
+        return self
 
 
 # -----------------------------------------------------------------------------
@@ -141,9 +181,14 @@ class ProductUpdate(BaseSchema):
     affiliate_url_raw: str | None = None
     affiliate_redirect_slug: str | None = Field(None, max_length=150)
     platform_product_id: str | None = None
+    amazon_clean_url: str | None = Field(
+        None,
+        description="Link limpo do produto na Amazon (sem tag de afiliado)",
+    )
     categories: list[str] | None = None
     tags: list[str] | None = None
     availability: ProductAvailability | None = None
+    status: ProductStatus | None = Field(None, description="Status de publicacao no portal")
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2)
     review_count: int | None = Field(None, ge=0)
 
@@ -153,6 +198,9 @@ class ProductUpdate(BaseSchema):
     instagram_badge: str | None = Field(None, max_length=20)
     instagram_caption: str | None = None
     instagram_hashtags: list[str] | None = None
+
+    # Notas internas (uso interno / comunicacao entre usuarios)
+    internal_notes: str | None = None
 
     @field_validator("affiliate_redirect_slug")
     @classmethod
@@ -231,6 +279,7 @@ class ProductResponse(ProductBase, ProductAffiliate, ResponseSchema):
     categories: list[str]
     tags: list[str]
     availability: ProductAvailability
+    status: ProductStatus
     rating: Decimal | None
     review_count: int
     internal_score: Decimal
@@ -249,6 +298,9 @@ class ProductResponse(ProductBase, ProductAffiliate, ResponseSchema):
     instagram_caption: str | None
     instagram_hashtags: list[str]
 
+    # Notas internas (uso interno / comunicacao entre usuarios)
+    internal_notes: str | None
+
 
 class ProductBrief(BaseSchema):
     """Schema resumido de Product (para listagens)."""
@@ -261,6 +313,7 @@ class ProductBrief(BaseSchema):
     main_image_url: str | None
     platform: ProductPlatform
     availability: ProductAvailability
+    status: ProductStatus
     rating: Decimal | None
     click_count: int
 
@@ -350,6 +403,18 @@ class ProductPlatformUpdate(BaseSchema):
     short_description: str | None = Field(None, max_length=500, description="Descricao curta")
     main_image_url: str | None = Field(None, max_length=500, description="URL imagem principal")
     affiliate_url_raw: str | None = Field(None, description="URL do afiliado")
+    amazon_clean_url: str | None = Field(
+        None,
+        description="Link limpo do produto na Amazon (sem tag de afiliado)",
+    )
+
+    # Status de publicacao no portal e notas internas da equipe
+    status: ProductStatus | None = Field(
+        None, description="Status de publicacao (draft, published, unpublished)"
+    )
+    internal_notes: str | None = Field(
+        None, description="Notas internas para uso da equipe e comunicacao entre usuarios"
+    )
 
     # Fonte da atualizacao (para historico de precos)
     source: str = Field(

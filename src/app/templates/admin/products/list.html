@@ -42,8 +42,17 @@
             <select name="availability" class="admin-form-select">
                 <option value="">Todas</option>
                 <option value="available" {% if availability == 'available' %}selected{% endif %}>Disponivel</option>
-                <option value="out_of_stock" {% if availability == 'out_of_stock' %}selected{% endif %}>Sem estoque</option>
-                <option value="discontinued" {% if availability == 'discontinued' %}selected{% endif %}>Descontinuado</option>
+                <option value="unavailable" {% if availability == 'unavailable' %}selected{% endif %}>Indisponivel</option>
+                <option value="unknown" {% if availability == 'unknown' %}selected{% endif %}>Desconhecido</option>
+            </select>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 0; min-width: 150px;">
+            <label class="admin-form-label">Status</label>
+            <select name="status" class="admin-form-select">
+                <option value="">Todos</option>
+                <option value="draft" {% if status == 'draft' %}selected{% endif %}>Rascunho</option>
+                <option value="published" {% if status == 'published' %}selected{% endif %}>Publicado</option>
+                <option value="unpublished" {% if status == 'unpublished' %}selected{% endif %}>Despublicado</option>
             </select>
         </div>
         <button type="submit" class="admin-btn admin-btn-secondary">Filtrar</button>
@@ -64,6 +73,7 @@
                     <th>Plataforma</th>
                     <th>Preco</th>
                     <th>Disponibilidade</th>
+                    <th>Status</th>
                     <th>Cliques</th>
                     <th>Acoes</th>
                 </tr>
@@ -121,6 +131,15 @@
                         <span class="admin-badge admin-badge-warning">Desconhecido</span>
                         {% endif %}
                     </td>
+                    <td>
+                        {% if product.status.value == 'published' %}
+                        <span class="admin-badge admin-badge-success">Publicado</span>
+                        {% elif product.status.value == 'unpublished' %}
+                        <span class="admin-badge admin-badge-danger">Despublicado</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-secondary">Rascunho</span>
+                        {% endif %}
+                    </td>
                     <td>{{ product.click_count or 0 }}</td>
                     <td class="actions">
                         <a href="/admin/products/{{ product.id }}" class="admin-btn admin-btn-sm admin-btn-secondary" title="Editar">
@@ -138,7 +157,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
                         Nenhum produto encontrado.
                         <a href="/admin/products/new" style="color: var(--admin-primary);">Adicionar primeiro produto</a>
                     </td>
@@ -163,7 +182,7 @@
     {% if pagination and pagination.total_pages > 1 %}
     <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--admin-border);">
         {% if pagination.page > 1 %}
-        <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}{% if platform %}&platform={{ platform }}{% endif %}{% if availability %}&availability={{ availability }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
+        <a href="?page={{ pagination.page - 1 }}{% if q %}&q={{ q }}{% endif %}{% if platform %}&platform={{ platform }}{% endif %}{% if availability %}&availability={{ availability }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Anterior</a>
         {% endif %}
 
         <span style="padding: 0.5rem 1rem; color: var(--admin-text-muted);">
@@ -171,7 +190,7 @@
         </span>
 
         {% if pagination.page < pagination.total_pages %}
-        <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}{% if platform %}&platform={{ platform }}{% endif %}{% if availability %}&availability={{ availability }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
+        <a href="?page={{ pagination.page + 1 }}{% if q %}&q={{ q }}{% endif %}{% if platform %}&platform={{ platform }}{% endif %}{% if availability %}&availability={{ availability }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="admin-btn admin-btn-sm admin-btn-secondary">Proxima</a>
         {% endif %}
     </div>
     {% endif %}

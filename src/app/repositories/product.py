@@ -10,7 +10,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Product, InstagramPostHistory
-from app.models.product import PriceRange, ProductAvailability, ProductPlatform
+from app.models.product import PriceRange, ProductAvailability, ProductPlatform, ProductStatus
 from app.repositories.base import BaseRepository
 
 
@@ -36,11 +36,22 @@ class ProductRepository(BaseRepository[Product]):
         )
         return list(result.scalars().all())
 
-    async def get_by_slug(self, slug: str) -> Product | None:
-        """Busca produto por slug."""
-        result = await self.db.execute(
-            select(Product).where(Product.slug == slug)
-        )
+    async def get_by_slug(
+        self,
+        slug: str,
+        status: ProductStatus | None = ProductStatus.PUBLISHED,
+    ) -> Product | None:
+        """
+        Busca produto por slug.
+
+        Por padrao retorna apenas produtos PUBLICADOS (uso no portal publico).
+        Para buscar outro status, passe `status=ProductStatus.DRAFT` etc.
+        Para ignorar o filtro de status (qualquer status), passe `status=None`.
+        """
+        query = select(Product).where(Product.slug == slug)
+        if status is not None:
+            query = query.where(Product.status == status)
+        result = await self.db.execute(query)
         return result.scalar_one_or_none()
 
     async def get_by_redirect_slug(self, redirect_slug: str) -> Product | None:
@@ -57,9 +68,10 @@ class ProductRepository(BaseRepository[Product]):
         platform: ProductPlatform | None = None,
         price_range: PriceRange | None = None,
     ) -> list[Product]:
-        """Lista produtos disponiveis."""
+        """Lista produtos disponiveis e publicados (portal publico)."""
         query = select(Product).where(
-            Product.availability == ProductAvailability.AVAILABLE
+            Product.availability == ProductAvailability.AVAILABLE,
+            Product.status == ProductStatus.PUBLISHED,
         )
 
         if platform:
@@ -77,6 +89,7 @@ class ProductRepository(BaseRepository[Product]):
         result = await self.db.execute(
             select(Product)
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .order_by(Product.click_count.desc())
             .limit(limit)
         )
@@ -181,6 +194,59 @@ class ProductRepository(BaseRepository[Product]):
         result = await self.db.execute(stmt)
         return result.scalar_one()
 
+    def _admin_filter_query(
+        self,
+        query,
+        platform: ProductPlatform | None = None,
+        availability: ProductAvailability | None = None,
+        status: ProductStatus | None = None,
+    ):
+        """Aplica filtros opcionais (plataforma, disponibilidade, status) a uma query."""
+        if platform is not None:
+            query = query.where(Product.platform == platform)
+        if availability is not None:
+            query = query.where(Product.availability == availability)
+        if status is not None:
+            query = query.where(Product.status == status)
+        return query
+
+    async def list_admin(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        platform: ProductPlatform | None = None,
+        availability: ProductAvailability | None = None,
+        status: ProductStatus | None = None,
+    ) -> list[Product]:
+        """
+        Lista produtos para o admin (qualquer status), com filtros opcionais.
+
+        Diferente dos metodos publicos, NAO filtra por status/disponibilidade
+        por padrao — mostra tudo, incluindo rascunhos e despublicados.
+        """
+        query = self._admin_filter_query(
+            select(Product), platform, availability, status
+        )
+        query = query.order_by(Product.created_at.desc()).offset(skip).limit(limit)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def count_admin(
+        self,
+        platform: ProductPlatform | None = None,
+        availability: ProductAvailability | None = None,
+        status: ProductStatus | None = None,
+    ) -> int:
+        """Conta produtos para o admin aplicando os mesmos filtros de list_admin."""
+        query = self._admin_filter_query(
+            select(func.count()).select_from(Product),
+            platform,
+            availability,
+            status,
+        )
+        result = await self.db.execute(query)
+        return result.scalar_one()
+
     async def get_ids_by_slugs(self, slugs: list[str]) -> list[UUID]:
         """
         Busca IDs de produtos por lista de slugs.
@@ -231,6 +297,7 @@ class ProductRepository(BaseRepository[Product]):
             select(Product)
             .where(Product.categories.op("@>")(category_json))
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .order_by(Product.internal_score.desc())
             .offset(skip)
             .limit(limit)
@@ -247,6 +314,7 @@ class ProductRepository(BaseRepository[Product]):
             .select_from(Product)
             .where(Product.categories.op("@>")(category_json))
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
         )
         result = await self.db.execute(stmt)
         return result.scalar_one()
@@ -341,6 +409,7 @@ class ProductRepository(BaseRepository[Product]):
             select(Product)
             .where(
                 Product.availability == ProductAvailability.AVAILABLE,
+                Product.status == ProductStatus.PUBLISHED,
                 Product.price.isnot(None),
                 Product.price <= max_price,
             )
@@ -366,6 +435,7 @@ class ProductRepository(BaseRepository[Product]):
             .select_from(Product)
             .where(
                 Product.availability == ProductAvailability.AVAILABLE,
+                Product.status == ProductStatus.PUBLISHED,
                 Product.price.isnot(None),
                 Product.price <= max_price,
             )
@@ -404,6 +474,7 @@ class ProductRepository(BaseRepository[Product]):
         stmt = (
             select(Product)
             .where(Product.availability == availability)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .where(Product.main_image_url.isnot(None))
             .where(
                 or_(
@@ -530,6 +601,7 @@ class ProductRepository(BaseRepository[Product]):
             select(func.count())
             .select_from(Product)
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .where(Product.main_image_url.isnot(None))
             .where(
                 or_(
@@ -567,6 +639,7 @@ class ProductRepository(BaseRepository[Product]):
         stmt = (
             select(Product)
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .where(Product.last_post_date.isnot(None))
             .where(Product.last_post_platform == "instagram")
             .order_by(Product.last_post_date.desc())
@@ -588,6 +661,7 @@ class ProductRepository(BaseRepository[Product]):
             select(func.count())
             .select_from(Product)
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .where(Product.last_post_date.isnot(None))
             .where(Product.last_post_platform == "instagram")
         )
@@ -605,6 +679,7 @@ class ProductRepository(BaseRepository[Product]):
         stmt = (
             select(Product)
             .where(Product.availability == ProductAvailability.AVAILABLE)
+            .where(Product.status == ProductStatus.PUBLISHED)
             .where(Product.last_post_date.isnot(None))
             .where(Product.last_post_platform == "instagram")
             .order_by(Product.last_post_date.desc())

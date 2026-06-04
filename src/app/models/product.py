@@ -38,6 +38,23 @@ class ProductAvailability(str, enum.Enum):
     UNKNOWN = "unknown"
 
 
+class ProductStatus(str, enum.Enum):
+    """
+    Status de publicacao do produto no portal.
+
+    Controla se o produto aparece ou nao nas paginas publicas.
+    Independente de `availability` (que indica estoque/disponibilidade).
+
+    - DRAFT: Rascunho. Produto recem-criado, nao aparece no portal.
+    - PUBLISHED: Publicado. Visivel nas paginas publicas.
+    - UNPUBLISHED: Despublicado. Retirado do portal (mas mantido no cadastro).
+    """
+
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    UNPUBLISHED = "unpublished"
+
+
 class PriceRange(str, enum.Enum):
     """Faixas de preco para filtros."""
 
@@ -101,7 +118,18 @@ class Product(Base, UUIDMixin, TimestampMixin):
     images: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
 
     # Afiliado
-    affiliate_url_raw: Mapped[str] = mapped_column(Text, nullable=False)
+    # Opcional no cadastro (ex: produto cadastrado por IA antes de ter o link
+    # de afiliado). Obrigatorio para PUBLICAR o produto (validado na aplicacao).
+    affiliate_url_raw: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Link "limpo" do produto na Amazon (sem tag de afiliado).
+    # Usado no fluxo onde um agente de IA cadastra o produto e um humano
+    # precisa abrir esse link para gerar manualmente o link de afiliado
+    # (ate termos acesso direto a API de afiliados).
+    amazon_clean_url: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Link limpo do produto na Amazon (sem tag de afiliado), para gerar o link de referenciado manualmente"
+    )
     affiliate_redirect_slug: Mapped[str] = mapped_column(
         String(150), unique=True, nullable=False
     )
@@ -121,6 +149,16 @@ class Product(Base, UUIDMixin, TimestampMixin):
     availability: Mapped[ProductAvailability] = mapped_column(
         Enum(ProductAvailability, name="product_availability", values_callable=lambda x: [e.value for e in x]),
         default=ProductAvailability.UNKNOWN,
+    )
+
+    # Status de publicacao no portal (rascunho -> publicado -> despublicado)
+    status: Mapped[ProductStatus] = mapped_column(
+        Enum(ProductStatus, name="product_status", values_callable=lambda x: [e.value for e in x]),
+        default=ProductStatus.DRAFT,
+        server_default=ProductStatus.DRAFT.value,
+        nullable=False,
+        index=True,
+        comment="Status de publicacao: draft (rascunho), published (publicado), unpublished (despublicado)",
     )
     rating: Mapped[Optional[float]] = mapped_column(Numeric(3, 2), nullable=True)
     review_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
@@ -196,6 +234,15 @@ class Product(Base, UUIDMixin, TimestampMixin):
         default=list,
         server_default="[]",
         comment="Lista de hashtags para Instagram"
+    )
+
+    # ==========================================================================
+    # Notas internas (uso interno / comunicacao entre usuarios da equipe)
+    # ==========================================================================
+    internal_notes: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Notas internas para uso da equipe e comunicacao entre usuarios"
     )
 
     # ==========================================================================

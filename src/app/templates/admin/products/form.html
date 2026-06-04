@@ -74,6 +74,19 @@
                 <div id="description-loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
                     <span>Gerando descricao com IA...</span>
                 </div>
+
+                <div class="admin-form-group">
+                    <label for="internal_notes" class="admin-form-label">
+                        Notas Internas
+                    </label>
+                    <textarea
+                        id="internal_notes"
+                        name="internal_notes"
+                        class="admin-form-textarea"
+                        placeholder="Anotacoes para uso interno da equipe e comunicacao entre usuarios (nao aparece no site)"
+                    >{{ product.internal_notes if product else '' }}</textarea>
+                    <div class="admin-form-hint">Uso interno apenas — nao e exibido publicamente no site.</div>
+                </div>
             </div>
 
             <!-- Affiliate Link -->
@@ -83,7 +96,7 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="affiliate_url_raw" class="admin-form-label">URL do Afiliado *</label>
+                    <label for="affiliate_url_raw" class="admin-form-label">URL do Afiliado</label>
                     <input
                         type="url"
                         id="affiliate_url_raw"
@@ -91,8 +104,26 @@
                         class="admin-form-input"
                         value="{{ product.affiliate_url_raw if product else '' }}"
                         placeholder="https://amazon.com.br/dp/..."
-                        required
                     >
+                    <div class="admin-form-hint">Opcional no cadastro, mas <strong>obrigatorio para publicar</strong> o produto.</div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="amazon_clean_url" class="admin-form-label">
+                        Link Limpo da Amazon
+                        {% if product and product.amazon_clean_url %}
+                        <a href="{{ product.amazon_clean_url }}" target="_blank" rel="noopener" class="admin-btn-icon-sm" title="Abrir na Amazon para gerar o link de afiliado">🔗 Abrir</a>
+                        {% endif %}
+                    </label>
+                    <input
+                        type="url"
+                        id="amazon_clean_url"
+                        name="amazon_clean_url"
+                        class="admin-form-input"
+                        value="{{ product.amazon_clean_url if product else '' }}"
+                        placeholder="https://www.amazon.com.br/dp/... (sem tag de afiliado)"
+                    >
+                    <div class="admin-form-hint">Link sem tag de afiliado. Abra-o para gerar manualmente o link de referenciado (enquanto nao temos acesso a API).</div>
                 </div>
 
                 <div class="admin-form-group">
@@ -494,6 +525,16 @@
                         <option value="unavailable" {% if product and product.availability.value == 'unavailable' %}selected{% endif %}>Indisponivel</option>
                         <option value="unknown" {% if product and product.availability.value == 'unknown' %}selected{% endif %}>Desconhecido</option>
                     </select>
+                </div>
+
+                <div class="admin-form-group">
+                    <label for="status" class="admin-form-label">Status de Publicacao</label>
+                    <select id="status" name="status" class="admin-form-select">
+                        <option value="draft" {% if not product or product.status.value == 'draft' %}selected{% endif %}>Rascunho</option>
+                        <option value="published" {% if product and product.status.value == 'published' %}selected{% endif %}>Publicado</option>
+                        <option value="unpublished" {% if product and product.status.value == 'unpublished' %}selected{% endif %}>Despublicado</option>
+                    </select>
+                    <div class="admin-form-hint">Somente produtos <strong>Publicados</strong> aparecem no portal.</div>
                 </div>
 
                 <div class="admin-form-actions">

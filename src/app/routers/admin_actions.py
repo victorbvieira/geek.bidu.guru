@@ -30,7 +30,8 @@ from app.services.api_token import create_api_token
 from app.core.security import get_password_hash
 from app.models import User
 from app.models.post import PostStatus, PostType
-from app.models.product import ProductAvailability, ProductPlatform
+from app.models.product import ProductAvailability, ProductPlatform, ProductStatus
+from app.schemas.product import PUBLISH_REQUIRES_AFFILIATE_MSG, is_publishable
 from app.models.user import UserRole
 from app.routers.admin import require_admin_user, require_admin_role
 
@@ -284,15 +285,17 @@ async def create_product(
     current_user: AdminUser,
     repo: ProductRepo,
     name: str = Form(...),
-    affiliate_url_raw: str = Form(...),
+    affiliate_url_raw: str = Form(""),
     affiliate_redirect_slug: str = Form(...),
     platform: str = Form("amazon"),
     slug: str = Form(""),
     short_description: str = Form(""),
     long_description: str = Form(""),
     platform_product_id: str = Form(""),
+    amazon_clean_url: str = Form(""),
     price: str = Form(""),
     availability: str = Form("available"),
+    status: str = Form("draft"),
     images: str = Form("[]"),
     rating: str = Form(""),
     review_count: str = Form(""),
@@ -304,10 +307,17 @@ async def create_product(
     instagram_badge: str = Form(""),
     instagram_caption: str = Form(""),
     instagram_hashtags: str = Form(""),
+    # Notas internas
+    internal_notes: str = Form(""),
 ):
     """Cria novo produto."""
     platform_enum = ProductPlatform(platform)
     platform_id = platform_product_id.strip() or None
+    status_enum = ProductStatus(status)
+
+    # Regra: produto so pode ser publicado se tiver URL de afiliado
+    if not is_publishable(status_enum, affiliate_url_raw.strip() or None):
+        raise HTTPException(status_code=400, detail=PUBLISH_REQUIRES_AFFILIATE_MSG)
 
     # Valida duplicidade: mesmo produto na mesma plataforma
     if platform_id and await repo.platform_product_exists(platform_enum, platform_id):
@@ -350,14 +360,16 @@ async def create_product(
     product_data = {
         "name": name.strip(),
         "slug": product_slug,
-        "affiliate_url_raw": affiliate_url_raw.strip(),
+        "affiliate_url_raw": affiliate_url_raw.strip() or None,
         "affiliate_redirect_slug": redirect_slug,
         "platform": platform_enum,
+        "amazon_clean_url": amazon_clean_url.strip() or None,
         "short_description": short_description.strip() or None,
         "long_description": long_description.strip() or None,
         "platform_product_id": platform_id,
         "price": float(price) if price else None,
         "availability": ProductAvailability(availability),
+        "status": ProductStatus(status),
         "main_image_url": main_image,
         "images": images_list,
         "categories": categories_list,
@@ -370,6 +382,8 @@ async def create_product(
         "instagram_badge": instagram_badge.strip() or None,
         "instagram_caption": instagram_caption.strip() or None,
         "instagram_hashtags": instagram_hashtags_list,
+        # Notas internas
+        "internal_notes": internal_notes.strip() or None,
     }
 
     # Atualiza price_range baseado no preco
@@ -391,15 +405,17 @@ async def update_product(
     current_user: AdminUser,
     repo: ProductRepo,
     name: str = Form(...),
-    affiliate_url_raw: str = Form(...),
+    affiliate_url_raw: str = Form(""),
     affiliate_redirect_slug: str = Form(...),
     platform: str = Form("amazon"),
     slug: str = Form(""),
     short_description: str = Form(""),
     long_description: str = Form(""),
     platform_product_id: str = Form(""),
+    amazon_clean_url: str = Form(""),
     price: str = Form(""),
     availability: str = Form("available"),
+    status: str = Form("draft"),
     images: str = Form("[]"),
     rating: str = Form(""),
     review_count: str = Form(""),
@@ -411,6 +427,8 @@ async def update_product(
     instagram_badge: str = Form(""),
     instagram_caption: str = Form(""),
     instagram_hashtags: str = Form(""),
+    # Notas internas
+    internal_notes: str = Form(""),
 ):
     """Atualiza produto existente."""
     product = await repo.get(product_id)
@@ -419,6 +437,11 @@ async def update_product(
 
     platform_enum = ProductPlatform(platform)
     platform_id = platform_product_id.strip() or None
+    status_enum = ProductStatus(status)
+
+    # Regra: produto so pode ser publicado se tiver URL de afiliado
+    if not is_publishable(status_enum, affiliate_url_raw.strip() or None):
+        raise HTTPException(status_code=400, detail=PUBLISH_REQUIRES_AFFILIATE_MSG)
 
     # Valida duplicidade: mesmo produto na mesma plataforma (excluindo o atual)
     if platform_id and await repo.platform_product_exists(platform_enum, platform_id, exclude_id=product_id):
@@ -497,14 +520,16 @@ async def update_product(
     update_data = {
         "name": name.strip(),
         "slug": product_slug,
-        "affiliate_url_raw": affiliate_url_raw.strip(),
+        "affiliate_url_raw": affiliate_url_raw.strip() or None,
         "affiliate_redirect_slug": redirect_slug,
         "platform": platform_enum,
+        "amazon_clean_url": amazon_clean_url.strip() or None,
         "short_description": short_description.strip() or None,
         "long_description": long_description.strip() or None,
         "platform_product_id": platform_id,
         "price": price_value,
         "availability": ProductAvailability(availability),
+        "status": ProductStatus(status),
         "main_image_url": main_image,
         "images": images_list,
         "categories": categories_list,
@@ -517,6 +542,8 @@ async def update_product(
         "instagram_badge": instagram_badge.strip() or None,
         "instagram_caption": instagram_caption.strip() or None,
         "instagram_hashtags": instagram_hashtags_list,
+        # Notas internas
+        "internal_notes": internal_notes.strip() or None,
     }
 
     await repo.update(product, update_data)

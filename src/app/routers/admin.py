@@ -402,24 +402,43 @@ async def list_products(
     q: Optional[str] = None,
     platform: Optional[str] = None,
     availability: Optional[str] = None,
+    status: Optional[str] = None,
 ):
-    """Listagem de produtos."""
+    """Listagem de produtos (admin: mostra todos os status)."""
+    from app.models.product import ProductAvailability, ProductPlatform, ProductStatus
+
     skip = (page - 1) * per_page
 
-    # Filtros
-    filters = {}
-    if platform:
-        filters["platform"] = platform
-    if availability:
-        filters["availability"] = availability
+    # Converte filtros (string -> enum), ignorando valores invalidos
+    def _parse(enum_cls, value):
+        if not value:
+            return None
+        try:
+            return enum_cls(value)
+        except ValueError:
+            return None
+
+    platform_enum = _parse(ProductPlatform, platform)
+    availability_enum = _parse(ProductAvailability, availability)
+    status_enum = _parse(ProductStatus, status)
 
     # Buscar produtos
     if q:
         products = await repo.search(q, skip=skip, limit=per_page)
         total = await repo.count_search(q)
     else:
-        products = await repo.get_multi(skip=skip, limit=per_page, **filters)
-        total = await repo.count(**filters)
+        products = await repo.list_admin(
+            skip=skip,
+            limit=per_page,
+            platform=platform_enum,
+            availability=availability_enum,
+            status=status_enum,
+        )
+        total = await repo.count_admin(
+            platform=platform_enum,
+            availability=availability_enum,
+            status=status_enum,
+        )
 
     total_pages = (total + per_page - 1) // per_page if total > 0 else 1
 
@@ -433,6 +452,7 @@ async def list_products(
             "q": q,
             "platform": platform,
             "availability": availability,
+            "status": status,
             "pagination": {
                 "page": page,
                 "per_page": per_page,

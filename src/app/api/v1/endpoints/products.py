@@ -65,7 +65,7 @@ from datetime import datetime, UTC
 
 from app.api.deps import Pagination, PriceHistoryRepo, ProductRepo
 from app.core.deps import require_role
-from app.models.product import PriceRange, ProductPlatform
+from app.models.product import PriceRange, ProductPlatform, ProductStatus
 from app.models.user import UserRole
 from app.schemas import (
     MessageResponse,
@@ -81,6 +81,7 @@ from app.schemas.instagram import (
     InstagramMetadataUpdate,
     InstagramMetadataUpdateResponse,
 )
+from app.schemas.product import PUBLISH_REQUIRES_AFFILIATE_MSG, is_publishable
 
 # Router com prefixo /products e tag para documentação OpenAPI
 router = APIRouter(prefix="/products", tags=["products"])
@@ -280,8 +281,11 @@ async def update_product_by_platform(
         {
             "price": 129.90,
             "availability": "available",
+            "status": "published",
             "rating": 4.5,
             "review_count": 1250,
+            "amazon_clean_url": "https://www.amazon.com.br/dp/B08N5WRWNW",
+            "internal_notes": "Cadastrado pelo agente de IA - revisar link de afiliado",
             "source": "api_amazon",
             "notes": "Atualizacao automatica via PA-API"
         }
@@ -313,6 +317,15 @@ async def update_product_by_platform(
     # Extrai os campos que serao atualizados (ignora source e notes que sao para historico)
     update_data = data.model_dump(exclude_unset=True, exclude={"source", "notes"})
     updated_fields = list(update_data.keys())
+
+    # Regra: produto so pode ficar publicado se tiver URL de afiliado.
+    result_status = update_data.get("status", product.status)
+    result_affiliate = update_data.get("affiliate_url_raw", product.affiliate_url_raw)
+    if not is_publishable(result_status, result_affiliate):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=PUBLISH_REQUIRES_AFFILIATE_MSG,
+        )
 
     # Variaveis para resposta
     price_history_created = False
@@ -403,16 +416,31 @@ async def get_product(product_id: UUID, repo: ProductRepo):
 
 
 @router.get("/slug/{slug}", response_model=ProductResponse)
-async def get_product_by_slug(slug: str, repo: ProductRepo):
+async def get_product_by_slug(
+    slug: str,
+    repo: ProductRepo,
+    status_filter: ProductStatus | None = Query(
+        None,
+        alias="status",
+        description=(
+            "Filtra por status de publicacao (draft, published, unpublished). "
+            "Se omitido, retorna apenas produtos publicados."
+        ),
+    ),
+):
     """
     Busca produto por slug (URL amigável).
 
     Usado para páginas de produto individuais onde o slug
     aparece na URL.
 
+    Por padrão retorna apenas produtos **publicados**. Para buscar produtos
+    em outro status, informe o parâmetro `status` (draft, unpublished).
+
     Args:
         slug: Slug único do produto
         repo: Repositório de produtos (injetado automaticamente)
+        status_filter: Status de publicacao (opcional; default = published)
 
     Returns:
         ProductResponse com dados completos do produto
@@ -420,7 +448,11 @@ async def get_product_by_slug(slug: str, repo: ProductRepo):
     Raises:
         HTTPException 404: Se o produto não for encontrado
     """
-    product = await repo.get_by_slug(slug)
+    # Sem status informado -> default do repositorio (published)
+    if status_filter is None:
+        product = await repo.get_by_slug(slug)
+    else:
+        product = await repo.get_by_slug(slug, status=status_filter)
 
     if not product:
         raise HTTPException(
@@ -533,6 +565,17 @@ async def update_product(product_id: UUID, data: ProductUpdate, repo: ProductRep
         )
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # Regra: produto so pode ficar publicado se tiver URL de afiliado.
+    # Avalia o estado resultante (valor novo, ou o atual se nao for alterado).
+    result_status = update_data.get("status", product.status)
+    result_affiliate = update_data.get("affiliate_url_raw", product.affiliate_url_raw)
+    if not is_publishable(result_status, result_affiliate):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=PUBLISH_REQUIRES_AFFILIATE_MSG,
+        )
+
     product = await repo.update(product, update_data)
     return ProductResponse.model_validate(product)
 

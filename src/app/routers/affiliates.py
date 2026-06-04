@@ -83,6 +83,14 @@ async def redirect_to_affiliate(
             detail="Produto nao encontrado",
         )
 
+    # Produto sem URL de afiliado (ex: rascunho cadastrado pela IA antes de
+    # termos o link). Nao ha para onde redirecionar.
+    if not product.affiliate_url_raw:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto ainda nao possui link de afiliado",
+        )
+
     # Captura dados para tracking
     click_data = {
         "product_id": product.id,

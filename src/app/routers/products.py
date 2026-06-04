@@ -270,7 +270,8 @@ async def get_product(
 
     Exibe detalhes do produto e link de afiliado.
     """
-    # Busca produto por slug
+    # Busca produto por slug (get_by_slug ja filtra apenas publicados por padrao,
+    # entao rascunhos/despublicados retornam 404 e nao vazam pela URL direta).
     product = await repo.get_by_slug(slug)
 
     if not product:
