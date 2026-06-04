@@ -304,6 +304,8 @@ async def create_product(
     instagram_badge: str = Form(""),
     instagram_caption: str = Form(""),
     instagram_hashtags: str = Form(""),
+    # Notas internas
+    internal_notes: str = Form(""),
 ):
     """Cria novo produto."""
     platform_enum = ProductPlatform(platform)
@@ -370,6 +372,8 @@ async def create_product(
         "instagram_badge": instagram_badge.strip() or None,
         "instagram_caption": instagram_caption.strip() or None,
         "instagram_hashtags": instagram_hashtags_list,
+        # Notas internas
+        "internal_notes": internal_notes.strip() or None,
     }
 
     # Atualiza price_range baseado no preco
@@ -411,6 +415,8 @@ async def update_product(
     instagram_badge: str = Form(""),
     instagram_caption: str = Form(""),
     instagram_hashtags: str = Form(""),
+    # Notas internas
+    internal_notes: str = Form(""),
 ):
     """Atualiza produto existente."""
     product = await repo.get(product_id)
@@ -517,6 +523,8 @@ async def update_product(
         "instagram_badge": instagram_badge.strip() or None,
         "instagram_caption": instagram_caption.strip() or None,
         "instagram_hashtags": instagram_hashtags_list,
+        # Notas internas
+        "internal_notes": internal_notes.strip() or None,
     }
 
     await repo.update(product, update_data)

@@ -111,6 +111,11 @@ class ProductCreate(ProductBase, ProductAffiliate):
         default_factory=list, description="Lista de hashtags (sem #)"
     )
 
+    # Notas internas (uso interno / comunicacao entre usuarios)
+    internal_notes: str | None = Field(
+        None, description="Notas internas para uso da equipe e comunicacao entre usuarios"
+    )
+
     @field_validator("affiliate_redirect_slug")
     @classmethod
     def validate_redirect_slug(cls, v: str) -> str:
@@ -153,6 +158,9 @@ class ProductUpdate(BaseSchema):
     instagram_badge: str | None = Field(None, max_length=20)
     instagram_caption: str | None = None
     instagram_hashtags: list[str] | None = None
+
+    # Notas internas (uso interno / comunicacao entre usuarios)
+    internal_notes: str | None = None
 
     @field_validator("affiliate_redirect_slug")
     @classmethod
@@ -248,6 +256,9 @@ class ProductResponse(ProductBase, ProductAffiliate, ResponseSchema):
     instagram_badge: str | None
     instagram_caption: str | None
     instagram_hashtags: list[str]
+
+    # Notas internas (uso interno / comunicacao entre usuarios)
+    internal_notes: str | None
 
 
 class ProductBrief(BaseSchema):

@@ -74,6 +74,19 @@
                 <div id="description-loading" style="display: none; text-align: center; padding: 0.5rem; color: var(--admin-text-muted);">
                     <span>Gerando descricao com IA...</span>
                 </div>
+
+                <div class="admin-form-group">
+                    <label for="internal_notes" class="admin-form-label">
+                        Notas Internas
+                    </label>
+                    <textarea
+                        id="internal_notes"
+                        name="internal_notes"
+                        class="admin-form-textarea"
+                        placeholder="Anotacoes para uso interno da equipe e comunicacao entre usuarios (nao aparece no site)"
+                    >{{ product.internal_notes if product else '' }}</textarea>
+                    <div class="admin-form-hint">Uso interno apenas — nao e exibido publicamente no site.</div>
+                </div>
             </div>
 
             <!-- Affiliate Link -->

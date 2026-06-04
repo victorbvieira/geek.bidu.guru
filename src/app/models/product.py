@@ -199,6 +199,15 @@ class Product(Base, UUIDMixin, TimestampMixin):
     )
 
     # ==========================================================================
+    # Notas internas (uso interno / comunicacao entre usuarios da equipe)
+    # ==========================================================================
+    internal_notes: Mapped[Optional[str]] = mapped_column(
+        Text,
+        nullable=True,
+        comment="Notas internas para uso da equipe e comunicacao entre usuarios"
+    )
+
+    # ==========================================================================
     # Custos de IA (para calcular ROI de geracoes automaticas)
     # ==========================================================================
     ai_tokens_used: Mapped[int] = mapped_column(
