@@ -118,7 +118,9 @@ class Product(Base, UUIDMixin, TimestampMixin):
     images: Mapped[list] = mapped_column(JSONBType, default=list, server_default="[]")
 
     # Afiliado
-    affiliate_url_raw: Mapped[str] = mapped_column(Text, nullable=False)
+    # Opcional no cadastro (ex: produto cadastrado por IA antes de ter o link
+    # de afiliado). Obrigatorio para PUBLICAR o produto (validado na aplicacao).
+    affiliate_url_raw: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     # Link "limpo" do produto na Amazon (sem tag de afiliado).
     # Usado no fluxo onde um agente de IA cadastra o produto e um humano
     # precisa abrir esse link para gerar manualmente o link de afiliado

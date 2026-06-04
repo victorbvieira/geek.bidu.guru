@@ -81,6 +81,7 @@ from app.schemas.instagram import (
     InstagramMetadataUpdate,
     InstagramMetadataUpdateResponse,
 )
+from app.schemas.product import PUBLISH_REQUIRES_AFFILIATE_MSG, is_publishable
 
 # Router com prefixo /products e tag para documentação OpenAPI
 router = APIRouter(prefix="/products", tags=["products"])
@@ -316,6 +317,15 @@ async def update_product_by_platform(
     # Extrai os campos que serao atualizados (ignora source e notes que sao para historico)
     update_data = data.model_dump(exclude_unset=True, exclude={"source", "notes"})
     updated_fields = list(update_data.keys())
+
+    # Regra: produto so pode ficar publicado se tiver URL de afiliado.
+    result_status = update_data.get("status", product.status)
+    result_affiliate = update_data.get("affiliate_url_raw", product.affiliate_url_raw)
+    if not is_publishable(result_status, result_affiliate):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=PUBLISH_REQUIRES_AFFILIATE_MSG,
+        )
 
     # Variaveis para resposta
     price_history_created = False
@@ -555,6 +565,17 @@ async def update_product(product_id: UUID, data: ProductUpdate, repo: ProductRep
         )
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # Regra: produto so pode ficar publicado se tiver URL de afiliado.
+    # Avalia o estado resultante (valor novo, ou o atual se nao for alterado).
+    result_status = update_data.get("status", product.status)
+    result_affiliate = update_data.get("affiliate_url_raw", product.affiliate_url_raw)
+    if not is_publishable(result_status, result_affiliate):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=PUBLISH_REQUIRES_AFFILIATE_MSG,
+        )
+
     product = await repo.update(product, update_data)
     return ProductResponse.model_validate(product)
 

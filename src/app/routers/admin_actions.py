@@ -31,6 +31,7 @@ from app.core.security import get_password_hash
 from app.models import User
 from app.models.post import PostStatus, PostType
 from app.models.product import ProductAvailability, ProductPlatform, ProductStatus
+from app.schemas.product import PUBLISH_REQUIRES_AFFILIATE_MSG, is_publishable
 from app.models.user import UserRole
 from app.routers.admin import require_admin_user, require_admin_role
 
@@ -284,7 +285,7 @@ async def create_product(
     current_user: AdminUser,
     repo: ProductRepo,
     name: str = Form(...),
-    affiliate_url_raw: str = Form(...),
+    affiliate_url_raw: str = Form(""),
     affiliate_redirect_slug: str = Form(...),
     platform: str = Form("amazon"),
     slug: str = Form(""),
@@ -312,6 +313,11 @@ async def create_product(
     """Cria novo produto."""
     platform_enum = ProductPlatform(platform)
     platform_id = platform_product_id.strip() or None
+    status_enum = ProductStatus(status)
+
+    # Regra: produto so pode ser publicado se tiver URL de afiliado
+    if not is_publishable(status_enum, affiliate_url_raw.strip() or None):
+        raise HTTPException(status_code=400, detail=PUBLISH_REQUIRES_AFFILIATE_MSG)
 
     # Valida duplicidade: mesmo produto na mesma plataforma
     if platform_id and await repo.platform_product_exists(platform_enum, platform_id):
@@ -354,7 +360,7 @@ async def create_product(
     product_data = {
         "name": name.strip(),
         "slug": product_slug,
-        "affiliate_url_raw": affiliate_url_raw.strip(),
+        "affiliate_url_raw": affiliate_url_raw.strip() or None,
         "affiliate_redirect_slug": redirect_slug,
         "platform": platform_enum,
         "amazon_clean_url": amazon_clean_url.strip() or None,
@@ -399,7 +405,7 @@ async def update_product(
     current_user: AdminUser,
     repo: ProductRepo,
     name: str = Form(...),
-    affiliate_url_raw: str = Form(...),
+    affiliate_url_raw: str = Form(""),
     affiliate_redirect_slug: str = Form(...),
     platform: str = Form("amazon"),
     slug: str = Form(""),
@@ -431,6 +437,11 @@ async def update_product(
 
     platform_enum = ProductPlatform(platform)
     platform_id = platform_product_id.strip() or None
+    status_enum = ProductStatus(status)
+
+    # Regra: produto so pode ser publicado se tiver URL de afiliado
+    if not is_publishable(status_enum, affiliate_url_raw.strip() or None):
+        raise HTTPException(status_code=400, detail=PUBLISH_REQUIRES_AFFILIATE_MSG)
 
     # Valida duplicidade: mesmo produto na mesma plataforma (excluindo o atual)
     if platform_id and await repo.platform_product_exists(platform_enum, platform_id, exclude_id=product_id):
@@ -509,7 +520,7 @@ async def update_product(
     update_data = {
         "name": name.strip(),
         "slug": product_slug,
-        "affiliate_url_raw": affiliate_url_raw.strip(),
+        "affiliate_url_raw": affiliate_url_raw.strip() or None,
         "affiliate_redirect_slug": redirect_slug,
         "platform": platform_enum,
         "amazon_clean_url": amazon_clean_url.strip() or None,

@@ -96,7 +96,7 @@
                 </div>
 
                 <div class="admin-form-group">
-                    <label for="affiliate_url_raw" class="admin-form-label">URL do Afiliado *</label>
+                    <label for="affiliate_url_raw" class="admin-form-label">URL do Afiliado</label>
                     <input
                         type="url"
                         id="affiliate_url_raw"
@@ -104,8 +104,8 @@
                         class="admin-form-input"
                         value="{{ product.affiliate_url_raw if product else '' }}"
                         placeholder="https://amazon.com.br/dp/..."
-                        required
                     >
+                    <div class="admin-form-hint">Opcional no cadastro, mas <strong>obrigatorio para publicar</strong> o produto.</div>
                 </div>
 
                 <div class="admin-form-group">

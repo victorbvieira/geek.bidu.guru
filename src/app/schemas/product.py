@@ -7,11 +7,28 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from app.models.product import PriceRange, ProductAvailability, ProductPlatform, ProductStatus
 from app.schemas.base import BaseSchema, ResponseSchema
 from app.utils.sanitize import sanitize_text, sanitize_slug
+
+
+# Mensagem unica para a regra: publicar exige link de afiliado.
+PUBLISH_REQUIRES_AFFILIATE_MSG = (
+    "Para publicar o produto e necessario informar a URL do afiliado "
+    "(affiliate_url_raw)."
+)
+
+
+def is_publishable(status: ProductStatus | None, affiliate_url_raw: str | None) -> bool:
+    """
+    Valida a regra de negocio: um produto so pode ficar PUBLICADO se tiver
+    `affiliate_url_raw`. Para qualquer outro status, retorna True.
+    """
+    if status != ProductStatus.PUBLISHED:
+        return True
+    return bool(affiliate_url_raw and str(affiliate_url_raw).strip())
 
 
 # -----------------------------------------------------------------------------
@@ -71,7 +88,10 @@ class ProductBase(BaseSchema):
 class ProductAffiliate(BaseSchema):
     """Campos de afiliado do produto."""
 
-    affiliate_url_raw: str = Field(..., description="URL completa do afiliado")
+    affiliate_url_raw: str | None = Field(
+        None,
+        description="URL completa do afiliado (opcional no cadastro; obrigatoria para publicar)",
+    )
     affiliate_redirect_slug: str = Field(..., max_length=150, description="Slug para redirect")
     platform: ProductPlatform = Field(..., description="Plataforma (amazon, mercadolivre, shopee)")
     platform_product_id: str | None = Field(None, max_length=200, description="ID na plataforma")
@@ -132,6 +152,13 @@ class ProductCreate(ProductBase, ProductAffiliate):
         if not re.match(r"^[a-z0-9-]+$", v):
             raise ValueError("Slug deve conter apenas letras minusculas, numeros e hifens")
         return v
+
+    @model_validator(mode="after")
+    def validate_publish_requires_affiliate(self) -> "ProductCreate":
+        """Nao permite criar ja publicado sem URL de afiliado."""
+        if not is_publishable(self.status, self.affiliate_url_raw):
+            raise ValueError(PUBLISH_REQUIRES_AFFILIATE_MSG)
+        return self
 
 
 # -----------------------------------------------------------------------------
