@@ -10,9 +10,11 @@ Endpoints disponíveis:
     GET    /products/top-clicked                          - Lista mais clicados
     GET    /products/{id}                                 - Busca produto por ID
     GET    /products/slug/{s}                             - Busca produto por slug
+    GET    /products/platform/{platform}/{platform_id}    - Busca por plataforma/ID externo
     POST   /products                                      - Cria novo produto
     PATCH  /products/{id}                                 - Atualiza produto existente
     PATCH  /products/{id}/price                           - Atualiza apenas preço
+    PATCH  /products/{id}/score                           - Atualiza apenas o score interno
     PATCH  /products/{id}/instagram-metadata              - Atualiza metadados Instagram + custo LLM
     PATCH  /products/platform/{platform}/{platform_id}    - Atualiza por plataforma/ID externo
     DELETE /products/{id}                                 - Remove produto
@@ -76,6 +78,7 @@ from app.schemas import (
     ProductResponse,
     ProductUpdate,
     ProductUpdatePrice,
+    ProductUpdateScore,
 )
 from app.schemas.instagram import (
     InstagramMetadataUpdate,
@@ -225,10 +228,41 @@ async def list_top_clicked(
 
 
 # =============================================================================
-# Endpoints de Atualizacao por Plataforma (para integracao com APIs externas)
-# IMPORTANTE: Este endpoint deve vir ANTES dos endpoints com {product_id}
+# Endpoints por Plataforma (para integracao com APIs externas)
+# IMPORTANTE: Estes endpoints devem vir ANTES dos endpoints com {product_id}
 # para evitar conflito de rotas no FastAPI
 # =============================================================================
+
+
+@router.get(
+    "/platform/{platform}/{platform_product_id}",
+    response_model=ProductResponse,
+    summary="Busca produto por plataforma e ID externo",
+)
+async def get_product_by_platform(
+    platform: ProductPlatform,
+    platform_product_id: str,
+    repo: ProductRepo,
+):
+    """
+    Busca produto pela combinacao (plataforma, ID na plataforma).
+
+    Util para integracoes externas (n8n, agentes de IA) que conhecem
+    o ID nativo da plataforma (ex: ASIN da Amazon) mas nao o UUID interno.
+    E o caminho canonico para checar duplicacao antes de criar via POST.
+
+    Returns 200 com o produto se existir, 404 se nao.
+    """
+    product = await repo.get_by_platform_product_id(
+        platform=platform,
+        platform_product_id=platform_product_id,
+    )
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Produto nao encontrado: {platform.value}/{platform_product_id}",
+        )
+    return ProductResponse.model_validate(product)
 
 
 @router.patch(
@@ -617,6 +651,51 @@ async def update_product_price(
         - Workflow n8n de atualização de preços
         - Sincronização com APIs das plataformas
         - Atualização em massa via script
+    """
+    product = await repo.get(product_id)
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Produto nao encontrado",
+        )
+
+    update_data = data.model_dump(exclude_unset=True)
+    product = await repo.update(product, update_data)
+    return ProductResponse.model_validate(product)
+
+
+@router.patch(
+    "/{product_id}/score",
+    response_model=ProductResponse,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
+async def update_product_score(
+    product_id: UUID, data: ProductUpdateScore, repo: ProductRepo
+):
+    """
+    Atualiza apenas o score interno de curadoria do produto (0-100).
+
+    **Autenticação**: Requer token JWT com role ADMIN, EDITOR ou AUTOMATION.
+
+    Operacao atomica de re-score, util para agentes/equipe que recalculam
+    a rubrica de qualidade sem mexer no resto do produto. O score tambem
+    pode ser enviado junto em POST /products e PATCH /products/{id}.
+
+    Args:
+        product_id: UUID do produto a ser atualizado
+        data: Novo internal_score (0-100)
+        repo: Repositório de produtos (injetado automaticamente)
+
+    Returns:
+        ProductResponse com o score atualizado
+
+    Raises:
+        HTTPException 404: Se o produto não for encontrado
+
+    Body (JSON):
+        {
+            "internal_score": 92.5
+        }
     """
     product = await repo.get(product_id)
     if not product:

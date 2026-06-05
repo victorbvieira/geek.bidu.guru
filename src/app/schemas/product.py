@@ -121,6 +121,13 @@ class ProductCreate(ProductBase, ProductAffiliate):
     )
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2, description="Rating 0-5")
     review_count: int = Field(default=0, ge=0, description="Numero de reviews")
+    internal_score: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        le=100,
+        decimal_places=2,
+        description="Score interno de curadoria (0-100), calculado por agente/equipe",
+    )
 
     # Metadados Instagram (pre-configuracao para posts futuros)
     instagram_headline: str | None = Field(
@@ -191,6 +198,13 @@ class ProductUpdate(BaseSchema):
     status: ProductStatus | None = Field(None, description="Status de publicacao no portal")
     rating: Decimal | None = Field(None, ge=0, le=5, decimal_places=2)
     review_count: int | None = Field(None, ge=0)
+    internal_score: Decimal | None = Field(
+        None,
+        ge=0,
+        le=100,
+        decimal_places=2,
+        description="Score interno de curadoria (0-100), calculado por agente/equipe",
+    )
 
     # Metadados Instagram (pre-configuracao para posts futuros)
     instagram_headline: str | None = Field(None, max_length=40)
