@@ -67,6 +67,12 @@ def setup_logging() -> logging.Logger:
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
+    # passlib 1.7.4 (sem updates desde 2020) tenta ler bcrypt.__about__.__version__,
+    # atributo removido no bcrypt >= 4.1. O passlib captura o erro ("trapped") e segue
+    # funcionando normalmente — o WARNING e puramente cosmetico. Elevamos para ERROR
+    # para nao poluir os logs; erros reais desse modulo ainda aparecem.
+    logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)
+
     return root_logger
 
 
