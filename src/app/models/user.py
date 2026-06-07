@@ -11,7 +11,7 @@ from sqlalchemy import Boolean, Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.base import TimestampMixin, UUIDMixin
+from app.models.base import JSONBType, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
     from app.models.post import Post
@@ -53,6 +53,16 @@ class User(Base, UUIDMixin, TimestampMixin):
         default=UserRole.AUTHOR,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # Preferencias do usuario (JSONB). Controla, entre outras coisas, o filtro
+    # de status pre-carregado nas listagens do admin (posts e produtos).
+    # Ex: {"posts_default_status": "draft", "products_default_status": "draft"}
+    preferences: Mapped[dict] = mapped_column(
+        JSONBType,
+        default=dict,
+        server_default="{}",
+        nullable=False,
+    )
 
     # Relacionamentos
     posts: Mapped[list["Post"]] = relationship(

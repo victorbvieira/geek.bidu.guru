@@ -1110,6 +1110,21 @@ async def delete_category(
 # -----------------------------------------------------------------------------
 
 
+def build_user_preferences(posts_status: str, products_status: str) -> dict:
+    """
+    Monta o dict de preferencias do usuario a partir dos campos do form.
+
+    Valor vazio = sem default (lista carrega tudo). So armazena chaves
+    com valor preenchido.
+    """
+    prefs: dict = {}
+    if posts_status and posts_status.strip():
+        prefs["posts_default_status"] = posts_status.strip()
+    if products_status and products_status.strip():
+        prefs["products_default_status"] = products_status.strip()
+    return prefs
+
+
 @router.post("/users", response_class=RedirectResponse)
 async def create_user(
     request: Request,
@@ -1121,6 +1136,8 @@ async def create_user(
     password_confirm: str = Form(...),
     role: str = Form("author"),
     is_active: str = Form(""),
+    pref_posts_status: str = Form(""),
+    pref_products_status: str = Form(""),
 ):
     """Cria novo usuario (apenas admin)."""
     # Valida senhas
@@ -1142,6 +1159,7 @@ async def create_user(
         "password_hash": get_password_hash(password),
         "role": UserRole(role),
         "is_active": is_active == "1",
+        "preferences": build_user_preferences(pref_posts_status, pref_products_status),
     }
 
     await repo.create(user_data)
@@ -1163,6 +1181,8 @@ async def update_user(
     password: str = Form(""),
     role: str = Form("author"),
     is_active: str = Form(""),
+    pref_posts_status: str = Form(""),
+    pref_products_status: str = Form(""),
 ):
     """Atualiza usuario existente (apenas admin)."""
     user = await repo.get(user_id)
@@ -1180,6 +1200,7 @@ async def update_user(
         "email": email.strip().lower(),
         "role": UserRole(role),
         "is_active": is_active == "1",
+        "preferences": build_user_preferences(pref_posts_status, pref_products_status),
     }
 
     # Atualiza senha se fornecida

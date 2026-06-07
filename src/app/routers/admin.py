@@ -285,6 +285,11 @@ async def list_posts(
     """Listagem de posts com filtros por status e tipo."""
     from app.models.post import PostType
 
+    # Preferencia do usuario: se o status nao veio na URL (None), usa o default
+    # configurado no cadastro. status="" (opcao "Todos") nao aplica preferencia.
+    if status_filter is None:
+        status_filter = (current_user.preferences or {}).get("posts_default_status") or None
+
     skip = (page - 1) * per_page
 
     # Filtros
@@ -406,6 +411,11 @@ async def list_products(
 ):
     """Listagem de produtos (admin: mostra todos os status)."""
     from app.models.product import ProductAvailability, ProductPlatform, ProductStatus
+
+    # Preferencia do usuario: se o status nao veio na URL (None), usa o default
+    # configurado no cadastro. status="" (opcao "Todos") nao aplica preferencia.
+    if status is None:
+        status = (current_user.preferences or {}).get("products_default_status") or None
 
     skip = (page - 1) * per_page
 
