@@ -259,8 +259,9 @@ async def home(request: Request):
         post_repo = PostRepository(db)
         category_repo = CategoryRepository(db)
 
-        # Busca até 6 produtos disponíveis (ordenados por score)
-        featured_products = await product_repo.get_available(limit=6)
+        # Busca até 10 produtos disponíveis (ordenados por score) para
+        # preencher 2 linhas completas da grade da home (5 por linha)
+        featured_products = await product_repo.get_available(limit=10)
 
         # Busca até 3 posts publicados recentes
         featured_posts = await post_repo.get_published(limit=3)
