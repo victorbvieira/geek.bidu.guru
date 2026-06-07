@@ -109,6 +109,21 @@ class BaseRepository(Generic[ModelType]):
         )
         return result.scalar_one_or_none()
 
+    def _apply_filters(self, query, filters: dict[str, Any]):
+        """
+        Aplica filtros de igualdade simples (campo == valor) a uma query.
+
+        Ignora valores None e campos que nao existem no modelo, permitindo
+        que os chamadores passem filtros opcionais sem ramificacoes.
+        """
+        for field, value in filters.items():
+            if value is None:
+                continue
+            column = getattr(self.model, field, None)
+            if column is not None:
+                query = query.where(column == value)
+        return query
+
     async def get_multi(
         self,
         *,
@@ -116,9 +131,10 @@ class BaseRepository(Generic[ModelType]):
         limit: int = 100,
         order_by: str | None = None,
         desc: bool = True,
+        **filters: Any,
     ) -> list[ModelType]:
         """
-        Lista registros com paginação e ordenação.
+        Lista registros com paginação, ordenação e filtros de igualdade.
 
         Implementa paginação offset-based, adequada para conjuntos de dados
         de tamanho moderado. Para grandes volumes, considere cursor-based pagination.
@@ -128,6 +144,7 @@ class BaseRepository(Generic[ModelType]):
             limit: Número máximo de registros a retornar. Default: 100
             order_by: Nome do campo para ordenação. Default: None (ordem do banco)
             desc: Se True, ordena decrescente; se False, crescente. Default: True
+            **filters: Filtros de igualdade campo=valor (None e ignorado).
 
         Returns:
             Lista de instâncias do modelo (pode estar vazia)
@@ -136,10 +153,10 @@ class BaseRepository(Generic[ModelType]):
             # Primeiros 20 posts, mais recentes primeiro
             posts = await repo.get_multi(limit=20, order_by="created_at", desc=True)
 
-            # Página 2 com 10 itens por página
-            items = await repo.get_multi(skip=10, limit=10)
+            # Filtra por status (enum) e tipo
+            items = await repo.get_multi(status=PostStatus.DRAFT)
         """
-        query = select(self.model)
+        query = self._apply_filters(select(self.model), filters)
 
         # Aplica ordenação se especificada
         if order_by:
@@ -151,22 +168,26 @@ class BaseRepository(Generic[ModelType]):
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def count(self) -> int:
+    async def count(self, **filters: Any) -> int:
         """
-        Conta o total de registros na tabela.
+        Conta registros na tabela, aplicando filtros de igualdade opcionais.
 
         Útil para cálculo de páginas na paginação e estatísticas.
 
+        Args:
+            **filters: Filtros de igualdade campo=valor (None e ignorado).
+
         Returns:
-            Número total de registros
+            Número total de registros (que casam com os filtros)
 
         Exemplo:
             total = await repo.count()
-            total_pages = (total + per_page - 1) // per_page
+            total_draft = await repo.count(status=PostStatus.DRAFT)
         """
-        result = await self.db.execute(
-            select(func.count()).select_from(self.model)
+        query = self._apply_filters(
+            select(func.count()).select_from(self.model), filters
         )
+        result = await self.db.execute(query)
         return result.scalar_one()
 
     async def create(self, obj_in: dict[str, Any]) -> ModelType:

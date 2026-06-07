@@ -76,6 +76,44 @@
                     {% endif %}
                 </div>
             </div>
+
+            {% set prefs = (user.preferences or {}) if user else {} %}
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>Preferencias</h3>
+                </div>
+                <div class="admin-card-body">
+                    <p class="admin-help-text" style="margin: 0 0 16px 0;">
+                        Define como as listagens do admin sao pre-carregadas para este usuario.
+                        Util, por exemplo, para um perfil revisor abrir direto nos rascunhos.
+                        Deixe em "Todos" para nao aplicar filtro padrao.
+                    </p>
+
+                    <div class="admin-form-group">
+                        <label for="pref_posts_status" class="admin-label">Posts — carregar por padrao</label>
+                        <select id="pref_posts_status" name="pref_posts_status" class="admin-select">
+                            <option value="" {{ 'selected' if not prefs.get('posts_default_status') else '' }}>Todos</option>
+                            <option value="draft" {{ 'selected' if prefs.get('posts_default_status') == 'draft' else '' }}>Rascunho</option>
+                            <option value="review" {{ 'selected' if prefs.get('posts_default_status') == 'review' else '' }}>Em revisao</option>
+                            <option value="scheduled" {{ 'selected' if prefs.get('posts_default_status') == 'scheduled' else '' }}>Agendado</option>
+                            <option value="published" {{ 'selected' if prefs.get('posts_default_status') == 'published' else '' }}>Publicado</option>
+                            <option value="archived" {{ 'selected' if prefs.get('posts_default_status') == 'archived' else '' }}>Arquivado</option>
+                        </select>
+                        <small class="admin-help-text">Status pre-carregado ao abrir <strong>/admin/posts</strong>.</small>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="pref_products_status" class="admin-label">Produtos — carregar por padrao</label>
+                        <select id="pref_products_status" name="pref_products_status" class="admin-select">
+                            <option value="" {{ 'selected' if not prefs.get('products_default_status') else '' }}>Todos</option>
+                            <option value="draft" {{ 'selected' if prefs.get('products_default_status') == 'draft' else '' }}>Rascunho</option>
+                            <option value="published" {{ 'selected' if prefs.get('products_default_status') == 'published' else '' }}>Publicado</option>
+                            <option value="unpublished" {{ 'selected' if prefs.get('products_default_status') == 'unpublished' else '' }}>Despublicado</option>
+                        </select>
+                        <small class="admin-help-text">Status pre-carregado ao abrir <strong>/admin/products</strong>.</small>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="admin-form-sidebar">
