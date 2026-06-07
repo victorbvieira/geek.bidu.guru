@@ -68,6 +68,7 @@ from app.schemas import (
     MessageResponse,
     PaginatedResponse,
     PostCreate,
+    PostProductsSet,
     PostResponse,
     PostUpdate,
     PostUpdateStatus,
@@ -407,6 +408,54 @@ async def update_post_status(
 
     update_data = data.model_dump(exclude_unset=True)
     post = await repo.update(post, update_data)
+    return PostResponse.model_validate(post)
+
+
+@router.put(
+    "/{post_id}/products",
+    response_model=PostResponse,
+    dependencies=[Depends(require_role(*WRITE_ROLES))],
+)
+async def set_post_products_endpoint(
+    post_id: UUID, data: PostProductsSet, repo: PostRepo
+):
+    """
+    Substitui o conjunto de produtos vinculados ao post.
+
+    A ordem do array define a `position` de cada produto (importante para
+    listicles). Operacao idempotente e substitutiva: o conjunto enviado
+    substitui o anterior, e um array vazio remove todas as vinculacoes.
+
+    **Autenticação**: Requer token JWT com role ADMIN, EDITOR, AUTHOR ou
+    AUTOMATION.
+
+    Args:
+        post_id: UUID do post
+        data: Lista de UUIDs de produtos (PostProductsSet)
+        repo: Repositório de posts (injetado automaticamente)
+
+    Returns:
+        PostResponse com `product_ids` refletindo a nova ordem
+
+    Raises:
+        HTTPException 404: Se o post não for encontrado
+
+    Body (JSON):
+        {
+            "product_ids": ["uuid-1", "uuid-2", "uuid-3"]
+        }
+    """
+    post = await repo.get(post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post nao encontrado",
+        )
+
+    await repo.set_post_products(post_id, data.product_ids)
+
+    # Recarrega para refletir as vinculacoes atualizadas (post_products selectin)
+    post = await repo.get(post_id)
     return PostResponse.model_validate(post)
 
 

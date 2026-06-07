@@ -210,3 +210,11 @@ class Post(Base, UUIDMixin, TimestampMixin):
         if self.publish_at and self.publish_at > utc_now():
             return False
         return True
+
+    @property
+    def product_ids(self) -> list[uuid.UUID]:
+        """IDs dos produtos vinculados, na ordem de position (relacao selectin)."""
+        return [
+            pp.product_id
+            for pp in sorted(self.post_products or [], key=lambda p: p.position)
+        ]
