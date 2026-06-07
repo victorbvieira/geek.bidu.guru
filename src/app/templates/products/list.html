@@ -11,44 +11,30 @@
 <section class="products-list">
     <div class="container">
         {% if products %}
-        <div class="products-grid">
+        <div class="products-grid-home">
             {% for product in products %}
-            <article class="product-card">
+            <article class="product-card-home">
                 {% if product.main_image_url %}
-                <a href="/produto/{{ product.slug }}" class="product-image">
+                <a href="/produto/{{ product.slug }}" class="product-image-home">
                     <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
                 </a>
                 {% else %}
-                <a href="/produto/{{ product.slug }}" class="product-image product-image-placeholder">
+                <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
                     <span>Sem imagem</span>
                 </a>
                 {% endif %}
-                <div class="product-content">
+                <div class="product-content-home">
                     <span class="product-platform platform-{{ product.platform.value }}">
                         {{ product.platform.value | title }}
                     </span>
-                    <h2 class="product-name">
-                        <a href="/produto/{{ product.slug }}">{{ product.name }}</a>
-                    </h2>
-                    {% if product.short_description %}
-                    <p class="product-description">{{ product.short_description[:100] }}{% if product.short_description|length > 100 %}...{% endif %}</p>
+                    <h3 class="product-name-home">
+                        <a href="/produto/{{ product.slug }}">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</a>
+                    </h3>
+                    {% if product.price %}
+                    <span class="product-price-home">{{ product.price | format_price }}</span>
                     {% endif %}
-                    <div class="product-footer">
-                        {% if product.price %}
-                        <span class="product-price">{{ product.price | format_price }}</span>
-                        {% endif %}
-                        {% if product.rating %}
-                        <span class="product-rating">
-                            <span class="stars">★</span>
-                            {{ "%.1f"|format(product.rating) }}
-                            {% if product.review_count %}
-                            <span class="review-count">({{ product.review_count }})</span>
-                            {% endif %}
-                        </span>
-                        {% endif %}
-                    </div>
-                    <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-cta" target="_blank" rel="noopener sponsored">
-                        Ver na {{ product.platform.value | title }}
+                    <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-cta-home" target="_blank" rel="noopener sponsored">
+                        Ver oferta
                     </a>
                 </div>
             </article>
@@ -104,142 +90,9 @@
     padding: 3rem 0;
 }
 
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
-}
-
-.product-card {
-    background: var(--color-bg-card);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-
-.product-image img {
-    width: 100%;
-    height: 200px;
-    object-fit: contain;
-    background: #f8f9fa;
-}
-
-.product-image-placeholder {
-    width: 100%;
-    height: 200px;
-    background: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #999;
-}
-
-.product-content {
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
-.product-platform {
-    display: inline-block;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 3px;
-    margin-bottom: 0.5rem;
-    width: fit-content;
-}
-
-.platform-amazon {
-    background: #ff9900;
-    color: #111;
-}
-
-.platform-mercadolivre {
-    background: #fff159;
-    color: #333;
-}
-
-.platform-shopee {
-    background: #ee4d2d;
-    color: white;
-}
-
-.product-name {
-    font-size: 1.1rem;
-    margin: 0 0 0.5rem;
-    line-height: 1.3;
-}
-
-.product-name a {
-    color: var(--color-text);
-    text-decoration: none;
-}
-
-.product-name a:hover {
-    color: var(--color-primary);
-}
-
-.product-description {
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-    margin: 0 0 1rem;
-    line-height: 1.5;
-    flex: 1;
-}
-
-.product-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.product-price {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.product-rating {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-}
-
-.product-rating .stars {
-    color: #f59e0b;
-}
-
-.product-rating .review-count {
-    font-size: 0.75rem;
-}
-
-.product-cta {
-    display: block;
-    text-align: center;
-    padding: 0.75rem 1rem;
-    background: var(--color-cta, #ff6b00);
-    color: white;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 600;
-    transition: background 0.2s, transform 0.1s;
-}
-
-.product-cta:hover {
-    background: var(--color-cta-hover, #e55a00);
-    transform: scale(1.02);
-}
+/* Os cards de produto usam as mesmas classes da home
+   (.products-grid-home / .product-card-home), definidas em main.css,
+   para manter o padrao visual identico ao da pagina inicial. */
 
 .pagination {
     display: flex;
@@ -276,11 +129,6 @@
 @media (max-width: 768px) {
     .products-header h1 {
         font-size: 2rem;
-    }
-
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 1rem;
     }
 }
 </style>

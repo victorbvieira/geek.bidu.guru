@@ -154,6 +154,13 @@ async def create_post(
             post_slug = f"{base_slug}-{counter}"
             counter += 1
 
+    # Ao publicar sem data definida, publica agora. Sem isso o post fica
+    # PUBLISHED mas com publish_at nulo e nao aparece nas listagens publicas.
+    status_enum = PostStatus(status)
+    publish_at_value = parse_datetime(publish_at)
+    if status_enum == PostStatus.PUBLISHED and publish_at_value is None:
+        publish_at_value = datetime.now(timezone.utc)
+
     # Monta dados do post
     post_data = {
         "title": title.strip(),
@@ -168,8 +175,8 @@ async def create_post(
         "category_id": UUID(category_id) if category_id else None,
         "author_id": current_user.id,
         "tags": parse_tags(tags),
-        "status": PostStatus(status),
-        "publish_at": parse_datetime(publish_at),
+        "status": status_enum,
+        "publish_at": publish_at_value,
     }
 
     post = await repo.create(post_data)
@@ -224,6 +231,12 @@ async def update_post(
             post_slug = f"{base_slug}-{counter}"
             counter += 1
 
+    # Ao publicar sem data definida, publica agora (mesmo motivo do create).
+    status_enum = PostStatus(post_status)
+    publish_at_value = parse_datetime(publish_at)
+    if status_enum == PostStatus.PUBLISHED and publish_at_value is None:
+        publish_at_value = datetime.now(timezone.utc)
+
     # Monta dados de atualizacao
     update_data = {
         "title": title.strip(),
@@ -237,8 +250,8 @@ async def update_post(
         "seo_focus_keyword": seo_focus_keyword.strip() or None,
         "category_id": UUID(category_id) if category_id else None,
         "tags": parse_tags(tags),
-        "status": PostStatus(post_status),
-        "publish_at": parse_datetime(publish_at),
+        "status": status_enum,
+        "publish_at": publish_at_value,
     }
 
     await repo.update(post, update_data)
