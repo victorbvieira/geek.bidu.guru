@@ -188,6 +188,15 @@ class PostUpdateStatus(BaseSchema):
     publish_at: datetime | None = None
 
 
+class PostProductsSet(BaseSchema):
+    """Schema para definir o conjunto de produtos vinculados ao post."""
+
+    product_ids: list[UUID] = Field(
+        ...,
+        description="UUIDs dos produtos; a ordem do array define a position (1, 2, 3...)",
+    )
+
+
 # -----------------------------------------------------------------------------
 # Response
 # -----------------------------------------------------------------------------
@@ -204,6 +213,8 @@ class PostResponse(PostBase, PostSEO, ResponseSchema):
     shared: bool
     view_count: int
     click_count: int
+    # IDs dos produtos vinculados, na ordem de exibicao (position)
+    product_ids: list[UUID] = Field(default_factory=list)
 
 
 class PostWithRelations(PostResponse):
