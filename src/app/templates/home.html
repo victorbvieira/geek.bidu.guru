@@ -86,6 +86,53 @@
     </div>
 </section>
 
+<!-- Secao de Ultimos Artigos (Carrossel) -->
+{% if recent_posts %}
+<section class="content-carousel">
+    <div class="container">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Ultimos Artigos</h2>
+                <p class="section-subtitle">As postagens mais recentes do blog</p>
+            </div>
+            <a href="/blog" class="section-link">Ver todos</a>
+        </div>
+        <div class="carousel-wrapper">
+            <button class="carousel-btn carousel-prev" aria-label="Anterior" data-carousel="recent-posts">
+                <span>&lt;</span>
+            </button>
+            <div class="carousel-track" id="carousel-recent-posts">
+                {% for post in recent_posts %}
+                <article class="carousel-card">
+                    {% if post.featured_image_url %}
+                    <a href="/blog/{{ post.slug }}" class="carousel-image">
+                        <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
+                        <span class="carousel-badge{% if post.type.value == 'guide' %} carousel-badge-guide{% endif %}">
+                            {% if post.type.value == 'listicle' %}Lista{% elif post.type.value == 'guide' %}Guia{% else %}Artigo{% endif %}
+                        </span>
+                    </a>
+                    {% endif %}
+                    <div class="carousel-content">
+                        {% if post.category %}
+                        <a href="/categoria/{{ post.category.slug }}" class="carousel-category">
+                            {{ post.category.name }}
+                        </a>
+                        {% endif %}
+                        <h3 class="carousel-title">
+                            <a href="/blog/{{ post.slug }}">{{ post.title[:60] }}{% if post.title|length > 60 %}...{% endif %}</a>
+                        </h3>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            <button class="carousel-btn carousel-next" aria-label="Proximo" data-carousel="recent-posts">
+                <span>&gt;</span>
+            </button>
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Secao de Listas (Carrossel) -->
 {% if recent_listicles %}
 <section class="content-carousel">
