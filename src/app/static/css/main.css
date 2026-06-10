@@ -243,6 +243,51 @@ section {
     color: var(--text-primary);
 }
 
+/* Dropdown do menu (Blog) */
+.has-dropdown {
+    position: relative;
+}
+
+.has-dropdown > a::after {
+    content: " \25BE";
+    font-size: 0.75em;
+    opacity: 0.7;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    list-style: none;
+    display: none;
+    flex-direction: column;
+    gap: var(--space-1);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: var(--space-2);
+    z-index: 100;
+}
+
+.has-dropdown:hover .dropdown-menu,
+.has-dropdown:focus-within .dropdown-menu {
+    display: flex;
+}
+
+.dropdown-menu a {
+    display: block;
+    white-space: nowrap;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--border-radius);
+}
+
+.dropdown-menu a:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
 .search-form {
     display: flex;
     gap: var(--space-2);
@@ -545,6 +590,20 @@ section {
 
     .main-nav a:hover {
         background: var(--bg-card);
+    }
+
+    /* No mobile o submenu vira lista aninhada sempre visivel */
+    .dropdown-menu {
+        position: static;
+        display: flex;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0 0 0 var(--space-4);
+    }
+
+    .has-dropdown > a::after {
+        content: "";
     }
 
     .header-actions {

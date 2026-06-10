@@ -249,6 +249,7 @@ async def home(request: Request):
     # Busca produtos, posts e categorias em destaque
     featured_products = []
     featured_posts = []
+    recent_posts = []
     recent_listicles = []
     recent_guides = []
     categories = []
@@ -265,6 +266,10 @@ async def home(request: Request):
 
         # Busca até 3 posts publicados recentes
         featured_posts = await post_repo.get_published(limit=3)
+
+        # Busca os posts publicados mais recentes (qualquer tipo) para o
+        # carrossel "Ultimos artigos" da home
+        recent_posts = await post_repo.get_published(limit=12)
 
         # Busca listicles e guias recentes para o carrossel
         recent_listicles = await post_repo.get_published(
@@ -289,6 +294,7 @@ async def home(request: Request):
             "description": "Encontre o presente geek perfeito para quem voce ama",
             "featured_products": featured_products,
             "featured_posts": featured_posts,
+            "recent_posts": recent_posts,
             "recent_listicles": recent_listicles,
             "recent_guides": recent_guides,
             "categories": categories,
