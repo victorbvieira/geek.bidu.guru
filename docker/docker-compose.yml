@@ -39,6 +39,8 @@ services:
       - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
       - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-120}
       - JWT_REFRESH_TOKEN_EXPIRE_DAYS=${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      # Token fixo do endpoint de cron (POST /api/v1/cron/tick)
+      - CRON_SECRET=${CRON_SECRET:-}
       # Aplicação
       - APP_NAME=${APP_NAME:-geek.bidu.guru}
       - APP_URL=${APP_URL:-https://geek.bidu.guru}
