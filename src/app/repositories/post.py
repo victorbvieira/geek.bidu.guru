@@ -83,6 +83,30 @@ class PostRepository(BaseRepository[Post]):
         result = await self.db.execute(query)
         return result.scalar_one()
 
+    async def publish_due_scheduled(self) -> list[Post]:
+        """
+        Promove posts agendados cuja data ja chegou: SCHEDULED + publish_at
+        <= agora -> PUBLISHED.
+
+        Retorna a lista de posts que foram publicados nesta execucao
+        (vazia se nao havia nada a publicar). Idempotente: rodar de novo
+        nao reprocessa posts ja publicados.
+        """
+        now = datetime.now(UTC)
+        result = await self.db.execute(
+            select(Post).where(
+                Post.status == PostStatus.SCHEDULED,
+                Post.publish_at.isnot(None),
+                Post.publish_at <= now,
+            )
+        )
+        due = list(result.scalars().all())
+        for post in due:
+            post.status = PostStatus.PUBLISHED
+        if due:
+            await self.db.commit()
+        return due
+
     async def get_by_status(
         self, status: PostStatus, skip: int = 0, limit: int = 20
     ) -> list[Post]:

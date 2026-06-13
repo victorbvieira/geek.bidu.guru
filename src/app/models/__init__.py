@@ -21,6 +21,7 @@ from app.models.instagram_post import InstagramPostHistory
 from app.models.social_integration import SocialIntegration, SocialPlatform
 from app.models.price_history import PriceHistory
 from app.models.api_token import ApiToken
+from app.models.scheduled_job import ScheduledJob
 
 __all__ = [
     # Mixins e Tipos
@@ -50,4 +51,5 @@ __all__ = [
     "SocialPlatform",
     "PriceHistory",
     "ApiToken",
+    "ScheduledJob",
 ]

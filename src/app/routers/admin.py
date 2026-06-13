@@ -824,6 +824,35 @@ async def list_users(
     )
 
 
+@router.get("/jobs", response_class=HTMLResponse)
+async def list_jobs_page(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    db: DBSession,
+):
+    """Configuracao dos jobs agendados (apenas admin)."""
+    from app.config import settings
+    from app.services.jobs import list_jobs
+
+    jobs = await list_jobs(db)
+
+    # URL do tick para exibir nas instrucoes do Dokploy
+    tick_url = f"{settings.app_url.rstrip('/')}/api/v1/cron/tick"
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/jobs/list.html",
+        context={
+            "title": "Jobs Agendados - Admin",
+            "current_user": current_user,
+            "active_page": "jobs",
+            "jobs": jobs,
+            "tick_url": tick_url,
+            "cron_configured": bool(settings.cron_secret),
+        },
+    )
+
+
 @router.get("/users/new", response_class=HTMLResponse)
 async def new_user(
     request: Request,
