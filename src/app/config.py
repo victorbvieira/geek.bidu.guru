@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 1440  # 24 horas
     jwt_refresh_token_expire_days: int = 7
 
+    # Token fixo para o endpoint de cron/jobs (POST /api/v1/cron/tick).
+    # Compartilhado com o Dokploy Schedule via header X-Cron-Token.
+    # Se vazio em producao, o endpoint fica desabilitado (retorna 503).
+    cron_secret: str | None = None
+
     # -------------------------------------------------------------------------
     # Logging
     # -------------------------------------------------------------------------

@@ -1329,6 +1329,58 @@ async def revoke_user_api_token(
 
 
 # -----------------------------------------------------------------------------
+# Jobs Agendados
+# -----------------------------------------------------------------------------
+
+
+@router.post("/jobs/{key}/toggle", response_class=RedirectResponse)
+async def toggle_job(
+    key: str,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    db: DBSession,
+):
+    """Liga/desliga um job agendado (apenas admin)."""
+    from sqlalchemy import select
+    from app.models.scheduled_job import ScheduledJob
+    from app.services.jobs import JOB_REGISTRY
+
+    if key not in JOB_REGISTRY:
+        raise HTTPException(status_code=404, detail="Job nao encontrado")
+
+    result = await db.execute(select(ScheduledJob).where(ScheduledJob.key == key))
+    job = result.scalar_one_or_none()
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job nao encontrado")
+
+    job.enabled = not job.enabled
+    await db.commit()
+
+    return RedirectResponse(
+        url="/admin/jobs",
+        status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/jobs/{key}/run", response_class=RedirectResponse)
+async def run_job(
+    key: str,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    db: DBSession,
+):
+    """Executa um job imediatamente (apenas admin), ignorando enabled/intervalo."""
+    from app.services.jobs import run_job_now
+
+    result = await run_job_now(db, key)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Job nao encontrado")
+
+    return RedirectResponse(
+        url="/admin/jobs",
+        status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+# -----------------------------------------------------------------------------
 # Upload de Imagens
 # -----------------------------------------------------------------------------
 

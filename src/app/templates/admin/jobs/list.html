@@ -1,0 +1,125 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Jobs Agendados{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<span class="current">Jobs Agendados</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">Jobs Agendados</h1>
+</div>
+
+{% if not cron_configured %}
+<div class="admin-card" style="margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+    <div class="admin-card-body">
+        <strong>⚠️ CRON_SECRET nao configurado.</strong>
+        O endpoint <code>/api/v1/cron/tick</code> esta desabilitado (retorna 503) ate
+        definir a variavel de ambiente <code>CRON_SECRET</code>. Os jobs so rodarao
+        automaticamente depois disso (ou manualmente via "Executar agora").
+    </div>
+</div>
+{% endif %}
+
+<!-- Como agendar no Dokploy -->
+<div class="admin-card" style="margin-bottom: 1rem;">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">Como agendar (Dokploy)</h3>
+    </div>
+    <div class="admin-card-body">
+        <p style="margin: 0 0 0.5rem; color: var(--admin-text-muted);">
+            Crie <strong>um unico</strong> Schedule no Dokploy (ex: de hora em hora) que chame
+            o endpoint abaixo. Ele executa todos os jobs habilitados e vencidos — nao e preciso
+            um Schedule por job.
+        </p>
+        <pre style="background: var(--admin-bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;"><code>curl -X POST "{{ tick_url }}" \
+  -H "X-Cron-Token: $CRON_SECRET"</code></pre>
+        <p style="margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--admin-text-muted);">
+            Cron sugerido: <code>0 * * * *</code> (no minuto 0 de cada hora).
+        </p>
+    </div>
+</div>
+
+<!-- Tabela de jobs -->
+<div class="admin-card">
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Job</th>
+                    <th>Status</th>
+                    <th>Intervalo</th>
+                    <th>Ultima execucao</th>
+                    <th>Resultado</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">{{ job.name }}</div>
+                        <div style="font-size: 0.75rem; color: var(--admin-text-muted);">
+                            {{ job.description }}
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--admin-text-muted); font-family: monospace;">
+                            {{ job.key }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if job.enabled %}
+                        <span class="admin-badge admin-badge-success">Ativo</span>
+                        {% else %}
+                        <span class="admin-badge admin-badge-secondary">Desligado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ job.interval_minutes }} min</td>
+                    <td>
+                        {% if job.last_run_at %}
+                        {{ job.last_run_at.strftime('%d/%m/%Y %H:%M') }} UTC
+                        {% else %}
+                        <span style="color: var(--admin-text-muted);">nunca</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if job.last_status == 'ok' %}
+                        <span class="admin-badge admin-badge-success">ok</span>
+                        {% elif job.last_status == 'error' %}
+                        <span class="admin-badge admin-badge-danger">erro</span>
+                        {% else %}
+                        <span style="color: var(--admin-text-muted);">-</span>
+                        {% endif %}
+                        {% if job.last_result %}
+                        <div style="font-size: 0.7rem; color: var(--admin-text-muted); max-width: 320px; overflow-wrap: anywhere;">
+                            {{ job.last_result[:200] }}{% if job.last_result|length > 200 %}...{% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <form method="POST" action="/admin/jobs/{{ job.key }}/toggle" style="display: inline;">
+                            <button type="submit" class="admin-btn admin-btn-sm admin-btn-secondary">
+                                {{ 'Desligar' if job.enabled else 'Ligar' }}
+                            </button>
+                        </form>
+                        <form method="POST" action="/admin/jobs/{{ job.key }}/run" style="display: inline;"
+                              onsubmit="return confirm('Executar &quot;{{ job.name }}&quot; agora?')">
+                            <button type="submit" class="admin-btn admin-btn-sm admin-btn-primary">
+                                Executar agora
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--admin-text-muted);">
+                        Nenhum job registrado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
