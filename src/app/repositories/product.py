@@ -20,6 +20,67 @@ class ProductRepository(BaseRepository[Product]):
     def __init__(self, db: AsyncSession):
         super().__init__(Product, db)
 
+    # =========================================================================
+    # Regra de afiliado: aplica/ajusta a tag da Amazon a cada create/update.
+    # Como TODAS as escritas (UI e API) passam por create/update, este e o
+    # ponto unico que garante que o affiliate_url_raw sempre carregue a nossa
+    # tag, montando o link a partir do amazon_clean_url quando disponivel.
+    # =========================================================================
+
+    @staticmethod
+    def _is_amazon(platform) -> bool:
+        return getattr(platform, "value", platform) == ProductPlatform.AMAZON.value
+
+    async def _apply_amazon_affiliate_tag(
+        self,
+        platform,
+        clean_url: str | None,
+        affiliate_url: str | None,
+    ) -> str | None:
+        """
+        Retorna o affiliate_url_raw ajustado com a nossa tag, ou None para
+        deixar inalterado. Fonte preferida: amazon_clean_url; senao o proprio
+        affiliate_url (que tem a tag substituida).
+        """
+        if not self._is_amazon(platform):
+            return None
+
+        from app.services.settings_store import AMAZON_AFFILIATE_TAG, get_setting
+        from app.utils.affiliate import build_amazon_affiliate_url
+
+        tag = await get_setting(self.db, AMAZON_AFFILIATE_TAG)
+        if not tag:
+            return None
+
+        source = clean_url or affiliate_url
+        if not source:
+            return None
+
+        return build_amazon_affiliate_url(source, tag)
+
+    async def create(self, obj_in: dict) -> Product:
+        """Cria produto aplicando a tag de afiliado da Amazon (se configurada)."""
+        adjusted = await self._apply_amazon_affiliate_tag(
+            obj_in.get("platform"),
+            obj_in.get("amazon_clean_url"),
+            obj_in.get("affiliate_url_raw"),
+        )
+        if adjusted is not None:
+            obj_in = {**obj_in, "affiliate_url_raw": adjusted}
+        return await super().create(obj_in)
+
+    async def update(self, db_obj: Product, obj_in: dict) -> Product:
+        """Atualiza produto reaplicando a tag de afiliado da Amazon."""
+        platform = obj_in.get("platform", db_obj.platform)
+        clean_url = obj_in.get("amazon_clean_url", db_obj.amazon_clean_url)
+        affiliate_url = obj_in.get("affiliate_url_raw", db_obj.affiliate_url_raw)
+        adjusted = await self._apply_amazon_affiliate_tag(
+            platform, clean_url, affiliate_url
+        )
+        if adjusted is not None:
+            obj_in = {**obj_in, "affiliate_url_raw": adjusted}
+        return await super().update(db_obj, obj_in)
+
     async def get_all_active(self) -> list[Product]:
         """
         Lista todos os produtos ativos (disponiveis).

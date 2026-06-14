@@ -853,6 +853,30 @@ async def list_jobs_page(
     )
 
 
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_page(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+    db: DBSession,
+):
+    """Configuracoes da aplicacao (apenas admin)."""
+    from app.services.settings_store import AMAZON_AFFILIATE_TAG, get_setting
+
+    amazon_tag = await get_setting(db, AMAZON_AFFILIATE_TAG, default="")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/settings/form.html",
+        context={
+            "title": "Configuracoes - Admin",
+            "current_user": current_user,
+            "active_page": "settings",
+            "amazon_affiliate_tag": amazon_tag or "",
+            "saved": request.query_params.get("saved") == "1",
+        },
+    )
+
+
 @router.get("/users/new", response_class=HTMLResponse)
 async def new_user(
     request: Request,

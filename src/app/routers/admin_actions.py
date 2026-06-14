@@ -1381,6 +1381,33 @@ async def run_job(
 
 
 # -----------------------------------------------------------------------------
+# Configuracoes da aplicacao
+# -----------------------------------------------------------------------------
+
+
+@router.post("/settings", response_class=RedirectResponse)
+async def save_settings(
+    current_user: Annotated[User, Depends(require_admin_role)],
+    db: DBSession,
+    amazon_affiliate_tag: str = Form(""),
+):
+    """Salva as configuracoes da aplicacao (apenas admin)."""
+    from app.services.settings_store import AMAZON_AFFILIATE_TAG, set_setting
+
+    await set_setting(
+        db,
+        AMAZON_AFFILIATE_TAG,
+        amazon_affiliate_tag.strip() or None,
+        description="Tag do programa de afiliados da Amazon (parametro ?tag= dos links)",
+    )
+
+    return RedirectResponse(
+        url="/admin/settings?saved=1",
+        status_code=http_status.HTTP_303_SEE_OTHER,
+    )
+
+
+# -----------------------------------------------------------------------------
 # Upload de Imagens
 # -----------------------------------------------------------------------------
 
