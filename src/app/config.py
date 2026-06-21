@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     # Se vazio em producao, o endpoint fica desabilitado (retorna 503).
     cron_secret: str | None = None
 
+    # Token fixo para a API de dashboard (GET /api/v1/dashboard/metrics).
+    # Enviado pelo consumidor no header X-Dashboard-Token (ou Bearer).
+    # Se vazio, o endpoint fica desabilitado (retorna 503).
+    dashboard_token: str | None = None
+
     # -------------------------------------------------------------------------
     # Logging
     # -------------------------------------------------------------------------

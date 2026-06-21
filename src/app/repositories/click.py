@@ -18,6 +18,20 @@ class ClickRepository(BaseRepository[AffiliateClick]):
     def __init__(self, db: AsyncSession):
         super().__init__(AffiliateClick, db)
 
+    async def count_in_period(
+        self, start: datetime, end: datetime
+    ) -> int:
+        """Conta cliques de afiliado no intervalo [start, end)."""
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(AffiliateClick)
+            .where(
+                AffiliateClick.clicked_at >= start,
+                AffiliateClick.clicked_at < end,
+            )
+        )
+        return result.scalar_one()
+
     async def get_by_product(
         self, product_id: UUID, skip: int = 0, limit: int = 100
     ) -> list[AffiliateClick]:
