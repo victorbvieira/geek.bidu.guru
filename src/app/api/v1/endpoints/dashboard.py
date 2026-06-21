@@ -14,7 +14,9 @@ from fastapi import APIRouter, Header, HTTPException, status
 
 from app.api.deps import DBSession
 from app.config import settings
+from app.services import paperclip
 from app.services.dashboard import get_dashboard_metrics
+from app.services.paperclip import get_paperclip_metrics
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -65,3 +67,44 @@ async def dashboard_metrics(
     """
     _authorize(x_dashboard_token, authorization)
     return await get_dashboard_metrics(db)
+
+
+@router.get("/paperclip", summary="Estado dos agentes do Paperclip")
+async def paperclip_metrics(
+    x_dashboard_token: str | None = Header(default=None, alias="X-Dashboard-Token"),
+    authorization: str | None = Header(default=None),
+):
+    """
+    Retorna o estado dos agentes do Paperclip (control plane de IA) lendo direto
+    o banco do Paperclip — que roda na mesma VPS, na rede `dokploy-network`.
+
+    **Autenticação**: header `X-Dashboard-Token: <DASHBOARD_TOKEN>` (ou
+    `Authorization: Bearer <DASHBOARD_TOKEN>`), o mesmo token de `/metrics`.
+
+    Indicadores:
+    - `agents`: total, contagem por status (cru) e por estado derivado
+      (`summary`: active/idle/blocked/...) + lista com a issue que cada agente
+      está atuando.
+    - `issues`: contagem por status, abertas, e a lista (em texto) das issues em
+      review e bloqueadas.
+    - `tokens_30d`: tokens (input/cached/output) e custo em USD nos últimos 30
+      dias, com tendência vs os 30 dias anteriores.
+
+    Requer `PAPERCLIP_DATABASE_URL` configurado; caso contrário retorna 503.
+
+    Exemplo:
+        curl "https://geek.bidu.guru/api/v1/dashboard/paperclip" \\
+            -H "X-Dashboard-Token: $DASHBOARD_TOKEN"
+    """
+    _authorize(x_dashboard_token, authorization)
+
+    if not paperclip.is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Integracao com Paperclip desabilitada: PAPERCLIP_DATABASE_URL nao configurado",
+        )
+
+    try:
+        return await get_paperclip_metrics()
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc

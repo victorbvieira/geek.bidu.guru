@@ -1285,6 +1285,36 @@ async def dashboard_api_tester(
     )
 
 
+@router.get("/integrations/paperclip-api", response_class=HTMLResponse)
+async def paperclip_api_tester(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+):
+    """
+    Testador da API de agentes do Paperclip (GET /api/v1/dashboard/paperclip).
+
+    Mesma autenticacao da API de dashboard (X-Dashboard-Token). Dispara uma
+    chamada real ao endpoint (mesma origem) e mostra status + JSON da resposta.
+    """
+    from app.config import settings
+
+    base_url = settings.app_url.rstrip("/")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/integrations/paperclip_tester.html",
+        context={
+            "title": "Testar API do Paperclip - Admin",
+            "current_user": current_user,
+            "active_page": "integrations",
+            "endpoint_url": f"{base_url}/api/v1/dashboard/paperclip",
+            "dashboard_token": settings.dashboard_token or "",
+            "token_configured": bool(settings.dashboard_token),
+            "paperclip_configured": bool(settings.paperclip_database_url),
+        },
+    )
+
+
 @router.get("/integrations/{integration_id}", response_class=HTMLResponse)
 async def edit_integration(
     request: Request,
