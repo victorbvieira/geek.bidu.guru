@@ -1256,6 +1256,35 @@ async def list_integrations(
     )
 
 
+@router.get("/integrations/dashboard-api", response_class=HTMLResponse)
+async def dashboard_api_tester(
+    request: Request,
+    current_user: Annotated[User, Depends(require_admin_role)],
+):
+    """
+    Testador da API de dashboard (GET /api/v1/dashboard/metrics).
+
+    Pagina interna que dispara uma chamada real ao endpoint (mesma origem,
+    com o token configurado) e mostra status + JSON da resposta.
+    """
+    from app.config import settings
+
+    base_url = settings.app_url.rstrip("/")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin/integrations/dashboard_tester.html",
+        context={
+            "title": "Testar API de Dashboard - Admin",
+            "current_user": current_user,
+            "active_page": "integrations",
+            "endpoint_url": f"{base_url}/api/v1/dashboard/metrics",
+            "dashboard_token": settings.dashboard_token or "",
+            "token_configured": bool(settings.dashboard_token),
+        },
+    )
+
+
 @router.get("/integrations/{integration_id}", response_class=HTMLResponse)
 async def edit_integration(
     request: Request,

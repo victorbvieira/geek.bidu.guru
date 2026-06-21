@@ -1,0 +1,139 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Testar API de Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<span>/</span>
+<a href="/admin/integrations">Integracoes</a>
+<span>/</span>
+<span class="current">API de Dashboard</span>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page-header">
+    <h1 class="admin-page-title">API de Dashboard</h1>
+</div>
+
+{% if not token_configured %}
+<div class="admin-card" style="margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+    <div class="admin-card-body">
+        <strong>⚠️ DASHBOARD_TOKEN nao configurado.</strong>
+        O endpoint responde 503 ate definir a variavel de ambiente
+        <code>DASHBOARD_TOKEN</code> e redeployar.
+    </div>
+</div>
+{% endif %}
+
+<div class="admin-card" style="margin-bottom: 1rem;">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">Endpoint</h3>
+    </div>
+    <div class="admin-card-body">
+        <div class="admin-form-group">
+            <label class="admin-form-label">URL</label>
+            <input type="text" class="admin-form-input" value="GET {{ endpoint_url }}" readonly>
+        </div>
+
+        <div class="admin-form-group">
+            <label class="admin-form-label" for="token-field">Token (header X-Dashboard-Token)</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="password" id="token-field" class="admin-form-input" value="{{ dashboard_token }}" readonly>
+                <button type="button" class="admin-btn admin-btn-secondary" onclick="toggleToken()">Mostrar</button>
+            </div>
+        </div>
+
+        <div class="admin-form-group">
+            <label class="admin-form-label">Equivalente em cURL</label>
+            <pre style="background: var(--admin-bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;"><code>curl "{{ endpoint_url }}" \
+  -H "X-Dashboard-Token: &lt;seu-token&gt;"</code></pre>
+        </div>
+
+        <button type="button" id="test-btn" class="admin-btn admin-btn-primary" onclick="runTest()" {% if not token_configured %}disabled{% endif %}>
+            ▶ Testar agora
+        </button>
+    </div>
+</div>
+
+<!-- Resultado -->
+<div class="admin-card" id="result-card" style="display: none;">
+    <div class="admin-card-header">
+        <h3 class="admin-card-title">Resultado <span id="status-badge"></span></h3>
+    </div>
+    <div class="admin-card-body">
+        <div id="cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem;"></div>
+        <details>
+            <summary style="cursor: pointer; color: var(--admin-text-muted);">JSON completo</summary>
+            <pre id="raw-json" style="background: var(--admin-bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto; margin-top: 0.5rem;"></pre>
+        </details>
+    </div>
+</div>
+
+<script>
+const ENDPOINT = {{ endpoint_url | tojson }};
+const TOKEN = {{ dashboard_token | tojson }};
+
+function toggleToken() {
+    const f = document.getElementById('token-field');
+    f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function trendHtml(block) {
+    if (!block) return '-';
+    const arrow = block.direction === 'up' ? '▲' : block.direction === 'down' ? '▼' : '▬';
+    const color = block.direction === 'up' ? '#22c55e' : block.direction === 'down' ? '#ef4444' : 'var(--admin-text-muted)';
+    const pct = block.trend_pct === null || block.trend_pct === undefined ? 'sem base' : block.trend_pct + '%';
+    return `<span style="color:${color}; font-weight:600;">${arrow} ${pct}</span>
+            <div style="font-size:0.75rem; color: var(--admin-text-muted);">anterior: ${block.previous}</div>`;
+}
+
+function card(title, value, sub) {
+    return `<div style="background: var(--admin-bg-secondary); border-radius: 8px; padding: 1rem;">
+        <div style="font-size: 0.8rem; color: var(--admin-text-muted);">${title}</div>
+        <div style="font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0;">${value}</div>
+        <div>${sub}</div>
+    </div>`;
+}
+
+async function runTest() {
+    const btn = document.getElementById('test-btn');
+    const card_el = document.getElementById('result-card');
+    const badge = document.getElementById('status-badge');
+    const cards = document.getElementById('cards');
+    const raw = document.getElementById('raw-json');
+
+    btn.disabled = true;
+    btn.textContent = 'Chamando...';
+    card_el.style.display = 'block';
+
+    try {
+        const resp = await fetch(ENDPOINT, { headers: { 'X-Dashboard-Token': TOKEN } });
+        const ok = resp.ok;
+        badge.innerHTML = `<span class="admin-badge ${ok ? 'admin-badge-success' : 'admin-badge-danger'}">HTTP ${resp.status}</span>`;
+
+        let data;
+        const text = await resp.text();
+        try { data = JSON.parse(text); } catch (e) { data = text; }
+        raw.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+
+        cards.innerHTML = '';
+        if (ok && typeof data === 'object') {
+            const pc = data.product_clicks_24h || {};
+            const np = data.new_products_7d || {};
+            const lp = data.last_product;
+            cards.innerHTML =
+                card(pc.label || 'Cliques em produtos (24h)', pc.current ?? '-', trendHtml(pc)) +
+                card(np.label || 'Novos produtos (7 dias)', np.current ?? '-', trendHtml(np)) +
+                card('Ultimo produto', lp ? (lp.ago ? lp.ago.text : '-') : '-',
+                     lp ? `<div style="font-size:0.8rem;">${lp.name}</div>` : 'nenhum');
+        }
+    } catch (err) {
+        badge.innerHTML = `<span class="admin-badge admin-badge-danger">ERRO</span>`;
+        raw.textContent = String(err);
+        cards.innerHTML = '';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '▶ Testar agora';
+    }
+}
+</script>
+{% endblock %}
