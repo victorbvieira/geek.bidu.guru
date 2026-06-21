@@ -62,6 +62,16 @@ class Settings(BaseSettings):
     dashboard_token: str | None = None
 
     # -------------------------------------------------------------------------
+    # Paperclip (control plane de agentes de IA, mesma VPS / dokploy-network)
+    # -------------------------------------------------------------------------
+    # Connection string read-only do Postgres do Paperclip. Aceita
+    # postgres://, postgresql:// ou postgresql+asyncpg:// (normalizado em runtime).
+    # Se vazio, GET /api/v1/dashboard/paperclip fica desabilitado (retorna 503).
+    paperclip_database_url: str | None = None
+    # issue_prefix da company do Geek Bidu no Paperclip (resolve o company_id).
+    paperclip_issue_prefix: str = "GEEAA"
+
+    # -------------------------------------------------------------------------
     # Logging
     # -------------------------------------------------------------------------
     log_level: str = "INFO"

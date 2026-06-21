@@ -13,9 +13,14 @@
         <h1 class="admin-page-title">Integracoes com Redes Sociais</h1>
         <p class="admin-page-subtitle">Configure credenciais de API para publicacao automatica</p>
     </div>
-    <a href="/admin/integrations/dashboard-api" class="admin-btn admin-btn-secondary">
-        📊 Testar API de Dashboard
-    </a>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/admin/integrations/dashboard-api" class="admin-btn admin-btn-secondary">
+            📊 Testar API de Dashboard
+        </a>
+        <a href="/admin/integrations/paperclip-api" class="admin-btn admin-btn-secondary">
+            📎 Testar API do Paperclip
+        </a>
+    </div>
 </div>
 
 <div class="admin-card" style="margin-bottom: 1.5rem;">
@@ -29,6 +34,21 @@
             </small>
         </div>
         <a href="/admin/integrations/dashboard-api" class="admin-btn admin-btn-primary admin-btn-sm">Abrir</a>
+    </div>
+</div>
+
+<div class="admin-card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem;">
+        <span style="font-size: 1.75rem;">📎</span>
+        <div style="flex: 1;">
+            <strong>API do Paperclip (agentes de IA)</strong><br>
+            <small style="color: var(--admin-text-muted);">
+                Estado dos agentes (ativo/idle/bloqueado + issue atual), issues em review e
+                bloqueadas, e consumo de tokens/custo dos ultimos 30 dias. Le o Paperclip da
+                mesma VPS. Mesmo token (X-Dashboard-Token).
+            </small>
+        </div>
+        <a href="/admin/integrations/paperclip-api" class="admin-btn admin-btn-primary admin-btn-sm">Abrir</a>
     </div>
 </div>
 

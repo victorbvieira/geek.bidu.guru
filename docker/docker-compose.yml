@@ -43,6 +43,10 @@ services:
       - CRON_SECRET=${CRON_SECRET:-}
       # Token fixo da API de dashboard (GET /api/v1/dashboard/metrics)
       - DASHBOARD_TOKEN=${DASHBOARD_TOKEN:-}
+      # Paperclip (control plane de agentes) - Postgres na mesma rede dokploy-network
+      # Read-only; alimenta GET /api/v1/dashboard/paperclip
+      - PAPERCLIP_DATABASE_URL=${PAPERCLIP_DATABASE_URL:-}
+      - PAPERCLIP_ISSUE_PREFIX=${PAPERCLIP_ISSUE_PREFIX:-GEEAA}
       # Aplicação
       - APP_NAME=${APP_NAME:-geek.bidu.guru}
       - APP_URL=${APP_URL:-https://geek.bidu.guru}
