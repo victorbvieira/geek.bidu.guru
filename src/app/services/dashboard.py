@@ -2,14 +2,11 @@
 Calculo das metricas do dashboard.
 
 Indicadores:
-- accesses: acessos (cliques de afiliado, fonte com timestamp no banco) nas
-  ultimas 24h, com trend vs as 24h anteriores.
+- product_clicks: cliques em produtos (afiliado) nas ultimas 24h, com trend
+  vs as 24h anteriores.
 - new_products: produtos cadastrados nos ultimos 7 dias, com trend vs os 7
   dias anteriores.
 - last_product: nome do ultimo produto cadastrado e ha quanto tempo.
-
-Obs: "acessos" usa affiliate_clicks porque os pageviews do site ficam no
-GA4 (externo), nao no banco. As sessoes (tabela sessions) nao sao gravadas.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -66,11 +63,11 @@ async def get_dashboard_metrics(db: AsyncSession) -> dict:
     click_repo = ClickRepository(db)
     product_repo = ProductRepository(db)
 
-    # --- Acessos (cliques de afiliado): ultimas 24h vs as 24h anteriores ---
+    # --- Cliques em produtos: ultimas 24h vs as 24h anteriores ---
     h24 = now - timedelta(hours=24)
     h48 = now - timedelta(hours=48)
-    accesses_current = await click_repo.count_in_period(h24, now)
-    accesses_previous = await click_repo.count_in_period(h48, h24)
+    product_clicks_current = await click_repo.count_in_period(h24, now)
+    product_clicks_previous = await click_repo.count_in_period(h48, h24)
 
     # --- Novos produtos: ultimos 7 dias vs os 7 dias anteriores ---
     d7 = now - timedelta(days=7)
@@ -91,10 +88,10 @@ async def get_dashboard_metrics(db: AsyncSession) -> dict:
 
     return {
         "generated_at": now.isoformat(),
-        "accesses_24h": {
-            "label": "Acessos (24h)",
+        "product_clicks_24h": {
+            "label": "Cliques em produtos (24h)",
             "source": "affiliate_clicks",
-            **_trend(accesses_current, accesses_previous),
+            **_trend(product_clicks_current, product_clicks_previous),
         },
         "new_products_7d": {
             "label": "Novos produtos (7 dias)",

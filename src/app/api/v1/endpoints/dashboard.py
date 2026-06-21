@@ -52,8 +52,8 @@ async def dashboard_metrics(
     `Authorization: Bearer <DASHBOARD_TOKEN>`).
 
     Indicadores:
-    - `accesses_24h`: acessos nas ultimas 24h + trend vs as 24h anteriores
-      (fonte: cliques de afiliado).
+    - `product_clicks_24h`: cliques em produtos nas ultimas 24h + trend vs as
+      24h anteriores.
     - `new_products_7d`: produtos cadastrados nos ultimos 7 dias + trend vs
       os 7 dias anteriores.
     - `last_product`: nome do ultimo produto cadastrado e ha quanto tempo
