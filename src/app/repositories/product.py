@@ -308,6 +308,27 @@ class ProductRepository(BaseRepository[Product]):
         result = await self.db.execute(query)
         return result.scalar_one()
 
+    async def count_created_in_period(
+        self, start: datetime, end: datetime
+    ) -> int:
+        """Conta produtos cadastrados no intervalo [start, end)."""
+        result = await self.db.execute(
+            select(func.count())
+            .select_from(Product)
+            .where(
+                Product.created_at >= start,
+                Product.created_at < end,
+            )
+        )
+        return result.scalar_one()
+
+    async def get_last_created(self) -> Product | None:
+        """Retorna o produto mais recentemente cadastrado (por created_at)."""
+        result = await self.db.execute(
+            select(Product).order_by(Product.created_at.desc()).limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def get_ids_by_slugs(self, slugs: list[str]) -> list[UUID]:
         """
         Busca IDs de produtos por lista de slugs.

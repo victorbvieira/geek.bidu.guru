@@ -12,6 +12,7 @@ from app.api.v1.endpoints import (
     categories,
     clicks,
     cron,
+    dashboard,
     instagram,
     newsletter,
     posts,
@@ -34,3 +35,4 @@ api_router.include_router(instagram.router)
 api_router.include_router(social_integrations.router)
 api_router.include_router(api_tokens.router)
 api_router.include_router(cron.router)
+api_router.include_router(dashboard.router)
