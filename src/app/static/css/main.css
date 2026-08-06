@@ -227,7 +227,9 @@ section {
     color: var(--color-primary-400);
 }
 
-.main-nav ul {
+/* Somente a lista de primeiro nivel: o `>` evita sobrescrever o
+   .dropdown-menu (que tem especificidade menor que `.main-nav ul`) */
+.main-nav > ul {
     display: flex;
     gap: var(--space-6);
     list-style: none;
@@ -577,7 +579,7 @@ section {
         display: block;
     }
 
-    .main-nav ul {
+    .main-nav > ul {
         flex-direction: column;
         gap: var(--space-2);
     }
