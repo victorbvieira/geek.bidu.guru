@@ -7,22 +7,22 @@
         <p class="section-description">{{ page_subtitle }}</p>
         <div class="price-badge">
             <span class="price-icon">💰</span>
-            <span class="price-text">Ate R$ {{ "%.0f"|format(max_price) }}</span>
+            <span class="price-text">Até R$ {{ "%.0f"|format(max_price) }}</span>
         </div>
     </div>
 </section>
 
 <section class="price-filters-nav">
     <div class="container">
-        <nav class="price-nav" aria-label="Filtros de preco">
+        <nav class="price-nav" aria-label="Filtros de preço">
             <a href="/categorias/preco/ate-50" class="price-nav-link {% if max_price == 50 %}active{% endif %}">
-                Ate R$ 50
+                Até R$ 50
             </a>
             <a href="/categorias/preco/ate-100" class="price-nav-link {% if max_price == 100 %}active{% endif %}">
-                Ate R$ 100
+                Até R$ 100
             </a>
             <a href="/categorias/preco/ate-200" class="price-nav-link {% if max_price == 200 %}active{% endif %}">
-                Ate R$ 200
+                Até R$ 200
             </a>
             <a href="/produtos" class="price-nav-link">
                 Ver todos
@@ -90,12 +90,12 @@
             {% endif %}
 
             <span class="pagination-info">
-                Pagina {{ page }} de {{ pages }}
+                Página {{ page }} de {{ pages }}
             </span>
 
             {% if has_next %}
             <a href="?page={{ page + 1 }}" class="pagination-link pagination-next">
-                Proxima
+                Próxima
             </a>
             {% endif %}
         </nav>
@@ -105,11 +105,11 @@
         <div class="empty-state">
             <div class="empty-icon">🎁</div>
             <h2>Nenhum produto encontrado</h2>
-            <p>No momento nao temos produtos disponiveis nessa faixa de preco.</p>
-            <p>Que tal conferir outras opcoes?</p>
+            <p>No momento não temos produtos disponíveis nessa faixa de preço.</p>
+            <p>Que tal conferir outras opções?</p>
             <div class="empty-actions">
                 {% if max_price < 200 %}
-                <a href="/categorias/preco/ate-200" class="btn btn-primary">Ver ate R$ 200</a>
+                <a href="/categorias/preco/ate-200" class="btn btn-primary">Ver até R$ 200</a>
                 {% endif %}
                 <a href="/produtos" class="btn btn-secondary">Ver todos os produtos</a>
             </div>

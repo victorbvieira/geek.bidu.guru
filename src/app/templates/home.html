@@ -7,17 +7,17 @@
             <span class="eyebrow">Curadoria geek · Amazon · Mercado Livre · Shopee</span>
             <h1>O presente geek certo, <span class="hl">sem farmar</span> horas de busca</h1>
             <p class="hero-subtitle">
-                O Bidu compara precos em 3 plataformas e separa so o que vale a pena,
-                de teclado mecanico a booster box. Curadoria de geek para geek.
+                O Bidu compara preços em 3 plataformas e separa só o que vale a pena,
+                de teclado mecânico a booster box. Curadoria de geek para geek.
             </p>
             <div class="hero-cta">
                 <a href="#destaques" class="btn btn-primary">Ver destaques da semana</a>
-                <a href="/categorias/preco/ate-100" class="btn btn-ghost">Presentes ate R$ 100</a>
+                <a href="/categorias/preco/ate-100" class="btn btn-ghost">Presentes até R$ 100</a>
             </div>
             <div class="trust">
-                <span class="trust-item"><span class="ico">⚖️</span> Precos comparados em 3 lojas</span>
-                <span class="trust-item"><span class="ico">🧙</span> Curadoria humana, sem enrolacao</span>
-                <span class="trust-item"><span class="ico">🔔</span> Alerta quando o preco cai</span>
+                <span class="trust-item"><span class="ico">⚖️</span> Preços comparados em 3 lojas</span>
+                <span class="trust-item"><span class="ico">🧙</span> Curadoria humana, sem enrolação</span>
+                <span class="trust-item"><span class="ico">🔔</span> Alerta quando o preço cai</span>
             </div>
         </div>
         <div class="hero-vis" aria-hidden="true">
@@ -67,7 +67,7 @@
         <div class="section-head">
             <div>
                 <h2>Destaques da semana</h2>
-                <p class="sub">Selecionados a dedo pelo Bidu, so entra aqui o que a gente compraria</p>
+                <p class="sub">Selecionados a dedo pelo Bidu, só entra aqui o que a gente compraria</p>
             </div>
             <a href="/produtos" class="section-link">Ver todos os produtos →</a>
         </div>
@@ -80,7 +80,7 @@
                     <span class="product-platform platform-{{ product.platform.value }}">
                         {{ product.platform.value | title }}
                     </span>
-                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy" width="300" height="300">
                 </a>
                 {% else %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
@@ -95,8 +95,9 @@
                         <a href="/produto/{{ product.slug }}">{{ product.name }}</a>
                     </h3>
                     {% if product.rating %}
-                    <span class="product-rating-home" aria-label="{{ product.rating }} de 5">
-                        ★★★★★<span class="rating-n">{{ '%.1f' | format(product.rating) }}</span>
+                    {% set full_stars = (product.rating | round) | int %}
+                    <span class="product-rating-home" aria-label="Avaliação: {{ product.rating }} de 5">
+                        {{ '★' * full_stars }}<span class="stars-off">{{ '☆' * (5 - full_stars) }}</span><span class="rating-n">{{ '%.1f' | format(product.rating) }}</span>
                     </span>
                     {% endif %}
                     {% if product.price %}
@@ -132,7 +133,7 @@
         {% else %}
         <div class="posts-grid">
             <div class="placeholder-card">
-                <p>Conteudo em construcao...</p>
+                <p>Conteúdo em construção...</p>
             </div>
         </div>
         {% endif %}
@@ -143,17 +144,17 @@
     <div class="container">
         <div class="tcg-hero">
             <div>
-                <span class="eyebrow">Nova expansao do site</span>
+                <span class="eyebrow">Nova expansão do site</span>
                 <h2>Arena TCG: <span class="hl">cartas e selados</span> chegando ao guru</h2>
                 <p>
-                    Em breve o Bidu tambem compara precos de singles, boosters e ETBs de
-                    Pokemon, Magic: The Gathering e One Piece Card Game, com condicao da
-                    carta, raridade e alerta de preco, do jeito que colecionador respeita.
+                    Em breve o Bidu também compara preços de singles, boosters e ETBs de
+                    Pokémon, Magic: The Gathering e One Piece Card Game, com condição da
+                    carta, raridade e alerta de preço, do jeito que colecionador respeita.
                 </p>
                 <a href="#guilda" class="btn btn-secondary">Entrar na lista de espera</a>
             </div>
             <div class="tcg-fan" aria-hidden="true">
-                <div class="tcg-card"><span class="art">⚡</span> Pokemon</div>
+                <div class="tcg-card"><span class="art">⚡</span> Pokémon</div>
                 <div class="tcg-card"><span class="art">🐉</span> Magic</div>
                 <div class="tcg-card"><span class="art">🌊</span> One Piece</div>
             </div>
@@ -162,25 +163,25 @@
             <div class="tcg-tile">
                 <span class="ico">🃏</span>
                 <h3>Singles</h3>
-                <p>Cartas avulsas com condicao declarada (NM, SP, MP) e raridade visivel no card.</p>
+                <p>Cartas avulsas com condição declarada (NM, SP, MP) e raridade visível no card.</p>
                 <span class="chip">Em breve</span>
             </div>
             <div class="tcg-tile">
                 <span class="ico">📦</span>
                 <h3>Produtos selados</h3>
-                <p>Booster box, ETB e decks prontos com comparacao de preco entre lojas.</p>
+                <p>Booster box, ETB e decks prontos com comparação de preço entre lojas.</p>
                 <span class="chip">Em breve</span>
             </div>
             <div class="tcg-tile">
                 <span class="ico">⏳</span>
                 <h3>Pre-vendas</h3>
-                <p>Reserve lancamentos antes de esgotar, com data de envio clara no card.</p>
+                <p>Reserve lançamentos antes de esgotar, com data de envio clara no card.</p>
                 <span class="chip">Em breve</span>
             </div>
             <div class="tcg-tile">
                 <span class="ico">🔔</span>
-                <h3>Alerta de preco</h3>
-                <p>Siga uma carta ou box e receba aviso quando o preco cair do seu alvo.</p>
+                <h3>Alerta de preço</h3>
+                <p>Siga uma carta ou box e receba aviso quando o preço cair do seu alvo.</p>
                 <span class="chip">Em breve</span>
             </div>
         </div>
@@ -197,7 +198,7 @@
             </div>
             <a href="/blog" class="section-link">Ver todo o blog →</a>
         </div>
-        <div class="tabs" role="tablist" aria-label="Filtrar conteudo">
+        <div class="tabs" role="tablist" aria-label="Filtrar conteúdo">
             <button class="tab is-active" role="tab" aria-selected="true" data-filter="all">Todos</button>
             <button class="tab" role="tab" aria-selected="false" data-filter="listicle">Listas</button>
             <button class="tab" role="tab" aria-selected="false" data-filter="guide">Guias</button>
@@ -234,7 +235,7 @@
             <img class="guild-mascot" src="/static/logo/mascot-only.png" alt="" width="88" height="88" loading="lazy">
             <div>
                 <h2>Entre para a Guilda</h2>
-                <p>Uma vez por semana: os melhores achados, quedas de preco e lancamentos TCG. Zero spam, palavra de mago.</p>
+                <p>Uma vez por semana: os melhores achados, quedas de preço e lançamentos TCG. Zero spam, palavra de mago.</p>
             </div>
             <form class="newsletter-form" id="newsletter-form">
                 <input type="email" name="email" placeholder="seu@email.com" required aria-label="Seu e-mail">
@@ -263,7 +264,7 @@
             </div>
         </div>
         <h3 class="newsletter-modal-title" id="modal-title">Level Up!</h3>
-        <p class="newsletter-modal-message" id="modal-message">Quase la! Verifique seu email para confirmar a inscricao.</p>
+        <p class="newsletter-modal-message" id="modal-message">Quase lá! Verifique seu email para confirmar a inscrição.</p>
         <div class="newsletter-modal-footer" id="modal-hint">
             <span>📬 Confira sua caixa de entrada (e spam!)</span>
         </div>

@@ -65,7 +65,7 @@
 
         <!-- Rating -->
         {% if product.rating %}
-        <div class="product-rating" aria-label="Avaliacao: {{ product.rating }} de 5">
+        <div class="product-rating" aria-label="Avaliação: {{ product.rating }} de 5">
             {% for i in range(5) %}
                 {% if i < product.rating|int %}
                 <span class="star filled">★</span>

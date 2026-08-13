@@ -4,7 +4,7 @@
 <section class="products-header">
     <div class="container">
         <h1>Produtos</h1>
-        <p class="section-description">Os melhores produtos geek selecionados para voce</p>
+        <p class="section-description">Os melhores produtos geek selecionados para você</p>
     </div>
 </section>
 
@@ -19,7 +19,7 @@
                     <span class="product-platform platform-{{ product.platform.value }}">
                         {{ product.platform.value | title }}
                     </span>
-                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy" width="300" height="300">
                 </a>
                 {% else %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
@@ -34,8 +34,9 @@
                         <a href="/produto/{{ product.slug }}">{{ product.name }}</a>
                     </h3>
                     {% if product.rating %}
-                    <span class="product-rating-home" aria-label="{{ product.rating }} de 5">
-                        ★★★★★<span class="rating-n">{{ '%.1f' | format(product.rating) }}</span>
+                    {% set full_stars = (product.rating | round) | int %}
+                    <span class="product-rating-home" aria-label="Avaliação: {{ product.rating }} de 5">
+                        {{ '★' * full_stars }}<span class="stars-off">{{ '☆' * (5 - full_stars) }}</span><span class="rating-n">{{ '%.1f' | format(product.rating) }}</span>
                     </span>
                     {% endif %}
                     {% if product.price %}
@@ -59,12 +60,12 @@
             {% endif %}
 
             <span class="pagination-info">
-                Pagina {{ page }} de {{ pages }}
+                Página {{ page }} de {{ pages }}
             </span>
 
             {% if has_next %}
             <a href="/produtos?page={{ page + 1 }}" class="pagination-link pagination-next">
-                Proxima
+                Próxima
             </a>
             {% endif %}
         </nav>
@@ -72,8 +73,8 @@
 
         {% else %}
         <div class="empty-state">
-            <p>Nenhum produto disponivel no momento.</p>
-            <p>Em breve teremos novidades incriveis para voce!</p>
+            <p>Nenhum produto disponível no momento.</p>
+            <p>Em breve teremos novidades incríveis para você!</p>
         </div>
         {% endif %}
     </div>

@@ -65,12 +65,12 @@
             {% endif %}
 
             <span class="pagination-info">
-                Pagina {{ page }} de {{ pages }}
+                Página {{ page }} de {{ pages }}
             </span>
 
             {% if has_next %}
             <a href="/{{ 'listas' if post_type == 'listicle' else 'guias' }}?page={{ page + 1 }}" class="pagination-link pagination-next">
-                Proxima
+                Próxima
             </a>
             {% endif %}
         </nav>
@@ -80,7 +80,7 @@
         <div class="empty-state">
             <span class="empty-icon">{{ page_icon }}</span>
             <h2>Nenhum {{ 'lista' if post_type == 'listicle' else 'guia' }} publicado ainda</h2>
-            <p>Em breve teremos conteudo incrivel para voce!</p>
+            <p>Em breve teremos conteúdo incrível para você!</p>
             <a href="/blog" class="empty-link">Ver todos os posts</a>
         </div>
         {% endif %}
@@ -101,7 +101,7 @@
             <a href="/listas" class="cta-card">
                 <span class="cta-icon">📋</span>
                 <h3>Listas</h3>
-                <p>Top 10 e selecoes especiais</p>
+                <p>Top 10 e seleções especiais</p>
             </a>
             {% endif %}
             <a href="/categorias" class="cta-card">
