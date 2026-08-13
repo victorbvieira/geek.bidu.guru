@@ -100,8 +100,28 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Diretório base da aplicação (onde está este arquivo main.py)
 BASE_DIR = Path(__file__).resolve().parent
 
+
+class CacheControlStaticFiles(StaticFiles):
+    """
+    StaticFiles com Cache-Control explicito.
+
+    Sem Cache-Control o navegador usa freshness heuristica e pode servir
+    CSS/JS antigos depois de um deploy (HTML novo + estilo velho). Assets
+    versionados (?v=) podem ser cacheados por 1 ano; os demais devem ser
+    revalidados a cada uso (304 via ETag, barato).
+    """
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if b"v=" in scope.get("query_string", b""):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        else:
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 # Montar arquivos estaticos (caminho absoluto para funcionar em qualquer contexto)
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+app.mount("/static", CacheControlStaticFiles(directory=BASE_DIR / "static"), name="static")
 
 # Montar diretorio de uploads externo (producao)
 # Quando UPLOAD_DIR esta configurado, os uploads sao salvos fora do codigo

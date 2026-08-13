@@ -12,6 +12,24 @@ from app.config import settings
 from app.utils.markdown import markdown_to_html
 
 
+def _compute_static_version(static_dir: Path) -> str:
+    """
+    Versao de cache-busting dos assets estaticos (?v= nos links de CSS/JS).
+
+    Usa o maior mtime dos arquivos de css/ e js/, entao muda a cada deploy
+    que altera algum asset e forca o navegador a buscar a versao nova.
+    """
+    latest = 0
+    for sub in ("css", "js"):
+        folder = static_dir / sub
+        if not folder.is_dir():
+            continue
+        for f in folder.rglob("*"):
+            if f.is_file():
+                latest = max(latest, int(f.stat().st_mtime))
+    return str(latest) if latest else "1"
+
+
 def setup_templates(directory: Path) -> Jinja2Templates:
     """
     Configura templates Jinja2 com filtros customizados.
@@ -33,6 +51,9 @@ def setup_templates(directory: Path) -> Jinja2Templates:
     templates.env.globals["google_site_verification"] = settings.google_site_verification
     templates.env.globals["is_production"] = settings.is_production
     templates.env.globals["app_name"] = settings.app_name
+    templates.env.globals["static_v"] = _compute_static_version(
+        directory.parent / "static"
+    )
 
     return templates
 
