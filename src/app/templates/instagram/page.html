@@ -12,7 +12,7 @@
             </div>
             <div class="insta-header-text">
                 <h1>Siga-nos no Instagram</h1>
-                <p class="insta-subtitle">Produtos geek incriveis compartilhados diariamente</p>
+                <p class="insta-subtitle">Produtos geek incríveis compartilhados diariamente</p>
                 <a href="https://instagram.com/geekbidu" target="_blank" rel="noopener" class="btn btn-instagram">
                     <span>@geekbidu</span>
                 </a>
@@ -45,7 +45,7 @@
     <div class="container">
         <div class="featured-badge">
             <span class="badge-icon">🔥</span>
-            <span class="badge-text">Ultimo Post</span>
+            <span class="badge-text">Último Post</span>
         </div>
         <div class="featured-card">
             <div class="featured-image-wrapper">
@@ -112,7 +112,7 @@
     <div class="container">
         <div class="section-header">
             <h2>Produtos Compartilhados</h2>
-            <p class="section-description">Todos os produtos que ja postamos no nosso Instagram</p>
+            <p class="section-description">Todos os produtos que já postamos no nosso Instagram</p>
         </div>
 
         {% if products %}
@@ -121,7 +121,7 @@
             <article class="product-card-home">
                 {% if product.main_image_url %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home">
-                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
+                    <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy" width="300" height="300">
                 </a>
                 {% else %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
@@ -156,12 +156,12 @@
             {% endif %}
 
             <span class="pagination-info">
-                Pagina {{ page }} de {{ pages }}
+                Página {{ page }} de {{ pages }}
             </span>
 
             {% if has_next %}
             <a href="/insta?page={{ page + 1 }}" class="pagination-link pagination-next">
-                Proxima
+                Próxima
             </a>
             {% endif %}
         </nav>
@@ -170,8 +170,8 @@
         {% else %}
         <div class="empty-state">
             <div class="empty-icon">📸</div>
-            <p>Ainda nao temos produtos postados no Instagram.</p>
-            <p>Em breve teremos novidades incriveis!</p>
+            <p>Ainda não temos produtos postados no Instagram.</p>
+            <p>Em breve teremos novidades incríveis!</p>
             <a href="/produtos" class="btn btn-primary">Ver todos os produtos</a>
         </div>
         {% endif %}
@@ -182,7 +182,7 @@
 <section class="insta-cta">
     <div class="container">
         <div class="cta-content">
-            <h2>Nao perca nenhuma oferta!</h2>
+            <h2>Não perca nenhuma oferta!</h2>
             <p>Siga nosso Instagram para receber as melhores dicas de presentes geek todos os dias.</p>
             <a href="https://instagram.com/geekbidu" target="_blank" rel="noopener" class="btn btn-instagram btn-large">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">

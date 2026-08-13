@@ -24,7 +24,7 @@
                         <figure class="carousel-image">
                             <img src="{{ product.images[0] }}" alt="{{ product.name }}" id="carousel-main-img">
                         </figure>
-                        <button class="carousel-nav carousel-next" onclick="nextImage()" aria-label="Proxima imagem">&#10095;</button>
+                        <button class="carousel-nav carousel-next" onclick="nextImage()" aria-label="Próxima imagem">&#10095;</button>
                     </div>
                     <div class="carousel-thumbnails">
                         {% for img in product.images %}
@@ -71,7 +71,7 @@
                     </div>
                     <span class="rating-value">{{ "%.1f"|format(product.rating) }}</span>
                     {% if product.review_count %}
-                    <span class="review-count">({{ product.review_count }} avaliacoes)</span>
+                    <span class="review-count">({{ product.review_count }} avaliações)</span>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -87,7 +87,7 @@
                     {% if product.availability.value == 'available' %}
                     <span class="availability available">Em estoque</span>
                     {% elif product.availability.value == 'unavailable' %}
-                    <span class="availability unavailable">Indisponivel</span>
+                    <span class="availability unavailable">Indisponível</span>
                     {% else %}
                     <span class="availability unknown">Verificar disponibilidade</span>
                     {% endif %}
@@ -95,7 +95,7 @@
 
                 {% if product.last_price_update %}
                 <p class="product-last-update">
-                    Preco atualizado em {{ product.last_price_update.strftime('%d/%m/%Y as %H:%M') }}
+                    Preço atualizado em {{ product.last_price_update.strftime('%d/%m/%Y as %H:%M') }}
                 </p>
                 {% endif %}
 
@@ -104,7 +104,7 @@
                 </a>
 
                 <p class="affiliate-disclaimer">
-                    * Este e um link de afiliado. Ao comprar atraves dele, voce nos ajuda a manter o site sem custo adicional para voce.
+                    * Este é um link de afiliado. Ao comprar através dele, você nos ajuda a manter o site sem custo adicional para você.
                 </p>
             </div>
         </div>
@@ -112,7 +112,7 @@
         <!-- Descricao longa -->
         {% if product.long_description %}
         <div class="product-description-section">
-            <h2>Descricao</h2>
+            <h2>Descrição</h2>
             <div class="product-long-description">
                 {{ product.long_description | markdown }}
             </div>

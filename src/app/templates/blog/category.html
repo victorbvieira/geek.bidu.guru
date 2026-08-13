@@ -134,12 +134,12 @@
             {% endif %}
 
             <span class="pagination-info">
-                Pagina {{ page }} de {{ pages }}
+                Página {{ page }} de {{ pages }}
             </span>
 
             {% if has_next %}
             <a href="/categoria/{{ category.slug }}?page={{ page + 1 }}" class="pagination-link pagination-next">
-                Proxima
+                Próxima
             </a>
             {% endif %}
         </nav>
@@ -147,8 +147,8 @@
 
         {% elif not products and not subcategories %}
         <div class="empty-state">
-            <p>Nenhum conteudo nesta categoria ainda.</p>
-            <p>Em breve teremos conteudo incrivel sobre {{ category.name }}!</p>
+            <p>Nenhum conteúdo nesta categoria ainda.</p>
+            <p>Em breve teremos conteúdo incrível sobre {{ category.name }}!</p>
             <a href="/blog" class="btn btn-primary">Ver todos os posts</a>
         </div>
         {% endif %}

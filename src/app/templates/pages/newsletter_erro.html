@@ -21,17 +21,17 @@
             {% if error_type == "expired" %}
             <div class="error-details">
                 <h2>O que aconteceu?</h2>
-                <p>O link de verificacao expirou. Links de verificacao sao validos por {{ expire_hours | default(48) }} horas por motivos de seguranca.</p>
+                <p>O link de verificação expirou. Links de verificação são válidos por {{ expire_hours | default(48) }} horas por motivos de segurança.</p>
             </div>
             {% elif error_type == "already_verified" %}
             <div class="error-details">
                 <h2>Tudo certo!</h2>
-                <p>Seu email ja foi verificado anteriormente. Voce ja esta inscrito na nossa newsletter e vai receber nossas novidades.</p>
+                <p>Seu email já foi verificado anteriormente. Você já está inscrito na nossa newsletter e vai receber nossas novidades.</p>
             </div>
             {% elif error_type == "invalid" %}
             <div class="error-details">
                 <h2>O que aconteceu?</h2>
-                <p>Este link de verificacao nao existe ou ja foi utilizado. Cada link so pode ser usado uma vez.</p>
+                <p>Este link de verificação não existe ou já foi utilizado. Cada link só pode ser usado uma vez.</p>
             </div>
             {% endif %}
 

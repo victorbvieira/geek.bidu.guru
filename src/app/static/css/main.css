@@ -1286,6 +1286,10 @@ section {
     letter-spacing: 0.1em;
 }
 
+.product-rating-home .stars-off {
+    color: var(--text-muted);
+}
+
 .product-rating-home .rating-n {
     color: var(--text-muted);
     letter-spacing: 0;

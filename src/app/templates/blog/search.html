@@ -107,12 +107,12 @@
                 {% endif %}
 
                 <span class="pagination-info">
-                    Pagina {{ page }} de {{ pages }}
+                    Página {{ page }} de {{ pages }}
                 </span>
 
                 {% if has_next %}
                 <a href="/busca?q={{ query }}&page={{ page + 1 }}" class="pagination-link pagination-next">
-                    Proxima
+                    Próxima
                 </a>
                 {% endif %}
             </nav>
@@ -134,7 +134,7 @@
 
         {% else %}
             <div class="search-suggestions">
-                <p>Sugestoes de busca:</p>
+                <p>Sugestões de busca:</p>
                 <ul>
                     <li><a href="/busca?q=funko">Funko Pop</a></li>
                     <li><a href="/busca?q=star+wars">Star Wars</a></li>
