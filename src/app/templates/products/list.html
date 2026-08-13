@@ -16,25 +16,33 @@
             <article class="product-card-home">
                 {% if product.main_image_url %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home">
+                    <span class="product-platform platform-{{ product.platform.value }}">
+                        {{ product.platform.value | title }}
+                    </span>
                     <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
                 </a>
                 {% else %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
+                    <span class="product-platform platform-{{ product.platform.value }}">
+                        {{ product.platform.value | title }}
+                    </span>
                     <span>Sem imagem</span>
                 </a>
                 {% endif %}
                 <div class="product-content-home">
-                    <span class="product-platform platform-{{ product.platform.value }}">
-                        {{ product.platform.value | title }}
-                    </span>
                     <h3 class="product-name-home">
-                        <a href="/produto/{{ product.slug }}">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</a>
+                        <a href="/produto/{{ product.slug }}">{{ product.name }}</a>
                     </h3>
+                    {% if product.rating %}
+                    <span class="product-rating-home" aria-label="{{ product.rating }} de 5">
+                        ★★★★★<span class="rating-n">{{ '%.1f' | format(product.rating) }}</span>
+                    </span>
+                    {% endif %}
                     {% if product.price %}
                     <span class="product-price-home">{{ product.price | format_price }}</span>
                     {% endif %}
                     <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-cta-home" target="_blank" rel="noopener sponsored">
-                        Ver oferta
+                        Ver oferta →
                     </a>
                 </div>
             </article>

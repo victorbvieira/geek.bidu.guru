@@ -2,57 +2,114 @@
 
 {% block content %}
 <section class="hero">
-    <div class="container">
-        <h1>Encontre o presente geek perfeito</h1>
-        <p class="hero-subtitle">
-            Listas, reviews e ideias criadas por geeks, para geeks - com os melhores achados da Amazon, Mercado Livre e Shopee.
-        </p>
-        <div class="hero-cta">
-            <a href="/ocasioes" class="btn btn-primary">Ver por ocasião</a>
-            <a href="/categorias/preco/ate-100" class="btn btn-secondary">Presentes até R$ 100</a>
+    <div class="container hero-grid">
+        <div>
+            <span class="eyebrow">Curadoria geek · Amazon · Mercado Livre · Shopee</span>
+            <h1>O presente geek certo, <span class="hl">sem farmar</span> horas de busca</h1>
+            <p class="hero-subtitle">
+                O Bidu compara precos em 3 plataformas e separa so o que vale a pena,
+                de teclado mecanico a booster box. Curadoria de geek para geek.
+            </p>
+            <div class="hero-cta">
+                <a href="#destaques" class="btn btn-primary">Ver destaques da semana</a>
+                <a href="/categorias/preco/ate-100" class="btn btn-ghost">Presentes ate R$ 100</a>
+            </div>
+            <div class="trust">
+                <span class="trust-item"><span class="ico">⚖️</span> Precos comparados em 3 lojas</span>
+                <span class="trust-item"><span class="ico">🧙</span> Curadoria humana, sem enrolacao</span>
+                <span class="trust-item"><span class="ico">🔔</span> Alerta quando o preco cai</span>
+            </div>
+        </div>
+        <div class="hero-vis" aria-hidden="true">
+            <span class="fcard fcard-1">⚡</span>
+            <span class="fcard fcard-2">🐉</span>
+            <span class="fcard fcard-3">🌊</span>
+            <img class="mascot" src="/static/logo/mascot-420.png" alt="" width="420" height="420" fetchpriority="high">
         </div>
     </div>
 </section>
 
-<section class="featured">
+<section id="categorias">
     <div class="container">
-        <h2>Destaques</h2>
+        <div class="section-head">
+            <div>
+                <h2>Escolha sua classe</h2>
+                <p class="sub">Navegue pelo universo que combina com quem vai receber o presente</p>
+            </div>
+            <a href="/categorias" class="section-link">Todas as categorias →</a>
+        </div>
+        {% set cat_icons = {
+            'gamer': '🎮', 'dev': '💻', 'otaku': '🎌', 'star-wars': '⭐',
+            'marvel': '🦸', 'boardgames': '🎲', 'board-games': '🎲'
+        } %}
+        <div class="cat-rail">
+            {% for category in categories %}
+            <a href="/categoria/{{ category.slug }}" class="cat-chip">
+                <span class="ico">
+                    {%- if category.image_url -%}
+                    <img src="{{ category.image_url }}" alt="" loading="lazy">
+                    {%- else -%}
+                    {{ cat_icons.get(category.slug, '🧩') }}
+                    {%- endif -%}
+                </span>
+                {{ category.name }}
+            </a>
+            {% endfor %}
+            <a href="#tcg" class="cat-chip is-new">
+                <span class="ico">🃏</span> TCG <span class="tag-new">Novo</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="destaques">
+    <div class="container">
+        <div class="section-head">
+            <div>
+                <h2>Destaques da semana</h2>
+                <p class="sub">Selecionados a dedo pelo Bidu, so entra aqui o que a gente compraria</p>
+            </div>
+            <a href="/produtos" class="section-link">Ver todos os produtos →</a>
+        </div>
         {% if featured_products %}
-        <p class="section-description">Os melhores presentes geek selecionados para voce</p>
         <div class="products-grid-home">
             {% for product in featured_products %}
             <article class="product-card-home">
                 {% if product.main_image_url %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home">
+                    <span class="product-platform platform-{{ product.platform.value }}">
+                        {{ product.platform.value | title }}
+                    </span>
                     <img src="{{ product.main_image_url }}" alt="{{ product.name }}" loading="lazy">
                 </a>
                 {% else %}
                 <a href="/produto/{{ product.slug }}" class="product-image-home product-image-placeholder">
+                    <span class="product-platform platform-{{ product.platform.value }}">
+                        {{ product.platform.value | title }}
+                    </span>
                     <span>Sem imagem</span>
                 </a>
                 {% endif %}
                 <div class="product-content-home">
-                    <span class="product-platform platform-{{ product.platform.value }}">
-                        {{ product.platform.value | title }}
-                    </span>
                     <h3 class="product-name-home">
-                        <a href="/produto/{{ product.slug }}">{{ product.name[:50] }}{% if product.name|length > 50 %}...{% endif %}</a>
+                        <a href="/produto/{{ product.slug }}">{{ product.name }}</a>
                     </h3>
+                    {% if product.rating %}
+                    <span class="product-rating-home" aria-label="{{ product.rating }} de 5">
+                        ★★★★★<span class="rating-n">{{ '%.1f' | format(product.rating) }}</span>
+                    </span>
+                    {% endif %}
                     {% if product.price %}
                     <span class="product-price-home">{{ product.price | format_price }}</span>
                     {% endif %}
                     <a href="/goto/{{ product.affiliate_redirect_slug }}" class="product-cta-home" target="_blank" rel="noopener sponsored">
-                        Ver oferta
+                        Ver oferta →
                     </a>
                 </div>
             </article>
             {% endfor %}
         </div>
-        <div class="see-all">
-            <a href="/produtos" class="btn btn-secondary">Ver todos os produtos</a>
-        </div>
         {% elif featured_posts %}
-        <p class="section-description">Os melhores artigos sobre presentes geek</p>
         <div class="posts-grid">
             {% for post in featured_posts %}
             <article class="post-card">
@@ -72,11 +129,7 @@
             </article>
             {% endfor %}
         </div>
-        <div class="see-all">
-            <a href="/blog" class="btn btn-secondary">Ver todos os artigos</a>
-        </div>
         {% else %}
-        <p class="section-description">Em breve: os melhores presentes geek selecionados para voce!</p>
         <div class="posts-grid">
             <div class="placeholder-card">
                 <p>Conteudo em construcao...</p>
@@ -86,203 +139,113 @@
     </div>
 </section>
 
-<!-- Secao de Ultimos Artigos (Carrossel) -->
+<section class="tcg" id="tcg">
+    <div class="container">
+        <div class="tcg-hero">
+            <div>
+                <span class="eyebrow">Nova expansao do site</span>
+                <h2>Arena TCG: <span class="hl">cartas e selados</span> chegando ao guru</h2>
+                <p>
+                    Em breve o Bidu tambem compara precos de singles, boosters e ETBs de
+                    Pokemon, Magic: The Gathering e One Piece Card Game, com condicao da
+                    carta, raridade e alerta de preco, do jeito que colecionador respeita.
+                </p>
+                <a href="#guilda" class="btn btn-secondary">Entrar na lista de espera</a>
+            </div>
+            <div class="tcg-fan" aria-hidden="true">
+                <div class="tcg-card"><span class="art">⚡</span> Pokemon</div>
+                <div class="tcg-card"><span class="art">🐉</span> Magic</div>
+                <div class="tcg-card"><span class="art">🌊</span> One Piece</div>
+            </div>
+        </div>
+        <div class="tcg-grid">
+            <div class="tcg-tile">
+                <span class="ico">🃏</span>
+                <h3>Singles</h3>
+                <p>Cartas avulsas com condicao declarada (NM, SP, MP) e raridade visivel no card.</p>
+                <span class="chip">Em breve</span>
+            </div>
+            <div class="tcg-tile">
+                <span class="ico">📦</span>
+                <h3>Produtos selados</h3>
+                <p>Booster box, ETB e decks prontos com comparacao de preco entre lojas.</p>
+                <span class="chip">Em breve</span>
+            </div>
+            <div class="tcg-tile">
+                <span class="ico">⏳</span>
+                <h3>Pre-vendas</h3>
+                <p>Reserve lancamentos antes de esgotar, com data de envio clara no card.</p>
+                <span class="chip">Em breve</span>
+            </div>
+            <div class="tcg-tile">
+                <span class="ico">🔔</span>
+                <h3>Alerta de preco</h3>
+                <p>Siga uma carta ou box e receba aviso quando o preco cair do seu alvo.</p>
+                <span class="chip">Em breve</span>
+            </div>
+        </div>
+    </div>
+</section>
+
 {% if recent_posts %}
-<section class="content-carousel">
+<section id="conteudo">
     <div class="container">
-        <div class="section-header">
+        <div class="section-head">
             <div>
-                <h2 class="section-title">Ultimos Artigos</h2>
-                <p class="section-subtitle">As postagens mais recentes do blog</p>
+                <h2>Grimorio do Bidu</h2>
+                <p class="sub">Listas, guias e reviews para escolher sem errar</p>
             </div>
-            <a href="/blog" class="section-link">Ver todos</a>
+            <a href="/blog" class="section-link">Ver todo o blog →</a>
         </div>
-        <div class="carousel-wrapper">
-            <button class="carousel-btn carousel-prev" aria-label="Anterior" data-carousel="recent-posts">
-                <span>&lt;</span>
-            </button>
-            <div class="carousel-track" id="carousel-recent-posts">
-                {% for post in recent_posts %}
-                <article class="carousel-card">
-                    {% if post.featured_image_url %}
-                    <a href="/blog/{{ post.slug }}" class="carousel-image">
-                        <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
-                        <span class="carousel-badge{% if post.type.value == 'guide' %} carousel-badge-guide{% endif %}">
-                            {% if post.type.value == 'listicle' %}Lista{% elif post.type.value == 'guide' %}Guia{% else %}Artigo{% endif %}
-                        </span>
-                    </a>
-                    {% endif %}
-                    <div class="carousel-content">
-                        {% if post.category %}
-                        <a href="/categoria/{{ post.category.slug }}" class="carousel-category">
-                            {{ post.category.name }}
-                        </a>
-                        {% endif %}
-                        <h3 class="carousel-title">
-                            <a href="/blog/{{ post.slug }}">{{ post.title[:60] }}{% if post.title|length > 60 %}...{% endif %}</a>
-                        </h3>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-            <button class="carousel-btn carousel-next" aria-label="Proximo" data-carousel="recent-posts">
-                <span>&gt;</span>
-            </button>
+        <div class="tabs" role="tablist" aria-label="Filtrar conteudo">
+            <button class="tab is-active" role="tab" aria-selected="true" data-filter="all">Todos</button>
+            <button class="tab" role="tab" aria-selected="false" data-filter="listicle">Listas</button>
+            <button class="tab" role="tab" aria-selected="false" data-filter="guide">Guias</button>
         </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- Secao de Listas (Carrossel) -->
-{% if recent_listicles %}
-<section class="content-carousel">
-    <div class="container">
-        <div class="section-header">
-            <div>
-                <h2 class="section-title">Listas</h2>
-                <p class="section-subtitle">Top 10, comparativos e selecoes especiais</p>
-            </div>
-            <a href="/listas" class="section-link">Ver todas</a>
-        </div>
-        <div class="carousel-wrapper">
-            <button class="carousel-btn carousel-prev" aria-label="Anterior" data-carousel="listicles">
-                <span>&lt;</span>
-            </button>
-            <div class="carousel-track" id="carousel-listicles">
-                {% for post in recent_listicles %}
-                <article class="carousel-card">
-                    {% if post.featured_image_url %}
-                    <a href="/blog/{{ post.slug }}" class="carousel-image">
-                        <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
-                        <span class="carousel-badge">Lista</span>
-                    </a>
-                    {% endif %}
-                    <div class="carousel-content">
-                        {% if post.category %}
-                        <a href="/categoria/{{ post.category.slug }}" class="carousel-category">
-                            {{ post.category.name }}
-                        </a>
-                        {% endif %}
-                        <h3 class="carousel-title">
-                            <a href="/blog/{{ post.slug }}">{{ post.title[:60] }}{% if post.title|length > 60 %}...{% endif %}</a>
-                        </h3>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-            <button class="carousel-btn carousel-next" aria-label="Proximo" data-carousel="listicles">
-                <span>&gt;</span>
-            </button>
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<!-- Secao de Guias (Carrossel) -->
-{% if recent_guides %}
-<section class="content-carousel content-carousel-alt">
-    <div class="container">
-        <div class="section-header">
-            <div>
-                <h2 class="section-title">Guias de Compra</h2>
-                <p class="section-subtitle">Tudo que voce precisa saber para escolher o presente perfeito</p>
-            </div>
-            <a href="/guias" class="section-link">Ver todos</a>
-        </div>
-        <div class="carousel-wrapper">
-            <button class="carousel-btn carousel-prev" aria-label="Anterior" data-carousel="guides">
-                <span>&lt;</span>
-            </button>
-            <div class="carousel-track" id="carousel-guides">
-                {% for post in recent_guides %}
-                <article class="carousel-card">
-                    {% if post.featured_image_url %}
-                    <a href="/blog/{{ post.slug }}" class="carousel-image">
-                        <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
-                        <span class="carousel-badge carousel-badge-guide">Guia</span>
-                    </a>
-                    {% endif %}
-                    <div class="carousel-content">
-                        {% if post.category %}
-                        <a href="/categoria/{{ post.category.slug }}" class="carousel-category">
-                            {{ post.category.name }}
-                        </a>
-                        {% endif %}
-                        <h3 class="carousel-title">
-                            <a href="/blog/{{ post.slug }}">{{ post.title[:60] }}{% if post.title|length > 60 %}...{% endif %}</a>
-                        </h3>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-            <button class="carousel-btn carousel-next" aria-label="Proximo" data-carousel="guides">
-                <span>&gt;</span>
-            </button>
-        </div>
-    </div>
-</section>
-{% endif %}
-
-<section class="categories">
-    <div class="container">
-        <h2 class="section-title">Navegue por Categoria</h2>
-        <div class="category-grid">
-            {% if categories %}
-                {% for category in categories %}
-                <a href="/categoria/{{ category.slug }}" class="category-card">
-                    {% if category.image_url %}
-                    <img src="{{ category.image_url }}" alt="{{ category.name }}" class="category-image">
-                    {% else %}
-                    <span class="category-icon">📦</span>
-                    {% endif %}
-                    <span class="category-name">{{ category.name }}</span>
+        <div class="posts-grid" id="grimorio-grid">
+            {% for post in recent_posts[:9] %}
+            <article class="post-card" data-type="{{ post.type.value }}">
+                {% if post.featured_image_url %}
+                <a href="/blog/{{ post.slug }}" class="post-image">
+                    <img src="{{ post.featured_image_url }}" alt="{{ post.title }}" loading="lazy">
+                    <span class="post-type-badge post-type-{{ post.type.value }}">
+                        {% if post.type.value == 'listicle' %}Lista{% elif post.type.value == 'guide' %}Guia{% elif post.type.value == 'review' %}Review{% else %}Artigo{% endif %}
+                    </span>
                 </a>
-                {% endfor %}
-            {% else %}
-            <a href="/categoria/gamer" class="category-card">
-                <span class="category-icon">🎮</span>
-                <span class="category-name">Gamer</span>
-            </a>
-            <a href="/categoria/dev" class="category-card">
-                <span class="category-icon">💻</span>
-                <span class="category-name">Dev</span>
-            </a>
-            <a href="/categoria/otaku" class="category-card">
-                <span class="category-icon">🎌</span>
-                <span class="category-name">Otaku</span>
-            </a>
-            <a href="/categoria/star-wars" class="category-card">
-                <span class="category-icon">⭐</span>
-                <span class="category-name">Star Wars</span>
-            </a>
-            <a href="/categoria/marvel" class="category-card">
-                <span class="category-icon">🦸</span>
-                <span class="category-name">Marvel</span>
-            </a>
-            <a href="/categoria/boardgames" class="category-card">
-                <span class="category-icon">🎲</span>
-                <span class="category-name">Board Games</span>
-            </a>
-            {% endif %}
-        </div>
-        <div class="see-all">
-            <a href="/categorias" class="btn btn-secondary">Ver todas as categorias</a>
+                {% endif %}
+                <div class="post-content">
+                    {% if post.category %}
+                    <span class="post-category">{{ post.category.name }}</span>
+                    {% endif %}
+                    <h3 class="post-title">
+                        <a href="/blog/{{ post.slug }}">{{ post.title }}</a>
+                    </h3>
+                </div>
+            </article>
+            {% endfor %}
         </div>
     </div>
 </section>
+{% endif %}
 
-<section class="newsletter">
+<section class="guild" id="guilda">
     <div class="container">
-        <h2>Fique por dentro!</h2>
-        <p>Receba as melhores ideias de presentes geek toda semana.</p>
-        <form class="newsletter-form" id="newsletter-form">
-            <input type="email" name="email" placeholder="Seu melhor e-mail" required>
-            <!-- Honeypot anti-spam (invisivel para usuarios) -->
-            <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off">
-            <!-- Timestamp anti-spam -->
-            <input type="hidden" name="ts" id="form-timestamp">
-            <button type="submit" class="btn btn-primary">Inscrever</button>
-        </form>
+        <div class="guild-inner">
+            <img class="guild-mascot" src="/static/logo/mascot-only.png" alt="" width="88" height="88" loading="lazy">
+            <div>
+                <h2>Entre para a Guilda</h2>
+                <p>Uma vez por semana: os melhores achados, quedas de preco e lancamentos TCG. Zero spam, palavra de mago.</p>
+            </div>
+            <form class="newsletter-form" id="newsletter-form">
+                <input type="email" name="email" placeholder="seu@email.com" required aria-label="Seu e-mail">
+                <!-- Honeypot anti-spam (invisivel para usuarios) -->
+                <input type="text" name="website" class="hp-field" tabindex="-1" autocomplete="off">
+                <!-- Timestamp anti-spam -->
+                <input type="hidden" name="ts" id="form-timestamp">
+                <button type="submit" class="btn btn-primary">Inscrever</button>
+                <p class="newsletter-note">Sem spam. Cancele quando quiser.</p>
+            </form>
+        </div>
         <p class="newsletter-feedback" id="newsletter-feedback"></p>
     </div>
 </section>
@@ -401,7 +364,7 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
         }
     } catch (error) {
         showNewsletterModal('Erro de conexao. Tente novamente.', false);
-    } finally {
+    }  finally {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
     }
@@ -411,228 +374,6 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
 
 {% block extra_css %}
 <style>
-/* Carrossel de Listas e Guias */
-.content-carousel {
-    padding: 3rem 0;
-    background: var(--color-bg);
-}
-
-.content-carousel-alt {
-    background: var(--color-bg-alt);
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.section-title {
-    margin: 0;
-    font-size: 1.75rem;
-}
-
-.section-subtitle {
-    margin: 0.25rem 0 0;
-    color: var(--color-text-muted);
-    font-size: 0.95rem;
-}
-
-.section-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.section-link:hover {
-    text-decoration: underline;
-}
-
-.carousel-wrapper {
-    position: relative;
-    overflow: hidden;
-}
-
-.carousel-track {
-    display: flex;
-    gap: 1.5rem;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    padding: 0.5rem 0;
-}
-
-.carousel-track::-webkit-scrollbar {
-    display: none;
-}
-
-.carousel-card {
-    flex: 0 0 280px;
-    background: var(--color-bg-card);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.carousel-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-}
-
-.carousel-image {
-    display: block;
-    position: relative;
-}
-
-.carousel-image img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-}
-
-.carousel-badge {
-    position: absolute;
-    top: 0.5rem;
-    left: 0.5rem;
-    background: var(--color-primary);
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.carousel-badge-guide {
-    background: #e67e22;
-}
-
-.carousel-content {
-    padding: 1rem;
-}
-
-.carousel-category {
-    display: inline-block;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    color: var(--color-primary);
-    text-decoration: none;
-    margin-bottom: 0.25rem;
-}
-
-.carousel-title {
-    font-size: 1rem;
-    margin: 0;
-    line-height: 1.3;
-}
-
-.carousel-title a {
-    color: var(--color-text);
-    text-decoration: none;
-}
-
-.carousel-title a:hover {
-    color: var(--color-primary);
-}
-
-.carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    cursor: pointer;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transition: background 0.2s, transform 0.2s;
-}
-
-.carousel-btn:hover {
-    background: var(--color-primary);
-    color: white;
-    transform: translateY(-50%) scale(1.05);
-}
-
-.carousel-prev {
-    left: 0;
-}
-
-.carousel-next {
-    right: 0;
-}
-
-@media (max-width: 768px) {
-    .carousel-card {
-        flex: 0 0 260px;
-    }
-
-    .carousel-btn {
-        display: none;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-
-/* Newsletter form */
-.newsletter {
-    padding: 3rem 0;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: white;
-    text-align: center;
-}
-
-.newsletter h2 {
-    margin-bottom: 0.5rem;
-}
-
-.newsletter p {
-    margin-bottom: 1.5rem;
-    opacity: 0.9;
-}
-
-.newsletter-form {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    max-width: 500px;
-    margin: 0 auto;
-    flex-wrap: wrap;
-}
-
-.newsletter-form input[type="email"] {
-    flex: 1;
-    min-width: 200px;
-    padding: 0.875rem 1rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-}
-
-.newsletter-form button {
-    padding: 0.875rem 2rem;
-    white-space: nowrap;
-}
-
 /* Honeypot - invisivel para usuarios */
 .hp-field {
     position: absolute !important;
@@ -648,6 +389,7 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
     margin-top: 1rem;
     font-size: 0.9rem;
     min-height: 1.4em;
+    text-align: center;
 }
 
 .newsletter-feedback.success {
@@ -656,17 +398,6 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
 
 .newsletter-feedback.error {
     color: #fecaca;
-}
-
-@media (max-width: 480px) {
-    .newsletter-form {
-        flex-direction: column;
-    }
-
-    .newsletter-form input[type="email"],
-    .newsletter-form button {
-        width: 100%;
-    }
 }
 
 /* Newsletter Modal - Feedback Animado */
@@ -735,7 +466,7 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
 .modal-emoji {
     font-size: 4rem;
     display: block;
-    animation: bounce 0.6s ease-out;
+    animation: modal-bounce 0.6s ease-out;
 }
 
 .modal-sparkles {
@@ -772,7 +503,7 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
     animation-delay: 0.6s;
 }
 
-@keyframes bounce {
+@keyframes modal-bounce {
     0% { transform: scale(0); }
     50% { transform: scale(1.2); }
     70% { transform: scale(0.9); }
@@ -816,20 +547,8 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
 }
 
 .newsletter-modal-btn {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
     border: none;
-    color: white;
-    padding: 0.875rem 2.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 8px;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.newsletter-modal-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
 }
 
 @media (max-width: 480px) {
@@ -850,22 +569,26 @@ document.getElementById('newsletter-form').addEventListener('submit', async func
 
 {% block extra_js %}
 <script>
-// Carrossel simples com scroll
+// Abas do Grimorio: filtro client-side dos posts por tipo
 (function() {
-    document.querySelectorAll('.carousel-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const carouselId = this.dataset.carousel;
-            const track = document.getElementById('carousel-' + carouselId);
-            if (!track) return;
+    const tabs = document.querySelectorAll('.tabs .tab');
+    const cards = document.querySelectorAll('#grimorio-grid .post-card');
+    if (!tabs.length || !cards.length) return;
 
-            const cardWidth = track.querySelector('.carousel-card')?.offsetWidth || 280;
-            const scrollAmount = cardWidth + 24; // card + gap
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            tabs.forEach(t => {
+                t.classList.remove('is-active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            this.classList.add('is-active');
+            this.setAttribute('aria-selected', 'true');
 
-            if (this.classList.contains('carousel-prev')) {
-                track.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            } else {
-                track.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
+            const filter = this.dataset.filter;
+            cards.forEach(card => {
+                const show = filter === 'all' || card.dataset.type === filter;
+                card.style.display = show ? '' : 'none';
+            });
         });
     });
 })();
